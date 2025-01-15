@@ -15,7 +15,9 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^1.0.19",
     "@mozilla/readability": "^0.5.0",
+    "ai": "^4.0.36",
     "jsdom": "^26.0.0"
   }
 }
