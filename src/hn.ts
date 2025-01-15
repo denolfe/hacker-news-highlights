@@ -4,7 +4,8 @@ import { JSDOM } from 'jsdom'
 
 export async function fetchTopStories(): Promise<StoryOutput[]> {
   const response = await fetch(
-    'https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=10',
+    // 'https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=10',
+    'https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=1',
   )
   const data = (await response.json()) as ResponseData
 
