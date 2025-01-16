@@ -9,9 +9,11 @@ import { DATA_DIR, podcastOutro as outro } from './constants'
 
 loadEnvFile(path.resolve(__dirname, '../.env'))
 
+const args = process.argv.slice(2)
+
 async function main() {
   await createDataDir()
-  const storyData = await fetchTopStories(10)
+  const storyData = await fetchTopStories(args[0] ? parseInt(args[0]) : 10)
   const intro = await generatePodcastIntro(storyData)
   const summaries = await summarize(storyData)
   summaries.unshift(intro)
