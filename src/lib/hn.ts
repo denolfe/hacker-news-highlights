@@ -1,7 +1,7 @@
 import { Readability } from '@mozilla/readability'
 import { JSDOM } from 'jsdom'
-import { Comment, ResponseData, SlimComment, StoryOutput } from './types'
-import { Cache } from './utils/cache'
+import { Comment, ResponseData, SlimComment, StoryOutput } from '../types'
+import { Cache } from '../utils/cache'
 
 export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]> {
   console.log(`Fetching top ${count} stories...`)
