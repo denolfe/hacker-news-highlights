@@ -2,10 +2,9 @@ import { Readability } from '@mozilla/readability'
 import { JSDOM } from 'jsdom'
 import { Comment, ResponseData, SlimComment, StoryOutput } from './types'
 
-export async function fetchTopStories(): Promise<StoryOutput[]> {
+export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]> {
   const response = await fetch(
-    // 'https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=10',
-    'https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=1',
+    `https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=${count}`,
   )
   const data = (await response.json()) as ResponseData
 
