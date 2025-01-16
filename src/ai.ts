@@ -1,7 +1,8 @@
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 import { SlimComment, StoryOutput } from './types'
-import { writeToFile } from './utils'
+import { writeToFile } from './utils/writeToFile'
+import { Cache } from './utils/cache'
 
 const storySummarizationPrompt = `
 You are an AI language model tasked with generating a recap of a top story from Hacker News (news.ycombinator.com). For the given story, perform the following tasks:
@@ -48,11 +49,19 @@ export async function summarize(stories: StoryOutput[]) {
 
   console.log('Generating summaries...')
 
+  const cache = await Cache.getInstance()
   const summaries: string[] = []
 
   for (const story of stories) {
     console.log(`Summarizing story: ${story.title}`)
     try {
+      const cacheKey = 'summary-' + story.story_id.toString()
+      const cached = await cache.read(cacheKey)
+      if (cached) {
+        summaries.push(cached)
+        continue
+      }
+
       const { text } = await generateText({
         model: openai('gpt-4o-mini'),
         prompt:
@@ -62,6 +71,7 @@ export async function summarize(stories: StoryOutput[]) {
           `Comments data:\n${generateCommentTree(story.comments.slice(0, 5))}`,
       })
       summaries.push(text)
+      await cache.write(cacheKey, text)
     } catch (error) {
       console.error('Error generating text:', error)
       await writeToFile('summary.txt', summaries)
