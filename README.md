@@ -22,3 +22,5 @@
 - [ ] Add logic to avoid duplicates
 - [ ] Add actual logger
 - [ ] Add arg parser
+- [ ] Generate "show notes"
+- [ ] Output a run summary
