@@ -1,6 +1,6 @@
 import ffmpeg from 'fluent-ffmpeg'
 import path from 'path'
-import { DATA_DIR } from '../lib/constants'
+import { CACHE_DIR } from '../lib/constants'
 
 export function joinAudioFiles(filenames: string[], output: string): Promise<void> {
   console.log(`Merging ${filenames.length} audio files into ${output}...`)
@@ -8,7 +8,7 @@ export function joinAudioFiles(filenames: string[], output: string): Promise<voi
     const command = ffmpeg()
 
     filenames
-      .map(f => path.resolve(DATA_DIR, f))
+      .map(f => path.resolve(CACHE_DIR, f))
       .forEach(file => {
         command.input(file)
       })

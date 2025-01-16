@@ -1,3 +1,8 @@
+export type StorySummary = {
+  storyId: string
+  text: string
+}
+
 export type StoryOutput = {
   content: string
   comments: SlimComment[]

@@ -20,7 +20,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   // Fetch the content and comments for each story
   const output: StoryOutput[] = []
   for (const hit of slim) {
-    console.log(`Fetching ${hit.url}`)
+    console.log(`Fetching - ${hit.title} - ${hit.url}`)
 
     let htmlString = await readFromCache(hit.story_id.toString())
     if (!htmlString) {
