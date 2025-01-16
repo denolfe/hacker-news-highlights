@@ -4,15 +4,17 @@ import OpenAI from 'openai'
 
 import { createHash } from 'crypto'
 import { directoryOrFileExists } from './utils/directoryOrFileExists'
+import { DATA_DIR } from './constants'
 
-export async function generateAudioFromText(summaries: string[]) {
+export async function generateAudioFromText(summaries: string[]): Promise<string> {
+  console.log('Generating audio...')
   const hash = createHash('sha256').update(summaries.join('\n\n')).digest('hex')
-  const speechFile = path.resolve(`./podcast-${hash}`)
+  const outputFileWithPrefix = path.resolve(DATA_DIR, `./podcast-${hash}`)
 
-  const fileExists = await directoryOrFileExists(speechFile)
+  const fileExists = await directoryOrFileExists(outputFileWithPrefix + '-0.mp3')
   if (fileExists) {
     console.log(`Existing audio file matches hash: ${hash}. Skipping audio generation.`)
-    return
+    return outputFileWithPrefix
   }
 
   const openai = new OpenAI({
@@ -29,10 +31,12 @@ export async function generateAudioFromText(summaries: string[]) {
     })
 
     const buffer = Buffer.from(await mp3.arrayBuffer())
-    const filename = `${speechFile}-${i}.mp3`
+    const filename = `${outputFileWithPrefix}-${i}.mp3`
     console.log(`Writing audio to file to ${filename}`)
     await fs.writeFile(filename, buffer)
   }
+
+  return outputFileWithPrefix
 }
 
 async function intelligentSplit(summaries: string[]): Promise<Array<string[]>> {
