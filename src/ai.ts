@@ -42,6 +42,7 @@ The general sentiment was [overall sentiment], with users expressing [specific r
 `
 
 export async function summarize(stories: StoryOutput[]) {
+  console.log('Summarizing stories...')
   const openai = createOpenAI({
     compatibility: 'strict', // strict mode, enable when using the OpenAI API
     apiKey: process.env.OPENAI_API_KEY,
