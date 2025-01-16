@@ -1,6 +1,6 @@
 import { Readability } from '@mozilla/readability'
-import { ResponseData, Comment, StoryOutput } from './types'
 import { JSDOM } from 'jsdom'
+import { Comment, ResponseData, SlimComment, StoryOutput } from './types'
 
 export async function fetchTopStories(): Promise<StoryOutput[]> {
   const response = await fetch(
@@ -41,8 +41,19 @@ export async function fetchTopStories(): Promise<StoryOutput[]> {
   return output
 }
 
-async function fetchStoryDataById(storyId: number): Promise<Comment[]> {
+async function fetchStoryDataById(storyId: number): Promise<SlimComment[]> {
   const response = await fetch(`https://hn.algolia.com/api/v1/items/${storyId}`)
   const data = await response.json()
-  return data.children as Comment[]
+  // Extract only author, children, created_at, and text. Recursively extract children's children.
+  const extractComment = (
+    c: any,
+  ): Pick<Comment, 'id' | 'created_at' | 'text' | 'children' | 'author'> => ({
+    id: c.id,
+    created_at: c.created_at,
+    text: c.text,
+    author: c.author,
+    children: c.children.map(extractComment),
+  })
+
+  return data.children.map(extractComment)
 }
