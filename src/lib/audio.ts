@@ -1,32 +1,35 @@
-import fs from 'fs/promises'
 import OpenAI from 'openai'
-import path from 'path'
 
-import { createHash } from 'crypto'
-import { DATA_DIR } from './constants'
+import { StorySummary } from '../types'
+import { readFromCache, writeToCache } from '../utils/cache'
 
-export async function generateAudioFromText(summaries: string[]): Promise<string[]> {
-  console.log('Generating audio...')
-  const hash = createHash('sha256').update(summaries.join('\n\n')).digest('hex')
-  const filenamePrefix = `podcast-${hash}`
-
+export async function generateAudioFromText(storySummaries: StorySummary[]): Promise<string[]> {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   })
 
   const audioFilenames: string[] = []
 
-  for (const [i, summary] of summaries.entries()) {
+  for (const [i, summary] of storySummaries.entries()) {
+    const filename = `segment-${summary.storyId}.mp3`
+
+    const cached = await readFromCache(filename)
+    if (cached) {
+      console.log(`Using cached audio for ${filename}`)
+      audioFilenames.push(filename)
+      continue
+    }
+
+    console.log(`Generating ${i + 1} of ${storySummaries.length} audio files...`)
     const mp3 = await openai.audio.speech.create({
       model: 'tts-1',
       voice: 'nova',
-      input: summary,
+      input: summary.text,
     })
 
     const buffer = Buffer.from(await mp3.arrayBuffer())
-    const filename = `${filenamePrefix}-${i}.mp3`
-    console.log(`Writing audio to file to ${filename}`)
-    await fs.writeFile(path.resolve(DATA_DIR, filename), buffer)
+    console.log(`Audio file generated: ${filename}`)
+    await writeToCache(filename, buffer)
     audioFilenames.push(filename)
   }
 

@@ -3,6 +3,7 @@ import { generateText } from 'ai'
 import { SlimComment, StoryOutput } from '../types'
 import { writeToFile } from '../utils/writeToFile'
 import { readFromCache, writeToCache } from '../utils/cache'
+import { createHash } from 'crypto'
 
 const storySummarizationPrompt = `
 You are an AI language model tasked with generating a recap of a top story from Hacker News (news.ycombinator.com). For the given story, perform the following tasks:
@@ -41,7 +42,9 @@ They debated [key debates or differing opinions], and shared insights on [recurr
 The general sentiment was [overall sentiment], with users expressing [specific reactions or concerns].
 `
 
-export async function summarize(stories: StoryOutput[]) {
+export async function summarize(
+  stories: StoryOutput[],
+): Promise<Array<{ storyId: string; text: string }>> {
   console.log('Summarizing stories...')
   const openai = createOpenAI({
     compatibility: 'strict', // strict mode, enable when using the OpenAI API
@@ -50,7 +53,7 @@ export async function summarize(stories: StoryOutput[]) {
 
   console.log('Generating summaries...')
 
-  const summaries: string[] = []
+  const summaries: Array<{ storyId: string; text: string }> = []
 
   for (const story of stories) {
     console.log(`Summarizing story: ${story.title}`)
@@ -58,7 +61,7 @@ export async function summarize(stories: StoryOutput[]) {
       const cacheKey = 'summary-' + story.story_id.toString()
       const cached = await readFromCache(cacheKey)
       if (cached) {
-        summaries.push(cached)
+        summaries.push({ storyId: story.story_id.toString(), text: cached })
         continue
       }
 
@@ -70,7 +73,7 @@ export async function summarize(stories: StoryOutput[]) {
           `Content:\n${story.content}\n` +
           `Comments data:\n${generateCommentTree(story.comments.slice(0, 5))}`,
       })
-      summaries.push(text)
+      summaries.push({ storyId: story.story_id.toString(), text })
       await writeToCache(cacheKey, text)
     } catch (error) {
       console.error('Error generating text:', error)
@@ -82,11 +85,20 @@ export async function summarize(stories: StoryOutput[]) {
   return summaries
 }
 
-export async function generatePodcastIntro(stories: StoryOutput[]) {
+export async function generatePodcastIntro(
+  stories: StoryOutput[],
+): Promise<{ cacheKey: string; text: string }> {
   console.log('Generating podcast intro...')
-  const cached = await readFromCache('intro')
+  const hash = createHash('sha256')
+    .update(stories.map(s => s.story_id).join())
+    .digest('hex')
+    .slice(0, 6)
+
+  const cacheKey = `intro-${hash}`
+  const cached = await readFromCache(cacheKey)
   if (cached) {
-    return cached
+    console.log(`Using cached intro: ${cacheKey}`)
+    return { cacheKey, text: cached }
   }
 
   const introTemplate = (summary: string) => `
@@ -116,8 +128,8 @@ ${stories.map(story => `Title: ${story.title}\nContent: ${story.content}\n\n`).j
   })
 
   const intro = introTemplate(text)
-  await writeToCache('intro', intro)
-  return intro
+  await writeToCache(cacheKey, intro)
+  return { cacheKey, text: intro }
 }
 
 /**
