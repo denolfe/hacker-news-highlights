@@ -8,7 +8,7 @@ import { DATA_DIR } from './constants'
 export async function generateAudioFromText(summaries: string[]): Promise<string[]> {
   console.log('Generating audio...')
   const hash = createHash('sha256').update(summaries.join('\n\n')).digest('hex')
-  const filePrefix = `podcast-${hash}`
+  const filenamePrefix = `podcast-${hash}`
 
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -24,7 +24,7 @@ export async function generateAudioFromText(summaries: string[]): Promise<string
     })
 
     const buffer = Buffer.from(await mp3.arrayBuffer())
-    const filename = `${filePrefix}-${i}.mp3`
+    const filename = `${filenamePrefix}-${i}.mp3`
     console.log(`Writing audio to file to ${filename}`)
     await fs.writeFile(path.resolve(DATA_DIR, filename), buffer)
     audioFilenames.push(filename)
