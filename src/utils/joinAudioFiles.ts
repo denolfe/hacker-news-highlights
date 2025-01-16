@@ -1,6 +1,6 @@
 import ffmpeg from 'fluent-ffmpeg'
 import path from 'path'
-import { DATA_DIR } from '../constants'
+import { DATA_DIR } from '../lib/constants'
 
 export function joinAudioFiles(filenames: string[], output: string): Promise<void> {
   console.log(`Merging ${filenames.length} audio files into ${output}...`)

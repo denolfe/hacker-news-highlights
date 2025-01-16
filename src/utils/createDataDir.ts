@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 import { directoryOrFileExists } from './directoryOrFileExists'
-import { DATA_DIR } from '../constants'
+import { DATA_DIR } from '../lib/constants'
 
 export async function createDataDir() {
   if (!(await directoryOrFileExists(DATA_DIR))) {

@@ -1,11 +1,11 @@
 import path from 'path'
 import { loadEnvFile } from 'process'
-import { generatePodcastIntro, summarize } from './ai'
-import { fetchTopStories } from './hn'
-import { generateAudioFromText } from './audio'
+import { generatePodcastIntro, summarize } from './lib/ai'
+import { fetchTopStories } from './lib/hn'
+import { generateAudioFromText } from './lib/audio'
 import { createDataDir } from './utils/createDataDir'
 import { joinAudioFiles } from './utils/joinAudioFiles'
-import { DATA_DIR, podcastOutro as outro } from './constants'
+import { DATA_DIR, podcastOutro as outro } from './lib/constants'
 
 loadEnvFile(path.resolve(__dirname, '../.env'))
 
