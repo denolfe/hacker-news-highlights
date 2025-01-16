@@ -5,7 +5,7 @@ import { fetchTopStories } from './hn'
 import { generateAudioFromText } from './audio'
 import { createDataDir } from './utils/createDataDir'
 import { joinAudioFiles } from './utils/joinAudioFiles'
-import { DATA_DIR } from './constants'
+import { DATA_DIR, podcastOutro as outro } from './constants'
 
 loadEnvFile(path.resolve(__dirname, '../.env'))
 
@@ -15,6 +15,7 @@ async function main() {
   const intro = await generatePodcastIntro(storyData)
   const summaries = await summarize(storyData)
   summaries.unshift(intro)
+  summaries.push(outro)
   const audioFilenames = await generateAudioFromText(summaries)
   await joinAudioFiles(audioFilenames, path.resolve(DATA_DIR, 'output.mp3'))
   console.log('Done!')
