@@ -116,18 +116,8 @@ ${stories.map(story => `Title: ${story.title}\nContent: ${story.content}\n\n`).j
   })
 
   const intro = introTemplate(text)
-  await cache.write('intro', intro)
+  await writeToCache('intro', intro)
   return intro
-}
-
-function joinWithCommasAnd(items: string[]): string {
-  if (!items.length) {
-    return ''
-  } else if (items.length === 1) {
-    return items[0]
-  } else {
-    return items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1]
-  }
 }
 
 /**
