@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "tsc --noEmit",
     "start": "NODE_OPTIONS=--no-deprecation tsx src/index.ts"
   },
   "keywords": [],
