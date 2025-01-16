@@ -1,6 +1,7 @@
 import { Readability } from '@mozilla/readability'
 import { JSDOM } from 'jsdom'
 import { Comment, ResponseData, SlimComment, StoryOutput } from './types'
+import { Cache } from './utils/cache'
 
 export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]> {
   const response = await fetch(
@@ -17,9 +18,20 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
 
   // Fetch the content and comments for each story
   const output: StoryOutput[] = []
+  const cache = await Cache.getInstance()
   for (const hit of slim) {
     console.log(`Fetching ${hit.url}`)
-    const htmlString = await fetch(hit.url).then(res => res.text())
+
+    let htmlString = await cache.read(hit.story_id.toString())
+    if (!htmlString) {
+      htmlString = await fetch(hit.url).then(res => res.text())
+      if (!htmlString) {
+        console.log(`No content found for ${hit.url}`)
+        continue
+      }
+      await cache.write(hit.story_id.toString(), htmlString)
+    }
+
     const dom = new JSDOM(htmlString)
     let parsedArticleText = new Readability(dom.window.document).parse()?.textContent
 
