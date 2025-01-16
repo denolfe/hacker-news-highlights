@@ -11,7 +11,7 @@ You are an AI language model tasked with generating a recap of a top story from 
 2. Summarize the link's content: Provide a concise summary of the article's main points, capturing the essence of the story.
 3. Summarize the conversations in the comments: Analyze the comments section to extract key themes, debates, and insights shared by the community.
 
-**Instructions for Summarizing Comments:**
+Instructions for Summarizing Comments:
 
 -  Identify the main topics of discussion in the comments.
 -  Highlight any significant debates or differing opinions among users.
@@ -81,6 +81,55 @@ export async function summarize(stories: StoryOutput[]) {
   // await writeToFile('summary.txt', summaries.join('\n\n'))
 
   return summaries
+}
+
+export async function generatePodcastIntro(stories: StoryOutput[]) {
+  console.log('Generating podcast intro...')
+  const cache = await Cache.getInstance()
+  const cached = await cache.read('intro')
+  if (cached) {
+    return cached
+  }
+
+  const introTemplate = (summary: string) => `
+Welcome to the Hacker News recap where we bring you an exclusive overview of the top 10 posts
+on Hacker News every day.
+
+Today, we dive into ${summary}.
+
+Let's jump right in.
+`
+  const openai = createOpenAI({
+    compatibility: 'strict', // strict mode, enable when using the OpenAI API
+    apiKey: process.env.OPENAI_API_KEY,
+  })
+
+  const { text } = await generateText({
+    model: openai('gpt-4o-mini'),
+    prompt: `
+Summarize these 3 stories into a single sentence.
+
+Output in the format: Story 1, Story 2, and Story 3.
+
+Here are the top 3 stories from today's Hacker News recap:
+
+${stories.map(story => `Title: ${story.title}\nContent: ${story.content}\n\n`).join('\n')}
+`,
+  })
+
+  const intro = introTemplate(text)
+  await cache.write('intro', intro)
+  return intro
+}
+
+function joinWithCommasAnd(items: string[]): string {
+  if (!items.length) {
+    return ''
+  } else if (items.length === 1) {
+    return items[0]
+  } else {
+    return items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1]
+  }
 }
 
 /**
