@@ -7,9 +7,13 @@ import { generateAudioFromText } from './audio'
 loadEnvFile(path.resolve(__dirname, '../.env'))
 
 async function main() {
-  const storyData = await fetchTopStories(1)
-  const summary = await summarize(storyData)
-  await generateAudioFromText(summary.join('\n\n'))
+  console.log('Fetching top stories...')
+  const storyData = await fetchTopStories(10)
+  console.log('Summarizing stories...')
+  const summaries = await summarize(storyData)
+  console.log('Generating audio...')
+  await generateAudioFromText(summaries)
+  console.log('Done!')
 }
 
 void main()
