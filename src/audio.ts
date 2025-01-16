@@ -19,7 +19,7 @@ export async function generateAudioFromText(summaries: string[]): Promise<string
   for (const [i, summary] of summaries.entries()) {
     const mp3 = await openai.audio.speech.create({
       model: 'tts-1',
-      voice: 'shimmer',
+      voice: 'nova',
       input: summary,
     })
 
