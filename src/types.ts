@@ -1,10 +1,12 @@
 export type StoryOutput = {
   content: string
-  comments: Comment[]
+  comments: SlimComment[]
   title: string
   url: string
   story_id: number
 }
+
+export type SlimComment = Pick<Comment, 'id' | 'created_at' | 'text' | 'children' | 'author'>
 
 export type Comment = {
   id: number
