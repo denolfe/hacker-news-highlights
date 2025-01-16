@@ -1,6 +1,6 @@
 import path from 'path'
 import { loadEnvFile } from 'process'
-import { summarize } from './ai'
+import { generatePodcastIntro, summarize } from './ai'
 import { fetchTopStories } from './hn'
 import { generateAudioFromText } from './audio'
 import { createDataDir } from './utils/createDataDir'
@@ -12,7 +12,9 @@ loadEnvFile(path.resolve(__dirname, '../.env'))
 async function main() {
   await createDataDir()
   const storyData = await fetchTopStories(10)
+  const intro = await generatePodcastIntro(storyData)
   const summaries = await summarize(storyData)
+  summaries.unshift(intro)
   const audioFilenames = await generateAudioFromText(summaries)
   await joinAudioFiles(audioFilenames, path.resolve(DATA_DIR, 'output.mp3'))
   console.log('Done!')

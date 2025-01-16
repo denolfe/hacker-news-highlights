@@ -3,7 +3,7 @@ import path from 'path'
 import { DATA_DIR } from '../constants'
 
 export function joinAudioFiles(filenames: string[], output: string): Promise<void> {
-  console.log(`Merging audio files...\nFiles: ${filenames.join(', ')}\nOutput: ${output}`)
+  console.log(`Merging ${filenames.length} audio files into ${output}...`)
   return new Promise((resolve, reject) => {
     const command = ffmpeg()
 
@@ -15,7 +15,7 @@ export function joinAudioFiles(filenames: string[], output: string): Promise<voi
 
     command
       .on('end', () => {
-        console.log('Files have been merged successfully')
+        console.log('Audio files merged successfully!')
         resolve()
       })
       .on('error', err => {
