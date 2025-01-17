@@ -1,18 +1,25 @@
 import OpenAI from 'openai'
 
-import { StorySummary } from '../types'
+import { StoryDataAggregate, StorySummary } from '../types'
 import { readFromCache, writeToCache } from '../utils/cache'
 import { log } from '../utils/log'
 
-export async function generateAudioFromText(storySummaries: StorySummary[]): Promise<string[]> {
+type PodcastSegment = {
+  storyId: string
+  summary: string
+}
+
+export async function generateAudioFromText(
+  storyData: (StoryDataAggregate | PodcastSegment)[],
+): Promise<string[]> {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   })
 
   const audioFilenames: string[] = []
 
-  for (const [i, summary] of storySummaries.entries()) {
-    const filename = `segment-${summary.storyId}.mp3`
+  for (const [i, story] of storyData.entries()) {
+    const filename = `segment-${story.storyId}.mp3`
 
     const cached = await readFromCache(filename)
     if (cached) {
@@ -21,17 +28,21 @@ export async function generateAudioFromText(storySummaries: StorySummary[]): Pro
       continue
     }
 
-    log.info(`Generating ${i + 1} of ${storySummaries.length} audio files...`)
-    const mp3 = await openai.audio.speech.create({
-      model: 'tts-1',
-      voice: 'nova',
-      input: summary.text,
-    })
+    log.info(`Generating audio for story: ${story.storyId}...`)
+    try {
+      const mp3 = await openai.audio.speech.create({
+        model: 'tts-1',
+        voice: 'nova',
+        input: story.summary as string,
+      })
 
-    const buffer = Buffer.from(await mp3.arrayBuffer())
-    log.info(`Audio file generated: ${filename}`)
-    await writeToCache(filename, buffer)
-    audioFilenames.push(filename)
+      const buffer = Buffer.from(await mp3.arrayBuffer())
+      log.info(`Audio file generated: ${filename}`)
+      await writeToCache(filename, buffer)
+      audioFilenames.push(filename)
+    } catch (error) {
+      log.error(`Error generating audio for story: ${story.storyId}\nsummary: ${story.summary}`)
+    }
   }
 
   return audioFilenames

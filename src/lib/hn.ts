@@ -15,7 +15,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   const slim = data.hits.map(s => ({
     title: s.title,
     url: s.url,
-    story_id: s.story_id,
+    storyId: s.story_id,
   }))
 
   // Fetch the content and comments for each story
@@ -23,14 +23,14 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   for (const hit of slim) {
     log.info(`Fetching - ${hit.title} - ${hit.url}`)
 
-    let htmlString = await readFromCache(hit.story_id.toString())
+    let htmlString = await readFromCache(hit.storyId.toString())
     if (!htmlString) {
       htmlString = await fetch(hit.url).then(res => res.text())
       if (!htmlString) {
         log.info(`No content found for ${hit.url}`)
         continue
       }
-      await writeToCache(hit.story_id.toString(), htmlString)
+      await writeToCache(hit.storyId.toString(), htmlString)
     }
 
     const dom = new JSDOM(htmlString)
@@ -40,13 +40,13 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
       parsedArticleText = 'No content found'
     }
 
-    const comments = await fetchStoryDataById(hit.story_id)
+    const comments = await fetchStoryDataById(hit.storyId)
     output.push({
       content: parsedArticleText,
       comments,
       title: hit.title,
       url: hit.url,
-      story_id: hit.story_id,
+      storyId: hit.storyId,
     })
   }
 

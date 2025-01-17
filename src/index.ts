@@ -7,6 +7,7 @@ import { joinAudioFiles } from './utils/joinAudioFiles'
 import { CACHE_DIR, podcastOutro as outro } from './lib/constants'
 import { initCacheDir } from './utils/cache'
 import { log } from './utils/log'
+import { generateShowNotes } from './lib/show-notes'
 
 loadEnvFile(path.resolve(__dirname, '../.env'))
 
@@ -18,11 +19,12 @@ async function main() {
   const intro = await generatePodcastIntro(storyData)
   const summaries = await summarize(storyData)
   const audioFilenames = await generateAudioFromText([
-    { text: intro.text, storyId: intro.cacheKey },
+    { summary: intro.text, storyId: intro.cacheKey },
     ...summaries,
-    { text: outro, storyId: 'outro' },
+    { summary: outro, storyId: 'outro' },
   ])
   await joinAudioFiles(audioFilenames, path.resolve(CACHE_DIR, 'output.mp3'))
+  await generateShowNotes({ stories: summaries, introText: intro.text })
   log.info('Done!')
 }
 
