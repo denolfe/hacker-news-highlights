@@ -2,6 +2,7 @@ import OpenAI from 'openai'
 
 import { StorySummary } from '../types'
 import { readFromCache, writeToCache } from '../utils/cache'
+import { log } from '../utils/log'
 
 export async function generateAudioFromText(storySummaries: StorySummary[]): Promise<string[]> {
   const openai = new OpenAI({
@@ -15,12 +16,12 @@ export async function generateAudioFromText(storySummaries: StorySummary[]): Pro
 
     const cached = await readFromCache(filename)
     if (cached) {
-      console.log(`Using cached audio for ${filename}`)
+      log.info(`Using cached audio for ${filename}`)
       audioFilenames.push(filename)
       continue
     }
 
-    console.log(`Generating ${i + 1} of ${storySummaries.length} audio files...`)
+    log.info(`Generating ${i + 1} of ${storySummaries.length} audio files...`)
     const mp3 = await openai.audio.speech.create({
       model: 'tts-1',
       voice: 'nova',
@@ -28,7 +29,7 @@ export async function generateAudioFromText(storySummaries: StorySummary[]): Pro
     })
 
     const buffer = Buffer.from(await mp3.arrayBuffer())
-    console.log(`Audio file generated: ${filename}`)
+    log.info(`Audio file generated: ${filename}`)
     await writeToCache(filename, buffer)
     audioFilenames.push(filename)
   }
