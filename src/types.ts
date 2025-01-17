@@ -1,3 +1,7 @@
+export type StoryDataAggregate = StoryOutput & {
+  summary?: string
+}
+
 export type StorySummary = {
   storyId: string
   text: string
@@ -8,7 +12,7 @@ export type StoryOutput = {
   comments: SlimComment[]
   title: string
   url: string
-  story_id: number
+  storyId: number
 }
 
 export type SlimComment = Pick<Comment, 'id' | 'created_at' | 'text' | 'children' | 'author'>

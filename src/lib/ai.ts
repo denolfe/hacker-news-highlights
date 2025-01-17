@@ -1,6 +1,6 @@
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText } from 'ai'
-import { SlimComment, StoryOutput } from '../types'
+import { SlimComment, StoryDataAggregate, StoryOutput } from '../types'
 import { writeToFile } from '../utils/writeToFile'
 import { readFromCache, writeToCache } from '../utils/cache'
 import { createHash } from 'crypto'
@@ -43,9 +43,7 @@ They debated [key debates or differing opinions], and shared insights on [recurr
 The general sentiment was [overall sentiment], with users expressing [specific reactions or concerns].
 `
 
-export async function summarize(
-  stories: StoryOutput[],
-): Promise<Array<{ storyId: string; text: string }>> {
+export async function summarize(stories: StoryDataAggregate[]): Promise<StoryDataAggregate[]> {
   log.info('Summarizing stories...')
   const openai = createOpenAI({
     compatibility: 'strict', // strict mode, enable when using the OpenAI API
@@ -54,15 +52,13 @@ export async function summarize(
 
   log.info('Generating summaries...')
 
-  const summaries: Array<{ storyId: string; text: string }> = []
-
   for (const story of stories) {
     log.info(`Summarizing story: ${story.title}`)
     try {
-      const cacheKey = 'summary-' + story.story_id.toString()
+      const cacheKey = 'summary-' + story.storyId.toString()
       const cached = await readFromCache(cacheKey)
       if (cached) {
-        summaries.push({ storyId: story.story_id.toString(), text: cached })
+        story.summary = cached
         continue
       }
 
@@ -74,16 +70,15 @@ export async function summarize(
           `Content:\n${story.content}\n` +
           `Comments data:\n${generateCommentTree(story.comments.slice(0, 5))}`,
       })
-      summaries.push({ storyId: story.story_id.toString(), text })
+      story.summary = text
       await writeToCache(cacheKey, text)
     } catch (error) {
       console.error('Error generating text:', error)
-      await writeToFile('summary.txt', summaries)
     }
   }
   // await writeToFile('summary.txt', summaries.join('\n\n'))
 
-  return summaries
+  return stories
 }
 
 export async function generatePodcastIntro(
@@ -91,7 +86,7 @@ export async function generatePodcastIntro(
 ): Promise<{ cacheKey: string; text: string }> {
   log.info('Generating podcast intro...')
   const hash = createHash('sha256')
-    .update(stories.map(s => s.story_id).join())
+    .update(stories.map(s => s.storyId).join())
     .digest('hex')
     .slice(0, 6)
 
