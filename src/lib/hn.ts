@@ -2,9 +2,10 @@ import { Readability } from '@mozilla/readability'
 import { JSDOM } from 'jsdom'
 import { Comment, ResponseData, SlimComment, StoryOutput } from '../types'
 import { readFromCache, writeToCache } from '../utils/cache'
+import { log } from '../utils/log'
 
 export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]> {
-  console.log(`Fetching top ${count} stories...`)
+  log.info(`Fetching top ${count} stories...`)
   const response = await fetch(
     `https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=${count}`,
   )
@@ -20,13 +21,13 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   // Fetch the content and comments for each story
   const output: StoryOutput[] = []
   for (const hit of slim) {
-    console.log(`Fetching - ${hit.title} - ${hit.url}`)
+    log.info(`Fetching - ${hit.title} - ${hit.url}`)
 
     let htmlString = await readFromCache(hit.story_id.toString())
     if (!htmlString) {
       htmlString = await fetch(hit.url).then(res => res.text())
       if (!htmlString) {
-        console.log(`No content found for ${hit.url}`)
+        log.info(`No content found for ${hit.url}`)
         continue
       }
       await writeToCache(hit.story_id.toString(), htmlString)

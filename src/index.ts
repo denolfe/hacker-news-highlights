@@ -6,6 +6,7 @@ import { generateAudioFromText } from './lib/audio'
 import { joinAudioFiles } from './utils/joinAudioFiles'
 import { CACHE_DIR, podcastOutro as outro } from './lib/constants'
 import { initCacheDir } from './utils/cache'
+import { log } from './utils/log'
 
 loadEnvFile(path.resolve(__dirname, '../.env'))
 
@@ -22,7 +23,7 @@ async function main() {
     { text: outro, storyId: 'outro' },
   ])
   await joinAudioFiles(audioFilenames, path.resolve(CACHE_DIR, 'output.mp3'))
-  console.log('Done!')
+  log.info('Done!')
 }
 
 void main()

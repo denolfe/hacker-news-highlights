@@ -2,11 +2,12 @@ import fs from 'fs/promises'
 import path from 'path'
 import { directoryOrFileExists } from './directoryOrFileExists'
 import { CACHE_DIR } from '../lib/constants'
+import { log } from './log'
 
 const debug = process.env.DEBUG === 'true'
 
 export async function initCacheDir() {
-  console.log(`[CACHE] Initializing cache directory: ${CACHE_DIR}`)
+  log.debug(`[CACHE] Initializing cache directory: ${CACHE_DIR}`)
   if (!(await directoryOrFileExists(CACHE_DIR))) {
     await fs.mkdir(CACHE_DIR)
   }
@@ -14,7 +15,7 @@ export async function initCacheDir() {
 
 export async function writeToCache(key: string, data: string | Buffer<ArrayBufferLike>) {
   if (debug) {
-    console.log(`[CACHE] Writing to cache: ${key}`)
+    log.debug(`[CACHE] Writing to cache: ${key}`)
   }
   await fs.writeFile(path.resolve(CACHE_DIR, key), data)
 }
@@ -25,7 +26,7 @@ export async function readFromCache(key: string) {
     return null
   }
   if (debug) {
-    console.log(`[CACHE] Reading from cache: ${key}`)
+    log.debug(`[CACHE] Reading from cache: ${key}`)
   }
   return await fs.readFile(location, 'utf-8')
 }

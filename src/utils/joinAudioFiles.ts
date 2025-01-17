@@ -1,9 +1,10 @@
 import ffmpeg from 'fluent-ffmpeg'
 import path from 'path'
 import { CACHE_DIR } from '../lib/constants'
+import { log } from './log'
 
 export function joinAudioFiles(filenames: string[], output: string): Promise<void> {
-  console.log(`Merging ${filenames.length} audio files into ${output}...`)
+  log.info(`Merging ${filenames.length} audio files into ${output}...`)
   return new Promise((resolve, reject) => {
     const command = ffmpeg()
 
@@ -15,7 +16,7 @@ export function joinAudioFiles(filenames: string[], output: string): Promise<voi
 
     command
       .on('end', () => {
-        console.log('Audio files merged successfully!')
+        log.info('Audio files merged successfully!')
         resolve()
       })
       .on('error', err => {

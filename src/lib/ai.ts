@@ -4,6 +4,7 @@ import { SlimComment, StoryOutput } from '../types'
 import { writeToFile } from '../utils/writeToFile'
 import { readFromCache, writeToCache } from '../utils/cache'
 import { createHash } from 'crypto'
+import { log } from '../utils/log'
 
 const storySummarizationPrompt = `
 You are an AI language model tasked with generating a recap of a top story from Hacker News (news.ycombinator.com). For the given story, perform the following tasks:
@@ -45,18 +46,18 @@ The general sentiment was [overall sentiment], with users expressing [specific r
 export async function summarize(
   stories: StoryOutput[],
 ): Promise<Array<{ storyId: string; text: string }>> {
-  console.log('Summarizing stories...')
+  log.info('Summarizing stories...')
   const openai = createOpenAI({
     compatibility: 'strict', // strict mode, enable when using the OpenAI API
     apiKey: process.env.OPENAI_API_KEY,
   })
 
-  console.log('Generating summaries...')
+  log.info('Generating summaries...')
 
   const summaries: Array<{ storyId: string; text: string }> = []
 
   for (const story of stories) {
-    console.log(`Summarizing story: ${story.title}`)
+    log.info(`Summarizing story: ${story.title}`)
     try {
       const cacheKey = 'summary-' + story.story_id.toString()
       const cached = await readFromCache(cacheKey)
@@ -88,7 +89,7 @@ export async function summarize(
 export async function generatePodcastIntro(
   stories: StoryOutput[],
 ): Promise<{ cacheKey: string; text: string }> {
-  console.log('Generating podcast intro...')
+  log.info('Generating podcast intro...')
   const hash = createHash('sha256')
     .update(stories.map(s => s.story_id).join())
     .digest('hex')
@@ -97,7 +98,7 @@ export async function generatePodcastIntro(
   const cacheKey = `intro-${hash}`
   const cached = await readFromCache(cacheKey)
   if (cached) {
-    console.log(`Using cached intro: ${cacheKey}`)
+    log.info(`Using cached intro: ${cacheKey}`)
     return { cacheKey, text: cached }
   }
 
