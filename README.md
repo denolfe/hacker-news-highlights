@@ -24,3 +24,5 @@
 - [ ] Add arg parser
 - [ ] Generate "show notes"
 - [ ] Output a run summary
+- [ ] Add author source to summary
+- [ ] Add pauses betweeen segments. Look at `<break time="1s" />` syntax.
