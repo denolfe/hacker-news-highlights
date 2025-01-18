@@ -27,6 +27,7 @@ Instructions for Summarizing Comments:
 **Example Input:**
 
 Title: [Article Title]
+Source: [Site Name, Byline, or Readable Hostname]
 
 Content:
 [Article Content]
@@ -36,7 +37,10 @@ Comments data:
 
 **Expected Output:**
 
-Title: [Article Title], is a [brief description of the article's focus].
+Title: [Article Title]
+Source: [Site Name, Byline, or Readable Hostname]
+
+Is a [brief description of the article's focus].
 [Summary of the article's main points, highlighting key arguments or findings].
 In the comments, users discussed [main topics of discussion], focusing on [specific aspects or implications].
 They debated [key debates or differing opinions], and shared insights on [recurring themes or additional context].
@@ -67,6 +71,7 @@ export async function summarize(stories: StoryDataAggregate[]): Promise<StoryDat
         prompt:
           storySummarizationPrompt +
           `Title: ${story.title}\n` +
+          `Source: ${story.source}\n` +
           `Content:\n${story.content}\n` +
           `Comments data:\n${generateCommentTree(story.comments.slice(0, 5))}`,
       })
@@ -113,7 +118,7 @@ Let's jump right in.
   const { text } = await generateText({
     model: openai('gpt-4o-mini'),
     prompt: `
-Summarize these 3 stories into a single sentence.
+Summarize these 3 stories into a single sentence. Be sure to change the summaries into the present participle form, using '-ing' verbs to indicate ongoing actions.
 
 Output in the format: Story 1, Story 2, and Story 3.
 

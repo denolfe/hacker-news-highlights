@@ -31,7 +31,7 @@ export async function generateAudioFromText(
     log.info(`Generating audio for story: ${story.storyId}...`)
     try {
       const mp3 = await openai.audio.speech.create({
-        model: 'tts-1',
+        model: 'tts-1-hd',
         voice: 'nova',
         input: story.summary as string,
       })

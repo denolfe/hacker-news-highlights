@@ -1,5 +1,5 @@
 import { Readability } from '@mozilla/readability'
-import { JSDOM } from 'jsdom'
+import { JSDOM, VirtualConsole } from 'jsdom'
 import { Comment, ResponseData, SlimComment, StoryOutput } from '../types'
 import { readFromCache, writeToCache } from '../utils/cache'
 import { log } from '../utils/log'
@@ -33,20 +33,33 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
       await writeToCache(hit.storyId.toString(), htmlString)
     }
 
-    const dom = new JSDOM(htmlString)
-    let parsedArticleText = new Readability(dom.window.document).parse()?.textContent
+    let parsed: ReturnType<typeof Readability.prototype.parse> | undefined
 
-    if (!parsedArticleText) {
-      parsedArticleText = 'No content found'
+    const virtualConsole = new VirtualConsole()
+    virtualConsole.on('error', () => {
+      // Ignore errors, keeps the output clean
+      // https://github.com/jsdom/jsdom/issues/2230#issuecomment-466915328
+    })
+    const dom = new JSDOM(htmlString, { virtualConsole })
+    parsed = new Readability(dom.window.document).parse()
+
+    const { textContent, byline, excerpt, siteName } = parsed ?? {
+      textContent: 'No content found for this story',
+      byline: '',
+      excerpt: '',
     }
+
+    log.info({ byline, excerpt, siteName })
 
     const comments = await fetchStoryDataById(hit.storyId)
     output.push({
-      content: parsedArticleText,
+      content: textContent,
       comments,
       title: hit.title,
       url: hit.url,
       storyId: hit.storyId,
+      // strip http(s), parse just the domain from the url
+      source: siteName ?? byline ?? new URL(hit.url).hostname.replace('www.', ''),
     })
   }
 
