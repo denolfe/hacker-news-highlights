@@ -21,7 +21,13 @@ export async function generateShowNotes({
 
   let showNotes = `This is a recap of the top 10 posts on Hacker News on ${formattedDate}.\n\n`
   showNotes += stories
-    .map(story => `${story.title}\nLink: ${story.url}\nHN: ${story.hnUrl}\n`)
+    .map(story => {
+      let str = `${story.title}\nHN: ${story.hnUrl}\n`
+      if (story.url) {
+        str += `Link: ${story.url}\n`
+      }
+      return str
+    })
     .join('\n')
 
   showNotes += `\n\nTranscript:\n${introText}\n${stories.map(s => s.summary).join('\n\n')}`
