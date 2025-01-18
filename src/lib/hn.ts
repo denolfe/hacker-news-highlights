@@ -36,7 +36,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   const filtered = slim
     .filter(s => {
       const wasCovered = coveredStories.includes(s.storyId)
-      logger.debug({ storyId: s.storyId, wasCovered })
+      logger.info({ storyId: s.storyId, wasCovered })
       return !wasCovered
     })
     .slice(0, count)
