@@ -36,6 +36,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: output
+          name: output-$(date +'%Y-%m-%d')
           path: output
           retention-days: 1
