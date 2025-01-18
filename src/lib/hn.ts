@@ -18,11 +18,14 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   const data = (await response.json()) as ResponseData
 
   // Extract only the data we need
-  const slim = data.hits.map(s => ({
-    title: s.title,
-    url: s.url,
-    storyId: s.story_id,
-  }))
+  const slim = data.hits.map(s => {
+    return {
+      title: s.title,
+      url: s.url,
+      storyId: s.story_id,
+      story_text: s.story_text,
+    }
+  })
 
   // Check if we have already covered the story
   const covered = await readFromCache('covered-stories')
@@ -58,10 +61,33 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   // Fetch the content and comments for each story
   const output: StoryOutput[] = []
   for (const story of filtered) {
+    const comments = await fetchStoryDataById(story.storyId)
     logger.info(`Fetching [${story.storyId}] - ${story.title} - ${story.url}`)
     const cacheKey = 'story-' + story.storyId.toString()
 
     let htmlString = await readFromCache(cacheKey)
+
+    const baseStoryOutput: Pick<StoryOutput, 'comments' | 'hnUrl' | 'storyId' | 'title'> = {
+      title: story.title,
+      storyId: story.storyId,
+      comments,
+      hnUrl: `https://news.ycombinator.com/item?id=${story.storyId}`,
+    }
+
+    // Ask HN posts don't have a url, but have a story_text
+    if (!story.url && story.story_text) {
+      output.push({
+        content: story.story_text,
+        source: 'Hacker News',
+        ...baseStoryOutput,
+      })
+    }
+
+    if (!story.url) {
+      logger.error(`No url or story text found for story ${story.storyId}`)
+      continue
+    }
+
     if (!htmlString) {
       htmlString = await fetch(story.url).then(res => res.text())
       if (!htmlString) {
@@ -87,16 +113,12 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
 
     logger.debug({ byline, excerpt, siteName })
 
-    const comments = await fetchStoryDataById(story.storyId)
     output.push({
       content: textContent,
-      comments,
-      title: story.title,
       url: story.url,
-      storyId: story.storyId,
       // strip http(s), parse just the domain from the url
       source: siteName ?? byline ?? new URL(story.url).hostname.replace('www.', ''),
-      hnUrl: `https://news.ycombinator.com/item?id=${story.storyId}`,
+      ...baseStoryOutput,
     })
   }
 
