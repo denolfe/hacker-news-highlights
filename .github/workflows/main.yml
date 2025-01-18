@@ -1,0 +1,70 @@
+name: build
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  NODE_VERSION: 23.6.0
+  PNPM_VERSION: 9.15.4
+
+jobs:
+  changes:
+    runs-on: ubuntu-24.04
+    outputs:
+      needs_build: ${{ steps.filter.outputs.needs_build }}
+    steps:
+      # https://github.com/actions/virtual-environments/issues/1187
+      - name: tune linux network
+        run: sudo ethtool -K eth0 tx off rx off
+
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            needs_build:
+              - 'src/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - '.github/**'
+      - name: Log all filter results
+        run: |
+          echo "needs_build: ${{ steps.filter.outputs.needs_build }}"
+
+  build:
+    needs: changes
+    if: ${{ needs.changes.outputs.needs_build == 'true' }}
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+          pnpm-install-cache-key: pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+      - run: pnpm run build
+
+      - name: Cache build
+        uses: actions/cache@v4
+        with:
+          path: ./*
+          key: ${{ github.sha }}-${{ github.run_number }}
