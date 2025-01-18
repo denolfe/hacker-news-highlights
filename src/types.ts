@@ -13,6 +13,8 @@ export type StoryOutput = {
   title: string
   url: string
   storyId: number
+  /** Sitename, byline, or readable hostname */
+  source: string
 }
 
 export type SlimComment = Pick<Comment, 'id' | 'created_at' | 'text' | 'children' | 'author'>
