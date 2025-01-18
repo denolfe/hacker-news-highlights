@@ -1,8 +1,10 @@
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText } from 'ai'
-import { SlimComment, StoryDataAggregate, StoryOutput } from '../types'
-import { readFromCache, writeToCache } from '../utils/cache'
 import { createHash } from 'crypto'
+
+import type { SlimComment, StoryDataAggregate, StoryOutput } from '../types'
+
+import { readFromCache, writeToCache } from '../utils/cache'
 import { childLogger } from '../utils/log'
 import { IMPERATIVE_PHRASES } from './constants'
 

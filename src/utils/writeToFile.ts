@@ -1,4 +1,5 @@
 import fs from 'fs/promises'
+
 import { log } from './log'
 
 export async function writeToFile(filename: string, data: any) {

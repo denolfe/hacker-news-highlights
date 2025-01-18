@@ -1,5 +1,7 @@
 import path from 'path'
-import { StoryDataAggregate } from '../types'
+
+import type { StoryDataAggregate } from '../types'
+
 import { writeToFile } from '../utils/writeToFile'
 import { OUTPUT_DIR } from './constants'
 

@@ -1,7 +1,8 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { directoryOrFileExists } from './directoryOrFileExists'
+
 import { CACHE_DIR } from '../lib/constants'
+import { directoryOrFileExists } from './directoryOrFileExists'
 import { log } from './log'
 
 const debug = process.env.DEBUG === 'true'
@@ -13,7 +14,7 @@ export async function initCacheDir() {
   }
 }
 
-export async function writeToCache(key: string, data: string | Buffer<ArrayBufferLike>) {
+export async function writeToCache(key: string, data: Buffer<ArrayBufferLike> | string) {
   if (debug) {
     log.debug(`[CACHE] Writing to cache: ${key}`)
   }

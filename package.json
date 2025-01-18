@@ -2,39 +2,27 @@
   "name": "hn-recap-clone",
   "version": "1.0.0",
   "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "index.js",
   "scripts": {
     "build": "tsc --noEmit",
+    "clean:audio": "rm -rf cache/*.mp3",
+    "clean:output": "rm -rf output/*.mp3",
     "format": "prettier --write .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint-staged": "lint-staged",
-    "start": "NODE_OPTIONS=--no-deprecation tsx src/index.ts",
-    "clean:audio": "rm -rf cache/*.mp3",
-    "clean:output": "rm -rf output/*.mp3"
+    "prepare": "husky",
+    "start": "NODE_OPTIONS=--no-deprecation tsx src/index.ts"
   },
   "lint-staged": {
     "package.json": "sort-package-json",
-    "*.{md,mdx,yml,json}": "prettier --write",
     "*.{js,jsx,ts,tsx}": [
       "prettier --write",
       "eslint --cache --fix"
     ]
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@payloadcms/eslint-config": "^3.9.0",
-    "@types/fluent-ffmpeg": "^2.1.27",
-    "@types/jsdom": "^21.1.7",
-    "eslint": "^9.18.0",
-    "husky": "^9.1.7",
-    "lint-staged": "^15.4.1",
-    "rimraf": "^6.0.1",
-    "sort-package-json": "^2.14.0",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.3"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.0.19",
@@ -43,5 +31,18 @@
     "fluent-ffmpeg": "^2.1.3",
     "jsdom": "^26.0.0",
     "openai": "^4.78.1"
+  },
+  "devDependencies": {
+    "@payloadcms/eslint-config": "^3.9.0",
+    "@types/fluent-ffmpeg": "^2.1.27",
+    "@types/jsdom": "^21.1.7",
+    "eslint": "^9.18.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.1",
+    "prettier": "^3.4.2",
+    "rimraf": "^6.0.1",
+    "sort-package-json": "^2.14.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
   }
 }
