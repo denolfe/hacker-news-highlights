@@ -12,7 +12,7 @@ export async function generateShowNotes({
 }) {
   let showNotes = stories
     .map(story => {
-      return `\n${story.title}\nLink: ${story.url})\n`
+      return `\n${story.title}\nLink: ${story.url}\nComments: ${story.hnUrl}\n`
     })
     .join('\n')
 
