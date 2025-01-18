@@ -1,7 +1,10 @@
 import OpenAI from 'openai'
+import ffmpeg from 'fluent-ffmpeg'
+import path from 'path'
 
 import { StoryDataAggregate, StorySummary } from '../types'
 import { readFromCache, writeToCache } from '../utils/cache'
+import { CACHE_DIR, OUTPUT_DIR } from '../lib/constants'
 import { log } from '../utils/log'
 
 type PodcastSegment = {
@@ -46,4 +49,28 @@ export async function generateAudioFromText(
   }
 
   return audioFilenames
+}
+
+export function joinAudioFiles(filenames: string[], outputFilename: string): Promise<void> {
+  log.info(`Merging ${filenames.length} audio files into ${outputFilename}...`)
+  return new Promise((resolve, reject) => {
+    const command = ffmpeg()
+
+    filenames
+      .map(f => path.resolve(CACHE_DIR, f))
+      .forEach(file => {
+        command.input(file)
+      })
+
+    command
+      .on('end', () => {
+        log.info('Audio files merged successfully!')
+        resolve()
+      })
+      .on('error', err => {
+        console.error('Error occurred:', err)
+        reject(err)
+      })
+      .mergeToFile(outputFilename, CACHE_DIR)
+  })
 }

@@ -21,16 +21,17 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   // Fetch the content and comments for each story
   const output: StoryOutput[] = []
   for (const hit of slim) {
-    log.info(`Fetching - ${hit.title} - ${hit.url}`)
+    log.info(`Fetching [${hit.storyId}] - ${hit.title} - ${hit.url}`)
+    const cacheKey = 'story-' + hit.storyId.toString()
 
-    let htmlString = await readFromCache(hit.storyId.toString())
+    let htmlString = await readFromCache(cacheKey)
     if (!htmlString) {
       htmlString = await fetch(hit.url).then(res => res.text())
       if (!htmlString) {
         log.info(`No content found for ${hit.url}`)
         continue
       }
-      await writeToCache(hit.storyId.toString(), htmlString)
+      await writeToCache(cacheKey, htmlString)
     }
 
     let parsed: ReturnType<typeof Readability.prototype.parse> | undefined
