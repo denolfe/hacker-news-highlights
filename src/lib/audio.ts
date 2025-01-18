@@ -8,6 +8,7 @@ import { CACHE_DIR, OUTPUT_DIR } from '../lib/constants'
 import { childLogger, log } from '../utils/log'
 
 const logger = childLogger('AUDIO')
+const silence = path.resolve(__dirname, 'silence-1s.mp3')
 
 type PodcastSegment = {
   storyId: string
@@ -55,11 +56,18 @@ export async function generateAudioFromText(
 
 export function joinAudioFiles(filenames: string[], outputFilename: string): Promise<void> {
   logger.info(`Merging ${filenames.length} audio files into ${outputFilename}...`)
+
+  // insert silence between segments
+  const filesWithSilence = insertBetween(filenames, silence)
+  logger.debug({
+    filesWithSilence,
+  })
+
   return new Promise((resolve, reject) => {
     const command = ffmpeg()
 
-    filenames
-      .map(f => path.resolve(CACHE_DIR, f))
+    filesWithSilence
+      .map(f => (path.isAbsolute(f) ? f : path.resolve(CACHE_DIR, f)))
       .forEach(file => {
         command.input(file)
       })
@@ -75,4 +83,14 @@ export function joinAudioFiles(filenames: string[], outputFilename: string): Pro
       })
       .mergeToFile(outputFilename, CACHE_DIR)
   })
+}
+
+function insertBetween(array: string[], itemToInsert: string): string[] {
+  return array.reduce((acc, current, index) => {
+    if (index > 0) {
+      acc.push(itemToInsert)
+    }
+    acc.push(current)
+    return acc
+  }, [] as string[])
 }
