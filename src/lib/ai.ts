@@ -56,10 +56,8 @@ export async function summarize(stories: StoryDataAggregate[]): Promise<StoryDat
     apiKey: process.env.OPENAI_API_KEY,
   })
 
-  logger.info('Generating summaries...')
-
-  for (const story of stories) {
-    logger.info(`Summarizing story: ${story.title}`)
+  for (const [i, story] of stories.entries()) {
+    logger.info(`[${i + 1}/${stories.length}] Summarizing: ${story.title}`)
     try {
       const cacheKey = 'summary-' + story.storyId.toString()
       const cached = await readFromCache(cacheKey)
@@ -80,7 +78,7 @@ export async function summarize(stories: StoryDataAggregate[]): Promise<StoryDat
       story.summary = text
       await writeToCache(cacheKey, text)
     } catch (error) {
-      console.error('Error generating text:', error)
+      logger.error('Error generating text:', error)
     }
   }
   // await writeToFile('summary.txt', summaries.join('\n\n'))
