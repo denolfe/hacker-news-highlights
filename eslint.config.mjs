@@ -12,14 +12,13 @@ export const defaultESLintIgnores = [
   '**/tsconfig.tsbuildinfo',
   '**/README.md',
   '**/eslint.config.js',
-  '**/payload-types.ts',
   '**/dist/',
   '**/.yarn/',
   '**/build/',
   '**/node_modules/',
   '**/temp/',
   '**/*.spec.ts',
-  'next-env.d.ts',
+  '**/eslint.config.mjs',
 ]
 
 /** @typedef {import('eslint').Linter.Config} Config */
@@ -29,7 +28,7 @@ export const rootParserOptions = {
   ecmaVersion: 'latest',
   projectService: {
     maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 40,
-    allowDefaultProject: ['scripts/*.ts', '*.js', '*.mjs', '*.d.ts'],
+    allowDefaultProject: ['*.js', '*.mjs', '*.d.ts', 'eslint.config.mjs'],
   },
 }
 
@@ -38,6 +37,8 @@ export const rootEslintConfig = [
   ...payloadEsLintConfig,
   {
     ignores: defaultESLintIgnores,
+  },
+  {
     rules: {
       'perfectionist/sort-object-types': 'off',
       'perfectionist/sort-objects': 'off',

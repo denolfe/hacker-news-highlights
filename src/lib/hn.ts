@@ -1,6 +1,8 @@
 import { Readability } from '@mozilla/readability'
 import { JSDOM, VirtualConsole } from 'jsdom'
-import { Comment, ResponseData, SlimComment, StoryOutput } from '../types'
+
+import type { Comment, ResponseData, SlimComment, StoryOutput } from '../types'
+
 import { readFromCache, writeToCache } from '../utils/cache'
 import { childLogger } from '../utils/log'
 
@@ -36,15 +38,13 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
       await writeToCache(cacheKey, htmlString)
     }
 
-    let parsed: ReturnType<typeof Readability.prototype.parse> | undefined
-
     const virtualConsole = new VirtualConsole()
     virtualConsole.on('error', () => {
       // Ignore errors, keeps the output clean
       // https://github.com/jsdom/jsdom/issues/2230#issuecomment-466915328
     })
     const dom = new JSDOM(htmlString, { virtualConsole })
-    parsed = new Readability(dom.window.document).parse()
+    const parsed = new Readability(dom.window.document).parse()
 
     const { textContent, byline, excerpt, siteName } = parsed ?? {
       textContent: 'No content found for this story',
@@ -76,7 +76,7 @@ async function fetchStoryDataById(storyId: number): Promise<SlimComment[]> {
   // Extract only author, children, created_at, and text. Recursively extract children's children.
   const extractComment = (
     c: any,
-  ): Pick<Comment, 'id' | 'created_at' | 'text' | 'children' | 'author'> => ({
+  ): Pick<Comment, 'author' | 'children' | 'created_at' | 'id' | 'text'> => ({
     id: c.id,
     created_at: c.created_at,
     text: c.text,

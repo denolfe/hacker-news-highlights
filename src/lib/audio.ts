@@ -1,11 +1,12 @@
-import OpenAI from 'openai'
 import ffmpeg from 'fluent-ffmpeg'
+import OpenAI from 'openai'
 import path from 'path'
 
-import { StoryDataAggregate, StorySummary } from '../types'
+import type { StoryDataAggregate } from '../types'
+
+import { CACHE_DIR } from '../lib/constants'
 import { readFromCache, writeToCache } from '../utils/cache'
-import { CACHE_DIR, OUTPUT_DIR } from '../lib/constants'
-import { childLogger, log } from '../utils/log'
+import { childLogger } from '../utils/log'
 
 const logger = childLogger('AUDIO')
 const silence = path.resolve(__dirname, 'silence-1s.mp3')
@@ -16,7 +17,7 @@ type PodcastSegment = {
 }
 
 export async function generateAudioFromText(
-  storyData: (StoryDataAggregate | PodcastSegment)[],
+  storyData: (PodcastSegment | StoryDataAggregate)[],
 ): Promise<string[]> {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -48,6 +49,7 @@ export async function generateAudioFromText(
       audioFilenames.push(filename)
     } catch (error) {
       logger.error(`Error generating audio for story: ${story.storyId}\nsummary: ${story.summary}`)
+      logger.error(error)
     }
   }
 
@@ -78,7 +80,7 @@ export function joinAudioFiles(filenames: string[], outputFilename: string): Pro
         resolve()
       })
       .on('error', err => {
-        console.error('Error occurred:', err)
+        logger.error('Error occurred:', err)
         reject(err)
       })
       .mergeToFile(outputFilename, CACHE_DIR)

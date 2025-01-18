@@ -1,6 +1,6 @@
-export type StoryDataAggregate = StoryOutput & {
+export type StoryDataAggregate = {
   summary?: string
-}
+} & StoryOutput
 
 export type StorySummary = {
   storyId: string
@@ -18,7 +18,7 @@ export type StoryOutput = {
   hnUrl: string
 }
 
-export type SlimComment = Pick<Comment, 'id' | 'created_at' | 'text' | 'children' | 'author'>
+export type SlimComment = Pick<Comment, 'author' | 'children' | 'created_at' | 'id' | 'text'>
 
 export type Comment = {
   id: number
@@ -26,7 +26,7 @@ export type Comment = {
   author: string
   text: string
   points: number
-  parent_id: number | null
+  parent_id: null | number
   children: Comment[]
 }
 
@@ -36,9 +36,9 @@ export type Story = {
   author: string
   title: string
   url: string
-  text: string | null
+  text: null | string
   points: number
-  parent_id: number | null
+  parent_id: null | number
   children: Comment[]
 }
 
