@@ -18,11 +18,11 @@
 ## TODO
 
 - [ ] Upload the audio file to a podcast hosting service or generate RSS feed
-- [ ] CI: generate mp3 on a daily basis
+- [x] CI: generate mp3 on a daily basis
 - [ ] Add logic to avoid duplicates
 - [x] Add actual logger
 - [ ] Add arg parser
 - [x] Generate "show notes"
 - [ ] Output a run summary
 - [x] Add author source to summary
-- [ ] Add pauses betweeen segments. Look at `<break time="1s" />` syntax.
+- [x] Add pauses betweeen segments. Look at `<break time="1s" />` syntax.
