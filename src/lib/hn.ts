@@ -63,6 +63,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
       storyId: hit.storyId,
       // strip http(s), parse just the domain from the url
       source: siteName ?? byline ?? new URL(hit.url).hostname.replace('www.', ''),
+      hnUrl: `https://news.ycombinator.com/item?id=${hit.storyId}`,
     })
   }
 
