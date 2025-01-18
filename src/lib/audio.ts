@@ -29,12 +29,12 @@ export async function generateAudioFromText(
 
     const cached = await readFromCache(filename)
     if (cached) {
-      logger.info(`Using cached audio for ${filename}`)
+      logger.info(`[${i + 1}/${storyData.length}] Using cached audio for ${filename}`)
       audioFilenames.push(filename)
       continue
     }
 
-    logger.info(`Generating audio for story: ${story.storyId}...`)
+    logger.info(`[${i + 1}/${storyData.length}] Generating audio: ${story.storyId}...`)
     try {
       const mp3 = await openai.audio.speech.create({
         model: 'tts-1-hd',
@@ -74,7 +74,7 @@ export function joinAudioFiles(filenames: string[], outputFilename: string): Pro
 
     command
       .on('end', () => {
-        logger.info('Audio files merged successfully!')
+        logger.info('Audio files merged')
         resolve()
       })
       .on('error', err => {
