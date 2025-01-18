@@ -1,7 +1,7 @@
+import path from 'path'
 import { StoryDataAggregate } from '../types'
 import { writeToFile } from '../utils/writeToFile'
-import { CACHE_DIR } from './constants'
-import path from 'path'
+import { OUTPUT_DIR } from './constants'
 
 export async function generateShowNotes({
   stories,
@@ -18,5 +18,5 @@ export async function generateShowNotes({
 
   showNotes += `\n\nTranscript:\n${introText}\n${stories.map(s => s.summary).join('\n\n')}`
 
-  await writeToFile(path.resolve(CACHE_DIR, 'show-notes.txt'), showNotes)
+  await writeToFile(path.resolve(OUTPUT_DIR, 'show-notes.txt'), showNotes)
 }
