@@ -1,11 +1,12 @@
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 import { SlimComment, StoryDataAggregate, StoryOutput } from '../types'
-import { writeToFile } from '../utils/writeToFile'
 import { readFromCache, writeToCache } from '../utils/cache'
 import { createHash } from 'crypto'
-import { log } from '../utils/log'
+import { childLogger } from '../utils/log'
 import { IMPERATIVE_PHRASES } from './constants'
+
+const logger = childLogger('AI')
 
 const storySummarizationPrompt = `
 You are an AI language model tasked with generating a recap of a top story from Hacker News (news.ycombinator.com). For the given story, perform the following tasks:
@@ -49,16 +50,16 @@ The general sentiment was [overall sentiment], with users expressing [specific r
 `
 
 export async function summarize(stories: StoryDataAggregate[]): Promise<StoryDataAggregate[]> {
-  log.info('Summarizing stories...')
+  logger.info('Summarizing stories...')
   const openai = createOpenAI({
     compatibility: 'strict', // strict mode, enable when using the OpenAI API
     apiKey: process.env.OPENAI_API_KEY,
   })
 
-  log.info('Generating summaries...')
+  logger.info('Generating summaries...')
 
   for (const story of stories) {
-    log.info(`Summarizing story: ${story.title}`)
+    logger.info(`Summarizing story: ${story.title}`)
     try {
       const cacheKey = 'summary-' + story.storyId.toString()
       const cached = await readFromCache(cacheKey)
@@ -90,7 +91,7 @@ export async function summarize(stories: StoryDataAggregate[]): Promise<StoryDat
 export async function generatePodcastIntro(
   stories: StoryOutput[],
 ): Promise<{ cacheKey: string; text: string }> {
-  log.info('Generating podcast intro...')
+  logger.info('Generating podcast intro...')
   const hash = createHash('sha256')
     .update(stories.map(s => s.storyId).join())
     .digest('hex')
@@ -99,7 +100,7 @@ export async function generatePodcastIntro(
   const cacheKey = `intro-${hash}`
   const cached = await readFromCache(cacheKey)
   if (cached) {
-    log.info(`Using cached intro: ${cacheKey}`)
+    logger.info(`Using cached intro: ${cacheKey}`)
     return { cacheKey, text: cached }
   }
 

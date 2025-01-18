@@ -5,7 +5,9 @@ import path from 'path'
 import { StoryDataAggregate, StorySummary } from '../types'
 import { readFromCache, writeToCache } from '../utils/cache'
 import { CACHE_DIR, OUTPUT_DIR } from '../lib/constants'
-import { log } from '../utils/log'
+import { childLogger, log } from '../utils/log'
+
+const logger = childLogger('AUDIO')
 
 type PodcastSegment = {
   storyId: string
@@ -26,12 +28,12 @@ export async function generateAudioFromText(
 
     const cached = await readFromCache(filename)
     if (cached) {
-      log.info(`Using cached audio for ${filename}`)
+      logger.info(`Using cached audio for ${filename}`)
       audioFilenames.push(filename)
       continue
     }
 
-    log.info(`Generating audio for story: ${story.storyId}...`)
+    logger.info(`Generating audio for story: ${story.storyId}...`)
     try {
       const mp3 = await openai.audio.speech.create({
         model: 'tts-1-hd',
@@ -40,11 +42,11 @@ export async function generateAudioFromText(
       })
 
       const buffer = Buffer.from(await mp3.arrayBuffer())
-      log.info(`Audio file generated: ${filename}`)
+      logger.info(`Audio file generated: ${filename}`)
       await writeToCache(filename, buffer)
       audioFilenames.push(filename)
     } catch (error) {
-      log.error(`Error generating audio for story: ${story.storyId}\nsummary: ${story.summary}`)
+      logger.error(`Error generating audio for story: ${story.storyId}\nsummary: ${story.summary}`)
     }
   }
 
@@ -52,7 +54,7 @@ export async function generateAudioFromText(
 }
 
 export function joinAudioFiles(filenames: string[], outputFilename: string): Promise<void> {
-  log.info(`Merging ${filenames.length} audio files into ${outputFilename}...`)
+  logger.info(`Merging ${filenames.length} audio files into ${outputFilename}...`)
   return new Promise((resolve, reject) => {
     const command = ffmpeg()
 
@@ -64,7 +66,7 @@ export function joinAudioFiles(filenames: string[], outputFilename: string): Pro
 
     command
       .on('end', () => {
-        log.info('Audio files merged successfully!')
+        logger.info('Audio files merged successfully!')
         resolve()
       })
       .on('error', err => {
