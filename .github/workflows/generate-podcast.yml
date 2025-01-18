@@ -2,6 +2,12 @@ name: generate-podcast
 
 on:
   workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Run in debug mode'
+        required: false
+        default: 'false'
+        type: boolean
 
   # every morning at 4am EST
   schedule:
@@ -43,6 +49,7 @@ jobs:
       - run: pnpm start
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DEBUG: ${{ github.event.inputs.debug }}
 
       # Cache cache/covered-stories for next run
       - name: Cache covered-stories
