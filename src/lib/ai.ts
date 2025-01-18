@@ -120,11 +120,18 @@ Let's ${IMPERATIVE_PHRASES[Math.floor(Math.random() * IMPERATIVE_PHRASES.length)
   const { text } = await generateText({
     model: openai('gpt-4o-mini'),
     prompt: `
-Summarize these 3 stories into a single sentence. Be sure to change the summaries into the present participle form, using '-ing' verbs to indicate ongoing actions.
+
+Given 3 stories from today's Hacker News:
+
+- Summarize these 3 stories into a single sentence.
+- Keep each summary short, concise, and in a similar format for clarity and flow.
+- Be sure to change the summaries into the present participle form, using '-ing' verbs to indicate ongoing actions.
+- Focus on the main subject or action of each story.
+- Remove any extra context that isn't crucial for understanding.
 
 Output in the format: Story 1, Story 2, and Story 3.
 
-Here are the top 3 stories from today's Hacker News recap:
+Here are the top 3 stories from today's Hacker News:
 
 ${stories.map(story => `Title: ${story.title}\nContent: ${story.content}\n\n`).join('\n')}
 `,
