@@ -14,6 +14,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: read
+
 env:
   NODE_VERSION: 23.6.0
   PNPM_VERSION: 9.15.4
@@ -21,8 +25,6 @@ env:
 jobs:
   changes:
     runs-on: ubuntu-24.04
-    permissions:
-      pull-requests: read
     outputs:
       needs_build: ${{ steps.filter.outputs.needs_build }}
     steps:
@@ -39,6 +41,7 @@ jobs:
               - 'src/**'
               - 'package.json'
               - 'pnpm-lock.yaml'
+              - '.github/**'
       - name: Log all filter results
         run: |
           echo "needs_build: ${{ steps.filter.outputs.needs_build }}"
