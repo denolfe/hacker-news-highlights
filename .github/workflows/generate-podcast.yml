@@ -30,12 +30,35 @@ jobs:
           pnpm-version: ${{ env.PNPM_VERSION }}
           pnpm-install-cache-key: pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
 
+      - name: Create cache directory
+        run: mkdir ./cache
+
+      # Restore cache from cache/covered-stories
+      - name: Restore covered-stories
+        uses: actions/cache@v4
+        with:
+          path: ./cache/covered-stories
+          key: ${{ github.ref }}-covered-stories
+
       - run: pnpm start
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      # Cache cache/covered-stories for next run
+      - name: Cache covered-stories
+        uses: actions/cache@v4
+        with:
+          path: ./cache/covered-stories
+          key: ${{ github.ref }}-covered-stories
 
       - uses: actions/upload-artifact@v4
         with:
           name: output-$(date +'%Y-%m-%d')
           path: output
           retention-days: 1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: covered-stories-$(date +'%Y-%m-%d')
+          path: cache/covered-stories
+          retention-days: 7
