@@ -11,7 +11,7 @@ export type StoryOutput = {
   content: string
   comments: SlimComment[]
   title: string
-  url: string
+  url?: string
   storyId: number
   /** Sitename, byline, or readable hostname */
   source: string
@@ -73,7 +73,8 @@ export type Hit = {
   story_id: number
   title: string
   updated_at: string
-  url: string
+  url?: string
+  story_text?: string
 }
 
 export type ProcessingTimingsMS = {
