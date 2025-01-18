@@ -15,10 +15,12 @@ on:
 
 permissions:
   contents: read
+  actions: write # for caching
 
 env:
   NODE_VERSION: 23.6.0
   PNPM_VERSION: 9.15.4
+  COVERED_STORIES_CACHE_KEY: ${{ github.ref }}-covered-stories
 
 jobs:
   podcast:
@@ -41,31 +43,41 @@ jobs:
 
       # Restore cache from cache/covered-stories
       - name: Restore covered-stories
-        uses: actions/cache@v4
+        id: cache-restore
+        uses: actions/cache/restore@v4
         with:
           path: ./cache/covered-stories
-          key: ${{ github.ref }}-covered-stories
+          key: ${{ env.COVERED_STORIES_CACHE_KEY }}
 
       - run: pnpm start
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           DEBUG: ${{ github.event.inputs.debug }}
 
+      - name: Delete Previous Cache
+        if: ${{ steps.cache-restore.outputs.cache-hit }}
+        continue-on-error: true
+        run: |
+          gh extension install actions/gh-actions-cache
+          gh actions-cache delete "${{ env.COVERED_STORIES_CACHE_KEY }}" --confirm
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       # Cache cache/covered-stories for next run
       - name: Cache covered-stories
-        uses: actions/cache@v4
+        uses: actions/cache/save@v4
         with:
           path: ./cache/covered-stories
-          key: ${{ github.ref }}-covered-stories
+          key: ${{ env.COVERED_STORIES_CACHE_KEY }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: output-$(date +'%Y-%m-%d')
+          name: output
           path: output
           retention-days: 1
 
       - uses: actions/upload-artifact@v4
         with:
-          name: covered-stories-$(date +'%Y-%m-%d')
-          path: cache/covered-stories
+          name: covered-stories
+          path: ./cache/covered-stories
           retention-days: 7
