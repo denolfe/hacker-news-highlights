@@ -5,6 +5,7 @@ import { writeToFile } from '../utils/writeToFile'
 import { readFromCache, writeToCache } from '../utils/cache'
 import { createHash } from 'crypto'
 import { log } from '../utils/log'
+import { IMPERATIVE_PHRASES } from './constants'
 
 const storySummarizationPrompt = `
 You are an AI language model tasked with generating a recap of a top story from Hacker News (news.ycombinator.com). For the given story, perform the following tasks:
@@ -106,9 +107,9 @@ export async function generatePodcastIntro(
 Welcome to the Hacker News recap where we bring you an exclusive overview of the top 10 posts
 on Hacker News every day.
 
-Today, we dive into ${summary}.
+Today, we dive into ${summary}
 
-Let's jump right in.
+Let's ${IMPERATIVE_PHRASES[Math.floor(Math.random() * IMPERATIVE_PHRASES.length)]}.
 `
   const openai = createOpenAI({
     compatibility: 'strict', // strict mode, enable when using the OpenAI API
