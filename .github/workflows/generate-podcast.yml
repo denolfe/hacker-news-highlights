@@ -5,7 +5,7 @@ on:
 
   # every morning at 4am EST
   schedule:
-    - cron: '0 4 * * *'
+    - cron: '0 9 * * *' # 4am EST
 
 permissions:
   contents: read
