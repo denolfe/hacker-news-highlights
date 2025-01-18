@@ -1,15 +1,15 @@
 import path from 'path'
-import { loadEnvFile } from 'process'
 import { generatePodcastIntro, summarize } from './lib/ai'
-import { fetchTopStories } from './lib/hn'
 import { generateAudioFromText, joinAudioFiles } from './lib/audio'
-import { CACHE_DIR, OUTPUT_DIR, podcastOutro as outro } from './lib/constants'
-import { initCacheDir } from './utils/cache'
-import { log } from './utils/log'
+import { OUTPUT_DIR, podcastOutro as outro } from './lib/constants'
+import { fetchTopStories } from './lib/hn'
 import { generateShowNotes } from './lib/show-notes'
+import { initCacheDir } from './utils/cache'
+import { loadEnvIfExists } from './utils/env'
 import { initOutputDir } from './utils/initOutputDir'
+import { log } from './utils/log'
 
-loadEnvFile(path.resolve(__dirname, '../.env'))
+loadEnvIfExists(path.resolve(__dirname, '../.env'))
 
 const args = process.argv.slice(2)
 
