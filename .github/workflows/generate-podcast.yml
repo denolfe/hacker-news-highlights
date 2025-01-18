@@ -1,0 +1,32 @@
+name: generate-podcast
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 23.6.0
+  PNPM_VERSION: 9.15.4
+
+jobs:
+  podcast:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+          pnpm-install-cache-key: pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+      - run: pnpm start
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: output
+          path: output
+          retention-days: 1
