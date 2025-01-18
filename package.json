@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc --noEmit",
     "start": "NODE_OPTIONS=--no-deprecation tsx src/index.ts",
-    "clear-cache": "rm -rf cache"
+    "clean:audio": "rm -rf cache/*.mp3"
   },
   "keywords": [],
   "author": "",
