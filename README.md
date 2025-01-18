@@ -20,9 +20,9 @@
 - [ ] Upload the audio file to a podcast hosting service or generate RSS feed
 - [ ] CI: generate mp3 on a daily basis
 - [ ] Add logic to avoid duplicates
-- [ ] Add actual logger
+- [x] Add actual logger
 - [ ] Add arg parser
-- [ ] Generate "show notes"
+- [x] Generate "show notes"
 - [ ] Output a run summary
-- [ ] Add author source to summary
+- [x] Add author source to summary
 - [ ] Add pauses betweeen segments. Look at `<break time="1s" />` syntax.
