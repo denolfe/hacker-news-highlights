@@ -10,6 +10,11 @@ import { IMPERATIVE_PHRASES } from './constants'
 
 const logger = childLogger('AI')
 
+const openai = createOpenAI({
+  compatibility: 'strict', // strict mode, enable when using the OpenAI API
+  apiKey: process.env.OPENAI_API_KEY,
+})
+
 const storySummarizationPrompt = `
 You are an AI language model tasked with generating a recap of a top story from Hacker News (news.ycombinator.com). For the given story, perform the following tasks:
 
@@ -53,10 +58,6 @@ The general sentiment was [overall sentiment], with users expressing [specific r
 
 export async function summarize(stories: StoryDataAggregate[]): Promise<StoryDataAggregate[]> {
   logger.info('Summarizing stories...')
-  const openai = createOpenAI({
-    compatibility: 'strict', // strict mode, enable when using the OpenAI API
-    apiKey: process.env.OPENAI_API_KEY,
-  })
 
   for (const [i, story] of stories.entries()) {
     logger.info(`[${i + 1}/${stories.length}] Summarizing: ${story.title}`)
@@ -83,7 +84,6 @@ export async function summarize(stories: StoryDataAggregate[]): Promise<StoryDat
       logger.error('Error generating text:', error)
     }
   }
-  // await writeToFile('summary.txt', summaries.join('\n\n'))
 
   return stories
 }
@@ -112,10 +112,6 @@ Today, we dive into ${summary}
 
 Let's ${IMPERATIVE_PHRASES[Math.floor(Math.random() * IMPERATIVE_PHRASES.length)]}.
 `
-  const openai = createOpenAI({
-    compatibility: 'strict', // strict mode, enable when using the OpenAI API
-    apiKey: process.env.OPENAI_API_KEY,
-  })
 
   const { text } = await generateText({
     model: openai('gpt-4o-mini'),
