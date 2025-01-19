@@ -55,8 +55,10 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   const newCovered = [...coveredStories, ...filtered.map(s => s.storyId)]
   logger.debug({ newCovered })
 
-  // Save the covered stories
-  await writeToCache('covered-stories', JSON.stringify(newCovered))
+  // Save the covered stories, but only in CI to prevent dupes between daily runs
+  if (process.env.CI) {
+    await writeToCache('covered-stories', JSON.stringify(newCovered))
+  }
 
   // Fetch the content and comments for each story
   const output: StoryOutput[] = []
