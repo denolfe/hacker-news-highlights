@@ -84,3 +84,9 @@ jobs:
           name: covered-stories
           path: ./cache/covered-stories
           retention-days: 7
+
+      - name: Log covered-stories and show-notes
+        run: |
+          set -ex
+          cat cache/covered-stories
+          cat output/show-notes.txt
