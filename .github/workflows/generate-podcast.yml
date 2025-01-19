@@ -53,6 +53,8 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           DEBUG: ${{ github.event.inputs.debug }}
+          # Use `elevenlabs` on main, else `openai`
+          VOICE_SERVICE: ${{ github.ref == 'refs/heads/main' && 'elevenlabs' || 'openai' }}
 
       - name: Delete Previous Cache
         if: ${{ steps.cache-restore.outputs.cache-hit }}

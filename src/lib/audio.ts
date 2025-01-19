@@ -6,7 +6,6 @@ import type { StoryDataAggregate, TtsService } from '../types'
 import { CACHE_DIR } from '../lib/constants'
 import { readFromCache, writeToCache } from '../utils/cache'
 import { childLogger } from '../utils/log'
-import { getElevenLabsClient, getOpenAI as getOpenAIClient } from './clients'
 
 const logger = childLogger('AUDIO')
 const silence = path.resolve(__dirname, 'silence-1s.mp3')
