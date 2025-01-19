@@ -81,6 +81,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
         source: 'Hacker News',
         ...baseStoryOutput,
       })
+      continue
     }
 
     if (!story.url) {

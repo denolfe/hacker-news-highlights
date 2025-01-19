@@ -68,3 +68,5 @@ jobs:
         with:
           path: ./*
           key: ${{ github.sha }}-${{ github.run_number }}
+
+      - run: pnpm test
