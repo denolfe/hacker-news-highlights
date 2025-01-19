@@ -1,5 +1,6 @@
 import path from 'path'
 
+export const PROJECT_ROOT = path.resolve(__dirname, '../..')
 export const CACHE_DIR = path.resolve(__dirname, '../../cache')
 export const OUTPUT_DIR = path.resolve(__dirname, '../../output')
 
