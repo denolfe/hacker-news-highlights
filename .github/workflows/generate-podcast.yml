@@ -52,6 +52,7 @@ jobs:
       - run: pnpm start
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ELEVEN_LABS_API_KEY: ${{ secrets.ELEVEN_LABS_API_KEY }}
           DEBUG: ${{ github.event.inputs.debug }}
           # Use `elevenlabs` on main, else `openai`
           VOICE_SERVICE: ${{ github.ref == 'refs/heads/main' && 'elevenlabs' || 'openai' }}
