@@ -64,30 +64,35 @@ export async function summarize(stories: StoryDataAggregate[]): Promise<StoryDat
   for (const [i, story] of stories.entries()) {
     logger.info(`[${i + 1}/${stories.length}] Summarizing: ${story.title}`)
     try {
-      const cacheKey = 'summary-' + story.storyId.toString()
-      const cached = await readFromCache(cacheKey)
-      if (cached) {
-        story.summary = cached
-        continue
-      }
-
-      const { text } = await generateText({
-        model: openai('gpt-4o-mini'),
-        prompt:
-          storySummarizationPrompt +
-          `Title: ${story.title}\n\n` +
-          `Source: ${story.source}\n` +
-          `Content:\n${story.content}\n` +
-          `Comments data:\n${generateCommentTree(story.comments.slice(0, 5))}`,
-      })
-      story.summary = text
-      await writeToCache(cacheKey, text)
+      stories[i] = await summarizeStory(story)
     } catch (error) {
       logger.error('Error generating text:', error)
     }
   }
 
   return stories
+}
+
+export async function summarizeStory(story: StoryDataAggregate): Promise<StoryDataAggregate> {
+  const cacheKey = 'summary-' + story.storyId.toString()
+  const cached = await readFromCache(cacheKey)
+  if (cached) {
+    story.summary = cached
+    return story
+  }
+
+  const { text } = await generateText({
+    model: openai('gpt-4o-mini'),
+    prompt:
+      storySummarizationPrompt +
+      `Title: ${story.title}\n\n` +
+      `Source: ${story.source}\n` +
+      `Content:\n${story.content}\n` +
+      `Comments data:\n${generateCommentTree(story.comments.slice(0, 5))}`,
+  })
+  story.summary = text
+  await writeToCache(cacheKey, text)
+  return story
 }
 
 export async function generatePodcastIntro(

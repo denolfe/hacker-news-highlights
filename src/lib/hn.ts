@@ -63,7 +63,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   // Fetch the content and comments for each story
   const output: StoryOutput[] = []
   for (const story of filtered) {
-    const comments = await fetchStoryDataById(story.storyId)
+    const comments = await fetchHnCommentsById(story.storyId)
     logger.info(`Fetching [${story.storyId}] - ${story.title} - ${story.url}`)
     const cacheKey = 'story-' + story.storyId.toString()
 
@@ -128,7 +128,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   return output
 }
 
-async function fetchStoryDataById(storyId: number): Promise<SlimComment[]> {
+export async function fetchHnCommentsById(storyId: number): Promise<SlimComment[]> {
   const response = await fetch(`https://hn.algolia.com/api/v1/items/${storyId}`)
   const data = await response.json()
   // Extract only author, children, created_at, and text. Recursively extract children's children.
@@ -143,4 +143,67 @@ async function fetchStoryDataById(storyId: number): Promise<SlimComment[]> {
   })
 
   return data.children.map(extractComment)
+}
+
+export async function fetchStoryDataById(storyId: number) {
+  const response = await fetch(`https://hn.algolia.com/api/v1/items/${storyId}`)
+  const data = (await response.json()) as StoryDataByIdResponse
+  // Extract only author, children, created_at, and text. Recursively extract children's children.
+  const extractComment = (c: any) => ({
+    id: c.id,
+    created_at: c.created_at,
+    text: c.text,
+    author: c.author,
+    children: c.children.map(extractComment),
+  })
+
+  const comments = data.children.map(extractComment)
+
+  const baseStoryOutput: { text: null | string } & Pick<
+    StoryOutput,
+    'comments' | 'hnUrl' | 'storyId' | 'title'
+  > = {
+    title: data.title,
+    storyId: data.story_id,
+    text: data.text,
+    comments,
+    hnUrl: `https://news.ycombinator.com/item?id=${data.story_id}`,
+  }
+
+  return {
+    ...baseStoryOutput,
+    content: data.text,
+    url: data.url,
+    source: data.author,
+  }
+}
+
+type StoryDataByIdResponseChildren = {
+  author: string
+  children: StoryDataByIdResponseChildren[]
+  created_at: string
+  created_at_i: number
+  id: number
+  options: string[]
+  parent_id: number
+  points: null | number
+  story_id: number
+  text: string
+  type: string
+}
+
+type StoryDataByIdResponse = {
+  author: string
+  children: StoryDataByIdResponseChildren[]
+  created_at: string
+  created_at_i: number
+  id: number
+  options: string[]
+  parent_id: null | number
+  points: number
+  story_id: number
+  text: null | string
+  title: string
+  type: string
+  url: null | string
 }

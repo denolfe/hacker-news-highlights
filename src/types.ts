@@ -8,10 +8,10 @@ export type StorySummary = {
 }
 
 export type StoryOutput = {
-  content: string
+  content: null | string
   comments: SlimComment[]
   title: string
-  url?: string
+  url?: null | string
   storyId: number
   /** Sitename, byline, or readable hostname */
   source: string
