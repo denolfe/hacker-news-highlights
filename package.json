@@ -9,6 +9,7 @@
   "scripts": {
     "build": "tsc --noEmit",
     "clean:audio": "rm -rf cache/*.mp3",
+    "clean:covered-stories": "rm -rf cache/covered-stories",
     "clean:output": "rm -rf output/*.mp3",
     "format": "prettier --write .",
     "lint": "eslint .",
