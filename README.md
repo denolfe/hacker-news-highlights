@@ -11,7 +11,7 @@
 - [x] CI: generate mp3 on a daily basis
 - [x] Add linting
 - [x] Add logic to avoid duplicates
-- [ ] Try ElevenLabs TTS
+- [x] Try ElevenLabs TTS
 - [ ] Upload the audio file to a podcast hosting service or generate RSS feed
 - [ ] Add arg parser
 - [ ] Output a run summary

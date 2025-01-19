@@ -1,5 +1,4 @@
 import ffmpeg from 'fluent-ffmpeg'
-import OpenAI from 'openai'
 import path from 'path'
 
 import type { StoryDataAggregate } from '../types'
@@ -7,6 +6,7 @@ import type { StoryDataAggregate } from '../types'
 import { CACHE_DIR } from '../lib/constants'
 import { readFromCache, writeToCache } from '../utils/cache'
 import { childLogger } from '../utils/log'
+import { getElevenLabsClient, getOpenAI as getOpenAIClient } from './clients'
 
 const logger = childLogger('AUDIO')
 const silence = path.resolve(__dirname, 'silence-1s.mp3')
@@ -19,10 +19,6 @@ type PodcastSegment = {
 export async function generateAudioFromText(
   storyData: (PodcastSegment | StoryDataAggregate)[],
 ): Promise<string[]> {
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  })
-
   const audioFilenames: string[] = []
 
   for (const [i, story] of storyData.entries()) {
@@ -37,15 +33,30 @@ export async function generateAudioFromText(
 
     logger.info(`[${i + 1}/${storyData.length}] Generating audio: ${story.storyId}...`)
     try {
-      const mp3 = await openai.audio.speech.create({
-        model: 'tts-1-hd',
-        voice: 'nova',
-        input: story.summary as string,
-      })
+      if (process.env.VOICE_SERVICE === 'elevenlabs') {
+        const audioStream = await getElevenLabsClient().textToSpeech.convert(
+          '56AoDkrOh6qfVPDXZ7Pt', // Cassidy
+          {
+            text: story.summary as string,
+            model_id: 'eleven_turbo_v2',
+          },
+        )
+        logger.info('Received back audio stream')
+        const buffer = await streamToBuffer(audioStream)
+        logger.info(`Audio file generated: ${filename}`)
+        await writeToCache(filename, buffer)
+      } else {
+        const mp3 = await getOpenAIClient().audio.speech.create({
+          model: 'tts-1-hd',
+          voice: 'nova',
+          input: story.summary as string,
+        })
 
-      const buffer = Buffer.from(await mp3.arrayBuffer())
-      logger.info(`Audio file generated: ${filename}`)
-      await writeToCache(filename, buffer)
+        const buffer = Buffer.from(await mp3.arrayBuffer())
+        logger.info(`Audio file generated: ${filename}`)
+        await writeToCache(filename, buffer)
+      }
+
       audioFilenames.push(filename)
     } catch (error) {
       logger.error(`Error generating audio for story: ${story.storyId}\nsummary: ${story.summary}`)
@@ -95,4 +106,12 @@ function insertBetween(array: string[], itemToInsert: string): string[] {
     acc.push(current)
     return acc
   }, [] as string[])
+}
+
+async function streamToBuffer(stream: NodeJS.ReadableStream) {
+  const chunks: (Buffer | string)[] = []
+  for await (const chunk of stream) {
+    chunks.push(chunk)
+  }
+  return Buffer.concat(chunks as Buffer[])
 }

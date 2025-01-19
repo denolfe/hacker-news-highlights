@@ -36,6 +36,7 @@ Instructions for Summarizing Comments:
 **Example Input:**
 
 Title: [Article Title]
+
 Source: [Site Name, Byline, or Readable Hostname]
 
 Content:
@@ -46,8 +47,9 @@ Comments data:
 
 **Expected Output:**
 
-Title: [Article Title]
-Source: [Site Name, Byline, or Readable Hostname]
+Title: [Article Title].
+
+Source: [Site Name, Byline, or Readable Hostname].
 
 Is a [brief description of the article's focus].
 [Summary of the article's main points, highlighting key arguments or findings].
@@ -73,7 +75,7 @@ export async function summarize(stories: StoryDataAggregate[]): Promise<StoryDat
         model: openai('gpt-4o-mini'),
         prompt:
           storySummarizationPrompt +
-          `Title: ${story.title}\n` +
+          `Title: ${story.title}\n\n` +
           `Source: ${story.source}\n` +
           `Content:\n${story.content}\n` +
           `Comments data:\n${generateCommentTree(story.comments.slice(0, 5))}`,
