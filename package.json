@@ -17,7 +17,8 @@
     "prepare": "husky",
     "start": "NODE_OPTIONS=--no-deprecation tsx src/index.ts",
     "test": "vitest --run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "youtube": "ffmpeg -loop 1 -i cover.png -i output/output.mp3 -c:v libx264 -c:a aac -b:a 192k -shortest -fflags +shortest -pix_fmt yuv420p output/output.mp4"
   },
   "lint-staged": {
     "package.json": "sort-package-json",
