@@ -104,3 +104,7 @@ export type ResponseData = {
   query: string
   serverTimeMS: number
 }
+
+export type TtsService = {
+  convert: (text: string) => Promise<Buffer>
+}
