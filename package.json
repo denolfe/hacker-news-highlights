@@ -8,9 +8,12 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc --noEmit",
+    "clean:all": "rm -rf cache/* output/*",
     "clean:audio": "rm -rf cache/*.mp3",
     "clean:covered-stories": "rm -rf cache/covered-stories",
-    "clean:output": "rm -rf output/*.mp3",
+    "clean:output": "rm -rf output/*",
+    "clean:stories": "rm -rf cache/story-*",
+    "clean:summaries": "rm -rf cache/summary-* cache/intro-*",
     "format": "prettier --write .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
