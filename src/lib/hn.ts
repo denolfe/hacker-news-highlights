@@ -1,10 +1,8 @@
-import { Readability } from '@mozilla/readability'
-import { JSDOM, VirtualConsole } from 'jsdom'
-
 import type { Comment, ResponseData, SlimComment, StoryOutput } from '../types'
 
 import { readFromCache, writeToCache } from '../utils/cache'
 import { childLogger } from '../utils/log'
+import { parseSiteContent } from '../utils/parseSiteContent'
 
 const logger = childLogger('HN')
 
@@ -39,7 +37,9 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   const filtered = slim
     .filter(s => {
       const wasCovered = coveredStories.includes(s.storyId)
-      logger.info({ storyId: s.storyId, wasCovered })
+      if (wasCovered) {
+        logger.info({ storyId: s.storyId, wasCovered })
+      }
       return !wasCovered
     })
     .slice(0, count)
@@ -62,9 +62,11 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
 
   // Fetch the content and comments for each story
   const output: StoryOutput[] = []
-  for (const story of filtered) {
+  for (const [i, story] of filtered.entries()) {
     const comments = await fetchHnCommentsById(story.storyId)
-    logger.info(`Fetching [${story.storyId}] - ${story.title} - ${story.url}`)
+    logger.info(
+      `[${i + 1}/${filtered.length}] Fetching [${story.storyId}] - ${story.title} - ${story.url}`,
+    )
     const cacheKey = 'story-' + story.storyId.toString()
 
     let htmlString = await readFromCache(cacheKey)
@@ -100,19 +102,20 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
       await writeToCache(cacheKey, htmlString)
     }
 
-    const virtualConsole = new VirtualConsole()
-    virtualConsole.on('error', () => {
-      // Ignore errors, keeps the output clean
-      // https://github.com/jsdom/jsdom/issues/2230#issuecomment-466915328
-    })
-    const dom = new JSDOM(htmlString, { virtualConsole })
-    const parsed = new Readability(dom.window.document).parse()
+    // const virtualConsole = new VirtualConsole()
+    // virtualConsole.on('error', () => {
+    //   // Ignore errors, keeps the output clean
+    //   // https://github.com/jsdom/jsdom/issues/2230#issuecomment-466915328
+    // })
+    // const dom = new JSDOM(htmlString, { virtualConsole })
+    // const parsed = new Readability(dom.window.document).parse()
 
-    const { textContent, byline, excerpt, siteName } = parsed ?? {
-      textContent: 'No content found for this story',
-      byline: '',
-      excerpt: '',
-    }
+    // const { textContent, byline, excerpt, siteName } = parsed ?? {
+    //   textContent: 'No content found for this story',
+    //   byline: '',
+    //   excerpt: '',
+    // }
+    const { textContent, byline, excerpt, siteName } = await parseSiteContent(htmlString)
 
     logger.debug({ byline, excerpt, siteName })
 
