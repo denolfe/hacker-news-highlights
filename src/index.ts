@@ -17,12 +17,29 @@ loadEnvIfExists()
 const args = minimist(process.argv.slice(2))
 
 async function main() {
-  const { count, audio } = args as { count?: number; audio?: boolean }
+  const { count, audio, preview } = args as { count?: number; audio?: boolean; preview?: boolean }
 
   await initOutputDir()
   await initCacheDir()
   const ttsService = getTtsService()
   const storyData = await fetchTopStories(count ?? 10)
+
+  if (preview) {
+    log.info(
+      '\n' +
+        storyData
+          .map(story => {
+            let str = `${story.title}\nHN: ${story.hnUrl}\n`
+            if (story.url) {
+              str += `Link: ${story.url}\n`
+            }
+            return str
+          })
+          .join('\n'),
+    )
+    return
+  }
+
   const intro = await generatePodcastIntro(storyData)
   const summaries = await summarize(storyData)
 
