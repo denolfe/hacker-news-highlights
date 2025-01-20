@@ -22,6 +22,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
       url: s.url,
       storyId: s.story_id,
       story_text: s.story_text,
+      points: s.points,
     }
   })
 
@@ -71,11 +72,15 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
 
     let htmlString = await readFromCache(cacheKey)
 
-    const baseStoryOutput: Pick<StoryOutput, 'comments' | 'hnUrl' | 'storyId' | 'title'> = {
+    const baseStoryOutput: Pick<
+      StoryOutput,
+      'comments' | 'hnUrl' | 'points' | 'storyId' | 'title'
+    > = {
       title: story.title,
       storyId: story.storyId,
       comments,
       hnUrl: `https://news.ycombinator.com/item?id=${story.storyId}`,
+      points: story.points,
     }
 
     // Ask HN posts don't have a url, but have a story_text
@@ -102,19 +107,6 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
       await writeToCache(cacheKey, htmlString)
     }
 
-    // const virtualConsole = new VirtualConsole()
-    // virtualConsole.on('error', () => {
-    //   // Ignore errors, keeps the output clean
-    //   // https://github.com/jsdom/jsdom/issues/2230#issuecomment-466915328
-    // })
-    // const dom = new JSDOM(htmlString, { virtualConsole })
-    // const parsed = new Readability(dom.window.document).parse()
-
-    // const { textContent, byline, excerpt, siteName } = parsed ?? {
-    //   textContent: 'No content found for this story',
-    //   byline: '',
-    //   excerpt: '',
-    // }
     const { textContent, byline, excerpt, siteName } = await parseSiteContent(htmlString)
 
     logger.debug({ byline, excerpt, siteName })
@@ -167,11 +159,12 @@ export async function fetchStoryDataById(storyId: number) {
 
   const baseStoryOutput: { text: null | string } & Pick<
     StoryOutput,
-    'comments' | 'hnUrl' | 'storyId' | 'title'
+    'comments' | 'hnUrl' | 'points' | 'storyId' | 'title'
   > = {
     title: data.title,
     storyId: data.story_id,
     text: data.text,
+    points: data.points,
     comments,
     hnUrl: `https://news.ycombinator.com/item?id=${data.story_id}`,
   }

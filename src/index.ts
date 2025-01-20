@@ -33,6 +33,7 @@ async function main() {
             if (story.url) {
               str += `Link: ${story.url}\n`
             }
+            str += `Points: ${story.points} | Comments: ${story.comments.length}\n`
             return str
           })
           .join('\n'),

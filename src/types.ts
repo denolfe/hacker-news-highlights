@@ -16,6 +16,7 @@ export type StoryOutput = {
   /** Sitename, byline, or readable hostname */
   source: string
   hnUrl: string
+  points: number
 }
 
 export type SlimComment = Pick<Comment, 'author' | 'children' | 'created_at' | 'id' | 'text'>
