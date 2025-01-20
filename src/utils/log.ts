@@ -1,19 +1,22 @@
-import { format } from 'node:util'
+import { format, inspect } from 'node:util'
 
 export const log = {
   debug: (...args: unknown[]) => {
     if (isDebug()) {
-      process.stderr.write(`DEBUG: ${format(...args)}\n`)
+      process.stdout.write(`DEBUG: ${format(...args)}\n`)
     }
   },
   warning: (...args: unknown[]) => {
-    process.stderr.write(`WARNING: ${format(...args)}\n`)
+    process.stdout.write(`WARNING: ${format(...args)}\n`)
   },
   info: (...args: unknown[]) => {
-    process.stderr.write(`${format(...args)}\n`)
+    process.stdout.write(`${format(...args)}\n`)
   },
   error: (...args: unknown[]) => {
     process.stderr.write(`ERROR: ${format(...args)}\n`)
+  },
+  deep: (...args: unknown[]) => {
+    process.stdout.write(`${inspect({ ...args }, false, null, true)}\n`)
   },
 }
 
