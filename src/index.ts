@@ -1,3 +1,4 @@
+import minimist from 'minimist'
 import path from 'path'
 
 import { generatePodcastIntro, summarize } from './lib/ai'
@@ -13,25 +14,34 @@ import { log } from './utils/log'
 
 loadEnvIfExists(path.resolve(__dirname, '../.env'))
 
-const args = process.argv.slice(2)
+const args = minimist(process.argv.slice(2))
 
 async function main() {
+  const { count, audio } = args as { count?: number; audio?: boolean }
+
   await initOutputDir()
   await initCacheDir()
   const ttsService = getTtsService()
-  const storyData = await fetchTopStories(args[0] ? parseInt(args[0]) : 10)
+  const storyData = await fetchTopStories(count ?? 10)
   const intro = await generatePodcastIntro(storyData)
   const summaries = await summarize(storyData)
-  const audioFilenames = await generateAudioFromText(
-    [
-      { summary: intro.text, storyId: intro.cacheKey },
-      ...summaries,
-      { summary: outro, storyId: 'outro' },
-    ],
-    ttsService,
-  )
-  await joinAudioFiles(audioFilenames, path.resolve(OUTPUT_DIR, 'output.mp3'))
+
   await generateShowNotes({ stories: summaries, introText: intro.text })
+
+  if (audio === false) {
+    log.info('SKIPPING audio generation')
+  } else {
+    const audioFilenames = await generateAudioFromText(
+      [
+        { summary: intro.text, storyId: intro.cacheKey },
+        ...summaries,
+        { summary: outro, storyId: 'outro' },
+      ],
+      ttsService,
+    )
+    await joinAudioFiles(audioFilenames, path.resolve(OUTPUT_DIR, 'output.mp3'))
+  }
+
   log.info('Done!')
 }
 
