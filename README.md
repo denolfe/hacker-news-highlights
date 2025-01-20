@@ -12,6 +12,6 @@
 - [x] Add linting
 - [x] Add logic to avoid duplicates
 - [x] Try ElevenLabs TTS
+- [x] Add arg parser
 - [ ] Upload the audio file to a podcast hosting service or generate RSS feed
-- [ ] Add arg parser
-- [ ] Output a run summary
+- [ ] Output a run summary at end for AI usage
