@@ -4,7 +4,7 @@ import type { StoryOutput } from './types'
 
 import * as cache from './utils/cache'
 
-export const jsonResponse = (data: any) =>
+export const jsonResponse = (data: Record<string, unknown>) =>
   Promise.resolve({
     headers: new Headers({ 'content-type': 'application/json' }),
     ok: true,

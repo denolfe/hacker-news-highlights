@@ -151,8 +151,11 @@ export async function fetchHnCommentsById(storyId: number): Promise<SlimComment[
 export async function fetchStoryDataById(storyId: number) {
   const response = await fetch(`https://hn.algolia.com/api/v1/items/${storyId}`)
   const data = (await response.json()) as StoryDataByIdResponse
+
   // Extract only author, children, created_at, and text. Recursively extract children's children.
-  const extractComment = (c: any) => ({
+  const extractComment = (
+    c: any,
+  ): Pick<Comment, 'author' | 'children' | 'created_at' | 'id' | 'text'> => ({
     id: c.id,
     created_at: c.created_at,
     text: c.text,

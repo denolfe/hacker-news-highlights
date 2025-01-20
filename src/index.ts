@@ -12,7 +12,7 @@ import { loadEnvIfExists } from './utils/env'
 import { initOutputDir } from './utils/initOutputDir'
 import { log } from './utils/log'
 
-loadEnvIfExists(path.resolve(__dirname, '../.env'))
+loadEnvIfExists()
 
 const args = minimist(process.argv.slice(2))
 
