@@ -31,7 +31,8 @@ Instructions for Summarizing Comments:
 -  Avoid including specific usernames or quoting comments verbatim; instead, focus on summarizing the overall discourse.
 -  Limit sentence count to 3-5 sentences per section.
 -  Use concise language
--  Do NOT use any formatting such as bold or asterisks
+-  Do NOT use any markdown formatting such as bold or asterisks
+-  Title and Source lines MUST end with a period.
 
 **Example Input:**
 
