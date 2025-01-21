@@ -5,7 +5,7 @@ import type { StoryDataAggregate, TtsService } from '../types'
 
 import { CACHE_DIR } from '../lib/constants'
 import { readFromCache, writeToCache } from '../utils/cache'
-import { childLogger } from '../utils/log'
+import { childLogger, log } from '../utils/log'
 
 const logger = childLogger('AUDIO')
 const silence = path.resolve(__dirname, 'silence-1s.mp3')
@@ -14,6 +14,8 @@ type PodcastSegment = {
   storyId: string
   summary: string
 }
+
+type Chapter = { title: string; start: number; end: number }
 
 export async function generateAudioFromText(
   storyData: (PodcastSegment | StoryDataAggregate)[],
@@ -46,7 +48,7 @@ export async function generateAudioFromText(
   return audioFilenames
 }
 
-export function joinAudioFiles(filenames: string[], outputFilename: string): Promise<void> {
+export async function joinAudioFiles(filenames: string[], outputFilename: string): Promise<void> {
   logger.info(`Merging ${filenames.length} audio files into ${outputFilename}...`)
 
   // insert silence between segments
@@ -55,7 +57,14 @@ export function joinAudioFiles(filenames: string[], outputFilename: string): Pro
     filesWithSilence,
   })
 
-  return new Promise((resolve, reject) => {
+  const durations = await calculateDurations(filesWithSilence)
+  log.info({ msg: 'DURRATTIONNNSSSSSSSSSSSSSSSSSSSS', durations })
+
+  // Write chapter metadata to file
+  const metadataContent = createMetadataContent(durations)
+  await writeToCache('chapters.txt', metadataContent)
+
+  await new Promise((resolve, reject) => {
     const command = ffmpeg()
 
     filesWithSilence
@@ -65,9 +74,12 @@ export function joinAudioFiles(filenames: string[], outputFilename: string): Pro
       })
 
     command
+      .on('start', cmd => {
+        logger.info('FFmpeg command:', cmd)
+      })
       .on('end', () => {
         logger.info('Audio files merged')
-        resolve()
+        resolve('Mp3 merge complete')
       })
       .on('error', err => {
         logger.error('Error occurred:', err)
@@ -75,6 +87,34 @@ export function joinAudioFiles(filenames: string[], outputFilename: string): Pro
       })
       .mergeToFile(outputFilename, CACHE_DIR)
   })
+
+  log.info('Writing metadata to file...')
+
+  // Write metadata to the file
+  // ffmpeg -i output.mp3 -i chapters.txt -map_metadata 1 -codec copy output.mp3.chapters.mp3
+
+  await new Promise((resolve, reject) => {
+    ffmpeg()
+      .on('start', cmd => {
+        logger.info('FFmpeg command:', cmd)
+      })
+      .on('end', () => {
+        logger.info('Metadata written to file')
+        resolve('Metadata written to file')
+      })
+      .on('error', err => {
+        logger.error('Error occurred:', err)
+        reject(err)
+      })
+      .input(outputFilename)
+      .input(path.resolve(CACHE_DIR, 'chapters.txt'))
+      .audioCodec('copy')
+      .outputOptions('-map_metadata', '1')
+      .outputOptions('-metadata', 'title=Hacker News Recap')
+      .save(outputFilename + '.chapters.mp3')
+  })
+
+  log.info('Audio file created')
 }
 
 function insertBetween(array: string[], itemToInsert: string): string[] {
@@ -85,4 +125,58 @@ function insertBetween(array: string[], itemToInsert: string): string[] {
     acc.push(current)
     return acc
   }, [] as string[])
+}
+function createMetadataContent(chapters: Chapter[]): string {
+  return (
+    `;FFMETADATA1\n` +
+    chapters
+      .map(
+        chapter => `
+[CHAPTER]
+TIMEBASE=1/1000
+START=${Math.floor(chapter.start * 1000)}
+END=${Math.floor(chapter.end * 1000)}
+title=${chapter.title}
+`,
+      )
+      .join('')
+  )
+}
+
+function calculateDurations(filenames: string[]): Promise<Chapter[]> {
+  return new Promise((resolve, reject) => {
+    let currentTime = 0
+    const chapters: Chapter[] = []
+
+    const processFile = (index: number) => {
+      if (index >= filenames.length) {
+        resolve(chapters)
+        return
+      }
+
+      const file = path.isAbsolute(filenames[index])
+        ? filenames[index]
+        : path.resolve(CACHE_DIR, filenames[index])
+      ffmpeg.ffprobe(file, (err, metadata) => {
+        if (err) {
+          reject(err as Error)
+          return
+        }
+
+        const duration = metadata.format.duration || 0
+        const title = path.basename(file, path.extname(file))
+
+        chapters.push({
+          title,
+          start: currentTime,
+          end: currentTime + duration,
+        })
+
+        currentTime += duration
+        processFile(index + 1)
+      })
+    }
+
+    processFile(0)
+  })
 }
