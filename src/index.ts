@@ -3,7 +3,7 @@ import path from 'path'
 
 import { generatePodcastIntro, summarize } from './lib/ai'
 import { generateAudioFromText, joinAudioFiles } from './lib/audio'
-import { OUTPUT_DIR, podcastOutro as outro } from './lib/constants'
+import { OUTPUT_DIR } from './lib/constants'
 import { fetchTopStories } from './lib/hn'
 import { getTtsService } from './lib/services'
 import { generateShowNotes } from './lib/show-notes'
@@ -49,15 +49,11 @@ async function main() {
   if (audio === false) {
     log.info('SKIPPING audio generation')
   } else {
-    const audioFilenames = await generateAudioFromText(
-      [
-        { summary: intro.text, storyId: intro.cacheKey },
-        ...summaries,
-        { summary: outro, storyId: 'outro' },
-      ],
+    const segments = await generateAudioFromText(
+      [{ summary: intro.text, storyId: intro.cacheKey, title: intro.title }, ...summaries],
       ttsService,
     )
-    await joinAudioFiles(audioFilenames, path.resolve(OUTPUT_DIR, 'output.mp3'))
+    await joinAudioFiles(segments, path.resolve(OUTPUT_DIR, 'output.mp3'))
   }
 
   log.info('Done!')

@@ -98,7 +98,7 @@ export async function summarizeStory(story: StoryDataAggregate): Promise<StoryDa
 
 export async function generatePodcastIntro(
   stories: StoryOutput[],
-): Promise<{ cacheKey: string; text: string }> {
+): Promise<{ cacheKey: string; text: string; title: string }> {
   logger.info('Generating podcast intro...')
   const hash = createHash('sha256')
     .update(stories.map(s => s.storyId).join())
@@ -109,7 +109,7 @@ export async function generatePodcastIntro(
   const cached = await readFromCache(cacheKey)
   if (cached) {
     logger.info(`Using cached intro: ${cacheKey}`)
-    return { cacheKey, text: cached }
+    return { cacheKey, text: cached, title: 'Intro' }
   }
 
   const introTemplate = (summary: string) => `
@@ -144,7 +144,7 @@ ${stories.map(story => `Title: ${story.title}\nContent: ${story.content}\n\n`).j
 
   const intro = introTemplate(text)
   await writeToCache(cacheKey, intro)
-  return { cacheKey, text: intro }
+  return { cacheKey, text: intro, title: 'Intro' }
 }
 
 /**
