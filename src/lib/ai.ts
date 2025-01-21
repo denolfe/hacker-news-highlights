@@ -113,8 +113,7 @@ export async function generatePodcastIntro(
   }
 
   const introTemplate = (summary: string) => `
-Welcome to the Hacker News recap where we bring you an exclusive overview of the top 10 posts
-on Hacker News every day.
+Welcome to the Hacker News Rundown where we bring you an exclusive overview of the top 10 posts on Hacker News every day.
 
 ${summary}
 

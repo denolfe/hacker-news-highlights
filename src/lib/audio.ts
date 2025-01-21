@@ -144,7 +144,7 @@ export async function joinAudioFiles(
       .input(path.resolve(CACHE_DIR, 'chapters.txt'))
       .audioCodec('copy')
       .outputOptions('-map_metadata', '1')
-      .outputOptions('-metadata', 'title=Hacker News Recap')
+      .outputOptions('-metadata', 'title=Hacker News Rundown')
       .save(outputFilename)
   })
 

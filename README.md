@@ -1,4 +1,4 @@
-# HN Recap Clone
+# Hacker News Rundown
 
 > My attempt to recreate the Hacker News Recap podcast
 
