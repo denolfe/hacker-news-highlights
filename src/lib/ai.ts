@@ -6,7 +6,7 @@ import type { SlimComment, StoryDataAggregate, StoryOutput } from '../types'
 
 import { readFromCache, writeToCache } from '../utils/cache'
 import { childLogger } from '../utils/log'
-import { IMPERATIVE_PHRASES } from './constants'
+import { IMPERATIVE_PHRASES, PODCAST_NAME } from './constants'
 
 const logger = childLogger('AI')
 
@@ -113,7 +113,7 @@ export async function generatePodcastIntro(
   }
 
   const introTemplate = (summary: string) => `
-Welcome to the Hacker News Rundown where we bring you an exclusive overview of the top 10 posts on Hacker News every day.
+Welcome to the ${PODCAST_NAME}, where we bring you an exclusive overview of the top 10 posts on Hacker News every day.
 
 ${summary}
 

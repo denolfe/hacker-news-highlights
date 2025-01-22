@@ -1,4 +1,4 @@
-# Hacker News Rundown
+# Hacker News Highlights
 
 > My attempt to recreate the Hacker News Recap podcast
 

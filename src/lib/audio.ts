@@ -3,7 +3,7 @@ import path from 'path'
 
 import type { StoryDataAggregate, TtsService } from '../types'
 
-import { CACHE_DIR, podcastOutro } from '../lib/constants'
+import { CACHE_DIR, PODCAST_NAME, podcastOutro } from '../lib/constants'
 import { readFromCache, writeToCache } from '../utils/cache'
 import { childLogger, log } from '../utils/log'
 
@@ -144,7 +144,7 @@ export async function joinAudioFiles(
       .input(path.resolve(CACHE_DIR, 'chapters.txt'))
       .audioCodec('copy')
       .outputOptions('-map_metadata', '1')
-      .outputOptions('-metadata', 'title=Hacker News Rundown')
+      .outputOptions('-metadata', `title=${PODCAST_NAME}`)
       .save(outputFilename)
   })
 
