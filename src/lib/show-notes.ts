@@ -31,7 +31,10 @@ export async function generateShowNotes({
     })
     .join('\n')
 
-  showNotes += `\n\nTranscript:\n${introText}\n${stories.map(s => s.summary).join('\n\n')}`
-
   await writeToFile(path.resolve(OUTPUT_DIR, 'show-notes.txt'), showNotes)
+
+  await writeToFile(
+    path.resolve(OUTPUT_DIR, 'transcript.txt'),
+    `Transcript:\n${introText}\n${stories.map(s => s.summary).join('\n\n')}`,
+  )
 }
