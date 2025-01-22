@@ -28,8 +28,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install ffmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Setup FFmpeg
+        uses: federicocarboni/setup-ffmpeg@v3.1
 
       - name: Node setup
         uses: ./.github/actions/setup
@@ -49,7 +49,8 @@ jobs:
           path: ./cache/covered-stories
           key: ${{ env.COVERED_STORIES_CACHE_KEY }}
 
-      - run: pnpm start
+      - name: Generate podcast
+        run: pnpm start
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ELEVEN_LABS_API_KEY: ${{ secrets.ELEVEN_LABS_API_KEY }}
