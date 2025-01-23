@@ -8,6 +8,12 @@ on:
         required: false
         default: 'false'
         type: boolean
+      voice_service:
+        description: 'Voice service to use'
+        required: false
+        options: ['openai', 'elevenlabs']
+        default: 'openai'
+        type: choice
 
   # every morning at 4am EST
   schedule:
@@ -56,7 +62,7 @@ jobs:
           ELEVEN_LABS_API_KEY: ${{ secrets.ELEVEN_LABS_API_KEY }}
           DEBUG: ${{ github.event.inputs.debug }}
           # Use `elevenlabs` on main, else `openai`
-          VOICE_SERVICE: ${{ github.ref == 'refs/heads/main' && 'elevenlabs' || 'openai' }}
+          VOICE_SERVICE: ${{ github.event.inputs.voice_service || (github.ref == 'refs/heads/main' && 'elevenlabs' || 'openai') }}
 
       - name: Delete Previous Cache
         if: ${{ steps.cache-restore.outputs.cache-hit }}
