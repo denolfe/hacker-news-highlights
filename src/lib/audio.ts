@@ -17,12 +17,6 @@ const silenceAudioSegment: PodcastSegmentWithAudio = {
   isSilence: true,
 }
 
-const outroSegment: PodcastSegment = {
-  summary: podcastOutro,
-  storyId: 'outro',
-  title: 'Outro',
-}
-
 type PodcastSegment = {
   title: string
   storyId: string
@@ -41,8 +35,6 @@ export async function generateAudioFromText(
   ttsService: TtsService,
 ): Promise<void> {
   const segments: PodcastSegmentWithAudio[] = []
-
-  storyData.push(outroSegment)
 
   for (const [i, story] of storyData.entries()) {
     const filename = `segment-${story.storyId}.mp3`
@@ -73,6 +65,12 @@ export async function generateAudioFromText(
       logger.error(error)
     }
   }
+
+  segments.push({
+    audioFilename: path.resolve(__dirname, 'outro.mp3'),
+    title: 'Outro',
+    summary: podcastOutro,
+  })
 
   await joinAudioFiles(segments, EPISODE_OUTPUT)
 }
