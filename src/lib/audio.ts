@@ -3,7 +3,7 @@ import path from 'path'
 
 import type { StoryDataAggregate, TtsService } from '../types'
 
-import { CACHE_DIR, PODCAST_NAME, podcastOutro } from '../lib/constants'
+import { CACHE_DIR, EPISODE_OUTPUT, PODCAST_NAME, podcastOutro } from '../lib/constants'
 import { readFromCache, writeToCache } from '../utils/cache'
 import { childLogger, log } from '../utils/log'
 
@@ -39,7 +39,7 @@ type Chapter = { title: string; start: number; end: number }
 export async function generateAudioFromText(
   storyData: (PodcastSegment | StoryDataAggregate)[],
   ttsService: TtsService,
-): Promise<PodcastSegmentWithAudio[]> {
+): Promise<void> {
   const segments: PodcastSegmentWithAudio[] = []
 
   storyData.push(outroSegment)
@@ -74,7 +74,7 @@ export async function generateAudioFromText(
     }
   }
 
-  return segments
+  await joinAudioFiles(segments, EPISODE_OUTPUT)
 }
 
 export async function joinAudioFiles(

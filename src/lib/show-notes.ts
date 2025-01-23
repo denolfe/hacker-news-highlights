@@ -5,13 +5,19 @@ import type { StoryDataAggregate } from '../types'
 import { writeToFile } from '../utils/writeToFile'
 import { OUTPUT_DIR } from './constants'
 
+/**
+ * Generates show notes and transcript files
+ * - Writes show notes to `show-notes.txt`
+ * - Writes transcript to `transcript.txt`
+ * @returns Show notes
+ */
 export async function generateShowNotes({
   stories,
   introText,
 }: {
   stories: StoryDataAggregate[]
   introText: string
-}) {
+}): Promise<string> {
   const formattedDate = new Date().toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -37,4 +43,6 @@ export async function generateShowNotes({
     path.resolve(OUTPUT_DIR, 'transcript.txt'),
     `Transcript:\n${introText}\n${stories.map(s => s.summary).join('\n\n')}`,
   )
+
+  return showNotes
 }
