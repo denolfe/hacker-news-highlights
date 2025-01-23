@@ -65,9 +65,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   const output: StoryOutput[] = []
   for (const [i, story] of filtered.entries()) {
     const comments = await fetchHnCommentsById(story.storyId)
-    logger.info(
-      `[${i + 1}/${filtered.length}] Fetching [${story.storyId}] - ${story.title} - ${story.url}`,
-    )
+    logger.info(`[${i + 1}/${filtered.length}] ${story.storyId} - ${story.title} - ${story.url}`)
     const cacheKey = 'story-' + story.storyId.toString()
 
     let htmlString = await readFromCache(cacheKey)
