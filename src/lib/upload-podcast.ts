@@ -26,9 +26,13 @@ export async function uploadPodcast(args: {
   const authorizeRes = (await fetch(`${baseUrl}/episodes/authorize_upload?filename=${filename}`, {
     method: 'GET',
     headers,
-  }).then(res => res.json())) as AuthorizeUploadResponse
+  }).then(res => {
+    log.info(`Authorize upload response: ${res.status}`)
+    return res.json()
+  })) as AuthorizeUploadResponse | undefined
 
-  if (!authorizeRes.data.attributes.upload_url || !authorizeRes.data.attributes.audio_url) {
+  if (!authorizeRes?.data?.attributes.upload_url || !authorizeRes.data.attributes.audio_url) {
+    log.info({ authorizeRes })
     throw new Error('Failed to authorize upload')
   }
 
@@ -152,7 +156,7 @@ type Episode = {
 }
 
 type AuthorizeUploadResponse = {
-  data: {
+  data?: {
     id: string
     type: string
     attributes: {
