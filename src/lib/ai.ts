@@ -155,9 +155,11 @@ export async function generatePodcastTitle(stories: StoryOutput[]): Promise<stri
     timeZone: 'America/New_York',
   })
 
+  const top3Stories = stories.slice(0, 3)
+
   const hash = createHash('sha256')
     .update(
-      stories
+      top3Stories
         .map(s => s.storyId)
         .slice(0, 3)
         .join(),
@@ -183,7 +185,7 @@ Given 3 stories from today's Hacker News:
 
 Here are the titles:
 
-${stories.map(story => `- ${story.title}\n`).join('')}
+${top3Stories.map(story => `- ${story.title}\n`).join('')}
 `,
   })
 
