@@ -1,7 +1,5 @@
 import fs from 'fs/promises'
 
-import type { StoryDataAggregate } from '../types'
-
 import { log } from '../utils/log'
 
 const showId = '60573'
@@ -9,24 +7,17 @@ const baseUrl = 'https://api.transistor.fm/v1'
 
 export async function uploadPodcast(args: {
   audioFilePath: string
-  stories: StoryDataAggregate[]
+  title: string
   showNotes: string
 }) {
   log.info('Uploading podcast...')
-  const { audioFilePath, stories, showNotes } = args
+  const { audioFilePath, title, showNotes } = args
 
   const apiKey = process.env.TRANSISTOR_API_KEY!
   const headers = {
     'Content-Type': 'application/json',
     'x-api-key': apiKey,
   }
-
-  const title = `${new Date().toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'America/New_York',
-  })} | ${stories[0].title}`
 
   const filename = audioFilePath.split('/').pop()
 

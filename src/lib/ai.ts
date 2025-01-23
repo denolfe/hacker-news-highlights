@@ -146,6 +146,53 @@ ${stories.map(story => `Title: ${story.title}\nContent: ${story.content}\n\n`).j
   return { cacheKey, text: intro, title: 'Intro' }
 }
 
+export async function generatePodcastTitle(stories: StoryOutput[]): Promise<string> {
+  logger.info('Generating podcast title...')
+  const todaysDate = new Date().toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'America/New_York',
+  })
+
+  const hash = createHash('sha256')
+    .update(
+      stories
+        .map(s => s.storyId)
+        .slice(0, 3)
+        .join(),
+    )
+    .digest('hex')
+    .slice(0, 6)
+
+  const cacheKey = `title-${hash}`
+  const cached = await readFromCache(cacheKey)
+  if (cached) {
+    logger.info(`Using cached title: ${cacheKey}`)
+    return cached
+  }
+
+  const { text } = await generateText({
+    model: openai('gpt-4o-mini'),
+    prompt: `
+Given 3 stories from today's Hacker News:
+
+- Summarize each summary into only a few words
+- Keep any proper nouns
+- The output should be a single sentence
+
+Here are the titles:
+
+${stories.map(story => `- ${story.title}\n`).join('')}
+`,
+  })
+
+  const title = `${todaysDate} | ${text}`
+  logger.info(`Title: ${title}`)
+  await writeToCache(cacheKey, title)
+  return title
+}
+
 /**
  * Turn comment json data into a tree structure that takes less tokens but is still readable
  */

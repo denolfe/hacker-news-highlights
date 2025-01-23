@@ -1,6 +1,6 @@
 import minimist from 'minimist'
 
-import { generatePodcastIntro, summarize } from './lib/ai'
+import { generatePodcastIntro, generatePodcastTitle, summarize } from './lib/ai'
 import { generateAudioFromText } from './lib/audio'
 import { EPISODE_OUTPUT } from './lib/constants'
 import { fetchTopStories } from './lib/hn'
@@ -49,6 +49,7 @@ async function main() {
   }
 
   const intro = await generatePodcastIntro(storyData)
+  const title = await generatePodcastTitle(storyData)
   const summaries = await summarize(storyData)
 
   const showNotes = await generateShowNotes({ stories: summaries, introText: intro.text })
@@ -63,7 +64,7 @@ async function main() {
     if (process.env.CI || publish === true) {
       await uploadPodcast({
         audioFilePath: EPISODE_OUTPUT,
-        stories: summaries,
+        title,
         showNotes,
       })
     } else {
