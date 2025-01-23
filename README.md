@@ -15,5 +15,6 @@
 - [x] Add arg parser
 - [x] Get timestamps for each segment
 - [x] Create "chapters" for each segment
-- [ ] Upload the audio file to a podcast hosting service or generate RSS feed
+- [x] Upload the audio file to a podcast hosting service or generate RSS feed
+- [ ] Implement DB in D1 for storing state of covered episodes
 - [ ] Output a run summary at end for AI usage
