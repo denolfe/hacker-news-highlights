@@ -113,7 +113,7 @@ export async function generatePodcastIntro(
   }
 
   const introTemplate = (summary: string) => `
-Welcome to the ${PODCAST_NAME}, where we expolore the top 10 posts on Hacker News every day.
+Welcome to the ${PODCAST_NAME}, where we explore the top 10 posts on Hacker News every day.
 
 ${summary}
 
