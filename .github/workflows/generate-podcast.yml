@@ -64,6 +64,15 @@ jobs:
           # Use `elevenlabs` on main, else `openai`
           VOICE_SERVICE: ${{ github.event.inputs.voice_service || (github.ref == 'refs/heads/main' && 'elevenlabs' || 'openai') }}
 
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: output and cache
+          path: |
+            output
+            cache
+          retention-days: 7
+
       - name: Delete Previous Cache
         if: ${{ steps.cache-restore.outputs.cache-hit }}
         continue-on-error: true
@@ -79,18 +88,6 @@ jobs:
         with:
           path: ./cache/covered-stories
           key: ${{ env.COVERED_STORIES_CACHE_KEY }}
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: output
-          path: output
-          retention-days: 1
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: covered-stories
-          path: ./cache/covered-stories
-          retention-days: 7
 
       - name: Log covered-stories, show-notes, transcript
         run: |
