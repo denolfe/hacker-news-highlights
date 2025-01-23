@@ -10,6 +10,7 @@
     "build": "tsc --noEmit",
     "clean:all": "rm -rf cache/* output/*",
     "clean:audio": "rm -rf cache/*.mp3",
+    "clean:cache": "rm -rf cache/*",
     "clean:covered-stories": "rm -rf cache/covered-stories",
     "clean:output": "rm -rf output/*",
     "clean:stories": "rm -rf cache/story-*",
