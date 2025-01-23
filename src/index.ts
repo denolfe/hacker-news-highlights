@@ -26,6 +26,13 @@ async function main() {
     publish?: boolean
   }
 
+  // TODO: Use zod
+  if (process.env.CI) {
+    if (!process.env.TRANSISTOR_API_KEY) {
+      throw new Error('Missing required env TRANSISTOR_API_KEY')
+    }
+  }
+
   await initOutputDir()
   await initCacheDir()
   const ttsService = getTtsService()

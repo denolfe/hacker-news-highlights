@@ -63,6 +63,7 @@ jobs:
           DEBUG: ${{ github.event.inputs.debug }}
           # Use `elevenlabs` on main, else `openai`
           VOICE_SERVICE: ${{ github.event.inputs.voice_service || (github.ref == 'refs/heads/main' && 'elevenlabs' || 'openai') }}
+          TRANSISTOR_API_KEY: ${{ secrets.TRANSISTOR_API_KEY }}
 
       - uses: actions/upload-artifact@v4
         if: always()
