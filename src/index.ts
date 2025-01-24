@@ -68,6 +68,7 @@ async function main() {
       [{ summary: intro.text, storyId: intro.cacheKey, title: intro.title }, ...summaries],
       ttsService,
     )
+    log.info(`Total character count: ${showNotes.replace(/\s+/g, '').length}`)
     if (process.env.CI || publish === true) {
       await uploadPodcast({
         audioFilePath: EPISODE_OUTPUT,
