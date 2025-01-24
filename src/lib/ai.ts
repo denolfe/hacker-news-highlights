@@ -189,7 +189,7 @@ ${top3Stories.map(story => `- ${story.title}\n`).join('')}
 `,
   })
 
-  const title = `${todaysDate} | ${text}`
+  const title = `${todaysDate} | ${text.replace(/\.$/, '')}`
   logger.info(`Title: ${title}`)
   await writeToCache(cacheKey, title)
   return title
