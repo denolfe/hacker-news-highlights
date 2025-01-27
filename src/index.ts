@@ -11,6 +11,7 @@ import { initCacheDir } from './utils/cache'
 import { loadEnvIfExists } from './utils/env'
 import { initOutputDir } from './utils/initOutputDir'
 import { log } from './utils/log'
+import { parseSiteContent } from './utils/parseSiteContent'
 
 loadEnvIfExists()
 
@@ -24,6 +25,7 @@ async function main() {
     preview?: boolean
     // --publish to upload to podcast host, publishes automatically in CI
     publish?: boolean
+    summarizeLink?: string
   }
 
   // TODO: Use zod
@@ -36,6 +38,16 @@ async function main() {
   await initOutputDir()
   await initCacheDir()
   const ttsService = getTtsService()
+
+  if (args.summarizeLink) {
+    log.info('Summarizing link', { url: args.summarizeLink })
+    const htmlString = await fetch(args.summarizeLink).then(res => res.text())
+    const { textContent, byline, excerpt, siteName } = await parseSiteContent(htmlString)
+    log.info({ textContent, byline, excerpt, siteName })
+    // TODO: Summarize this with AI
+    return
+  }
+
   const storyData = await fetchTopStories(count ?? 10)
 
   if (preview) {
