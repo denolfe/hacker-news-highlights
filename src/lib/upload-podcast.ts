@@ -69,7 +69,11 @@ export async function uploadPodcast(args: {
   const episode: Episode = {
     show_id: showId,
     title,
-    description: showNotes.replace(/\n/g, '<br>'),
+    description: showNotes
+      // Make all URLs clickable
+      .replace(/(https?:\/\/\S+)/g, '<a href="$1">$1</a>')
+      // Replace newlines with <br>
+      .replace(/\n/g, '<br>'),
     audio_url,
     increment_number: true,
   }
