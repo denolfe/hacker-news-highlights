@@ -109,11 +109,18 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
 
     logger.debug({ byline, excerpt, siteName })
 
+    // If siteName or byline is same as title, walk down the chain to find something different
+    let source = siteName || byline || undefined
+    const readableUrl = new URL(story.url).hostname.replace('www.', '')
+
+    if (source === story.title) {
+      source = readableUrl
+    }
+
     output.push({
       content: textContent,
       url: story.url,
-      // strip http(s), parse just the domain from the url
-      source: siteName ?? byline ?? new URL(story.url).hostname.replace('www.', ''),
+      source: source || readableUrl,
       ...baseStoryOutput,
     })
   }
