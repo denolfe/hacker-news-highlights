@@ -2,6 +2,10 @@
 
 > My attempt to recreate the Hacker News Recap podcast
 
+<p align="center">
+  <img src="cover.png" width="300">
+</p>
+
 ## TODO
 
 - [x] Add actual logger
