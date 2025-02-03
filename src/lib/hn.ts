@@ -110,7 +110,8 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
     logger.debug({ byline, excerpt, siteName })
 
     // If siteName or byline is same as title, walk down the chain to find something different
-    let source = siteName || byline || undefined
+    // split on ' - ' or ' | ' and take the first part
+    let source = (siteName || byline || undefined)?.split(/\s[-\\|]\s/)[0]
     const readableUrl = new URL(story.url).hostname.replace('www.', '')
 
     if (source === story.title) {
