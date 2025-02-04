@@ -43,6 +43,11 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
       }
       return !wasCovered
     })
+    // filter out `Who is hiring` posts
+    .filter(s => {
+      const pattern = /who is hiring/i
+      return !pattern.test(s.title)
+    })
     .slice(0, count)
 
   logger.debug({ filtered })
