@@ -9,6 +9,7 @@ import { generateShowNotes } from './lib/show-notes'
 import { uploadPodcast } from './lib/upload-podcast'
 import { initCacheDir } from './utils/cache'
 import { loadEnvIfExists } from './utils/env'
+import { filterPronunciation } from './utils/filterPronunciation'
 import { initOutputDir } from './utils/initOutputDir'
 import { log } from './utils/log'
 import { parseSiteContent } from './utils/parseSiteContent'
@@ -69,7 +70,15 @@ async function main() {
 
   const intro = await generatePodcastIntro(storyData)
   const title = await generatePodcastTitle(storyData)
-  const summaries = await summarize(storyData)
+  const unfilteredSummaries = await summarize(storyData)
+  const summaries = unfilteredSummaries.filter(s => {
+    return s.summary
+      ? {
+          ...s,
+          summary: filterPronunciation(s.summary),
+        }
+      : s
+  })
 
   const showNotes = await generateShowNotes({ stories: summaries, introText: intro.text })
 
