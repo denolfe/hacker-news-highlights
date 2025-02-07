@@ -30,9 +30,15 @@ async function main() {
   }
 
   // TODO: Use zod
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('Missing required env OPENAI_API_KEY')
+  }
   if (process.env.CI) {
     if (!process.env.TRANSISTOR_API_KEY) {
       throw new Error('Missing required env TRANSISTOR_API_KEY')
+    }
+    if (process.env.VOICE_SERVICE === 'elevenlabs' && !process.env.ELEVEN_LABS_API_KEY) {
+      throw new Error('Missing required env ELEVEN_LABS_API_KEY')
     }
   }
 
