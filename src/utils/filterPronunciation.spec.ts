@@ -16,6 +16,10 @@ describe('filterPronunciation', () => {
     ['WASM', 'wah-zum'],
     ['sqlite', 'ess-cue-lite'],
     ['SQLITE', 'ess-cue-lite'],
+    ['gui', 'gooey'],
+    ['GUI', 'gooey'],
+    ['rowid', 'row ID'],
+    ['ROWID', 'row ID'],
   ])('replaces %s with %s', (input, expected) => {
     expect(filterPronunciation(input)).toBe(expected)
   })

@@ -11,6 +11,8 @@ export function filterPronunciation(text: string): string {
       .replace(/\bgzip\b/gi, 'jee-zip')
       .replace(/\bwasm\b/gi, 'wah-zum')
       .replace(/\bsqlite\b/gi, 'ess-cue-lite')
+      .replace(/\bgui\b/gi, 'gooey')
+      .replace(/\browid\b/gi, 'row ID')
 
       // Remove any special characters that will never be pronounced properly such as "•" or "|"
       .replace(/[•|]/g, '')
