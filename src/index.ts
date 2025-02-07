@@ -75,6 +75,8 @@ async function main() {
   }
 
   const intro = await generatePodcastIntro(storyData)
+  intro.text = filterPronunciation(intro.text)
+
   const title = await generatePodcastTitle(storyData)
   const unfilteredSummaries = await summarize(storyData)
   const summaries = unfilteredSummaries.map(s => {
