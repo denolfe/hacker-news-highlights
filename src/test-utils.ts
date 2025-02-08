@@ -1,8 +1,8 @@
 import { vi } from 'vitest'
 
-import type { StoryOutput } from './types'
+import type { StoryOutput } from './types.js'
 
-import * as cache from './utils/cache'
+import * as cache from './utils/cache.js'
 
 export const jsonResponse = (data: Record<string, unknown>) =>
   Promise.resolve({

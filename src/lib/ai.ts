@@ -2,11 +2,11 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 import { createHash } from 'crypto'
 
-import type { SlimComment, StoryDataAggregate, StoryOutput } from '../types'
+import type { SlimComment, StoryDataAggregate, StoryOutput } from '../types.js'
 
-import { readFromCache, writeToCache } from '../utils/cache'
-import { childLogger } from '../utils/log'
-import { IMPERATIVE_PHRASES, PODCAST_NAME } from './constants'
+import { readFromCache, writeToCache } from '../utils/cache.js'
+import { childLogger } from '../utils/log.js'
+import { IMPERATIVE_PHRASES, PODCAST_NAME } from './constants.js'
 
 const logger = childLogger('AI')
 

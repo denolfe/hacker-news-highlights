@@ -1,9 +1,9 @@
 import fs from 'fs/promises'
 import path from 'path'
 
-import { CACHE_DIR } from '../lib/constants'
-import { directoryOrFileExists } from './directoryOrFileExists'
-import { log } from './log'
+import { CACHE_DIR } from '../lib/constants.js'
+import { directoryOrFileExists } from './directoryOrFileExists.js'
+import { log } from './log.js'
 
 const debug = process.env.DEBUG === 'true'
 

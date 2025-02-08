@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 
-import { log } from './log'
+import { log } from './log.js'
 
 type WritableData = Parameters<typeof fs.writeFile>[1]
 

@@ -4,8 +4,11 @@
   "description": "",
   "keywords": [],
   "license": "AGPL-3.0-only",
-  "author": "",
-  "main": "index.js",
+  "author": {
+    "name": "Elliot DeNolf",
+    "url": "https://github.com/denolfe"
+  },
+  "type": "module",
   "scripts": {
     "build": "tsc --noEmit",
     "clean:all": "rm -rf cache/* output/*",

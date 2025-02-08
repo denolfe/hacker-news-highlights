@@ -1,8 +1,8 @@
-import type { Comment, ResponseData, SlimComment, StoryOutput } from '../types'
+import type { Comment, ResponseData, SlimComment, StoryOutput } from '../types.js'
 
-import { readFromCache, writeToCache } from '../utils/cache'
-import { childLogger } from '../utils/log'
-import { parseSiteContent } from '../utils/parseSiteContent'
+import { readFromCache, writeToCache } from '../utils/cache.js'
+import { childLogger } from '../utils/log.js'
+import { parseSiteContent } from '../utils/parseSiteContent.js'
 
 const logger = childLogger('HN')
 

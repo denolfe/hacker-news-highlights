@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { filterPronunciation } from './filterPronunciation'
+import { filterPronunciation } from './filterPronunciation.js'
 
 describe('filterPronunciation', () => {
   test('replaces hyphens in source line', () => {

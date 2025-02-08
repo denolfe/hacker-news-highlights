@@ -1,14 +1,18 @@
 import ffmpeg from 'fluent-ffmpeg'
+import { fileURLToPath } from 'node:url'
 import path from 'path'
 
-import type { StoryDataAggregate, TtsService } from '../types'
+import type { StoryDataAggregate, TtsService } from '../types.js'
 
-import { CACHE_DIR, EPISODE_OUTPUT, PODCAST_NAME, podcastOutro } from '../lib/constants'
-import { readFromCache, writeToCache } from '../utils/cache'
-import { childLogger, log } from '../utils/log'
+import { CACHE_DIR, EPISODE_OUTPUT, PODCAST_NAME, podcastOutro } from '../lib/constants.js'
+import { readFromCache, writeToCache } from '../utils/cache.js'
+import { childLogger, log } from '../utils/log.js'
+
+const filename = fileURLToPath(import.meta.url)
+const dirname = path.dirname(filename)
 
 const logger = childLogger('AUDIO')
-const silenceAudioPath = path.resolve(__dirname, 'silence-1s.mp3')
+const silenceAudioPath = path.resolve(dirname, 'silence-1s.mp3')
 
 const silenceAudioSegment: PodcastSegmentWithAudio = {
   audioFilename: silenceAudioPath,
@@ -67,7 +71,7 @@ export async function generateAudioFromText(
   }
 
   segments.push({
-    audioFilename: path.resolve(__dirname, 'outro.mp3'),
+    audioFilename: path.resolve(dirname, 'outro.mp3'),
     title: 'Outro',
     summary: podcastOutro,
   })

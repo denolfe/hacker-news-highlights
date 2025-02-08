@@ -1,7 +1,7 @@
 import path from 'path'
 import { loadEnvFile } from 'process'
 
-import { PROJECT_ROOT } from '../lib/constants'
+import { PROJECT_ROOT } from '../lib/constants.js'
 
 export function loadEnvIfExists(absPath?: string) {
   try {
