@@ -6,11 +6,40 @@ import { parseSiteContent } from '../utils/parseSiteContent'
 
 const logger = childLogger('HN')
 
+async function fetchWithTimeoutAndRetry(
+  url: string,
+  timeout: number = 5000,
+  retries: number = 3,
+): Promise<Response> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const controller = new AbortController()
+    const id = setTimeout(() => controller.abort(), timeout)
+    try {
+      const response = await fetch(url, { signal: controller.signal })
+      clearTimeout(id)
+      return response
+    } catch (error: unknown) {
+      clearTimeout(id)
+      if (attempt === retries) {
+        logger.error(
+          `Failed to fetch ${url} after ${retries} attempts: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
+        )
+        logger.error(error)
+        throw error
+      }
+      logger.warning(
+        `Attempt ${attempt} failed for ${url}. ${error instanceof Error ? error.message : JSON.stringify(error)}`,
+      )
+    }
+  }
+  throw new Error(`Failed to fetch ${url} after ${retries} attempts`)
+}
+
 export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]> {
   logger.info(`Fetching top ${count} stories...`)
 
   // Fetch additional stories to account for stories covered in previous episodes
-  const response = await fetch(
+  const response = await fetchWithTimeoutAndRetry(
     `https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=${count + 10}`,
   )
   const data = (await response.json()) as ResponseData
@@ -102,12 +131,17 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
     }
 
     if (!htmlString) {
-      htmlString = await fetch(story.url).then(res => res.text())
-      if (!htmlString) {
-        logger.info(`No content found for ${story.url}`)
+      try {
+        htmlString = await fetchWithTimeoutAndRetry(story.url).then(res => res.text())
+        if (!htmlString) {
+          logger.info(`No content found for ${story.url}`)
+          continue
+        }
+        await writeToCache(cacheKey, htmlString)
+      } catch (error) {
+        logger.error(`Failed to fetch content for ${story.url}: ${error.message}`)
         continue
       }
-      await writeToCache(cacheKey, htmlString)
     }
 
     const { textContent, byline, excerpt, siteName } = await parseSiteContent(htmlString)
@@ -135,7 +169,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
 }
 
 export async function fetchHnCommentsById(storyId: number): Promise<SlimComment[]> {
-  const response = await fetch(`https://hn.algolia.com/api/v1/items/${storyId}`)
+  const response = await fetchWithTimeoutAndRetry(`https://hn.algolia.com/api/v1/items/${storyId}`)
   const data = await response.json()
   // Extract only author, children, created_at, and text. Recursively extract children's children.
   const extractComment = (
@@ -152,7 +186,7 @@ export async function fetchHnCommentsById(storyId: number): Promise<SlimComment[
 }
 
 export async function fetchStoryDataById(storyId: number) {
-  const response = await fetch(`https://hn.algolia.com/api/v1/items/${storyId}`)
+  const response = await fetchWithTimeoutAndRetry(`https://hn.algolia.com/api/v1/items/${storyId}`)
   const data = (await response.json()) as StoryDataByIdResponse
 
   // Extract only author, children, created_at, and text. Recursively extract children's children.
