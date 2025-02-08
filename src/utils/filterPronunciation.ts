@@ -13,6 +13,7 @@ export function filterPronunciation(text: string): string {
       .replace(/\bsqlite\b/gi, 'ess-cue-lite')
       .replace(/\bgui\b/gi, 'gooey')
       .replace(/\browid\b/gi, 'row ID')
+      .replace(/\bregex\b/gi, 'rehh-jecks')
 
       // Remove any special characters that will never be pronounced properly such as "•" or "|"
       .replace(/[•|]/g, '')
