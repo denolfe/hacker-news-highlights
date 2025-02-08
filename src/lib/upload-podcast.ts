@@ -42,11 +42,6 @@ export async function uploadPodcast(args: {
     },
   } = authorizeRes
 
-  log.info({
-    upload_url,
-    audio_url,
-  })
-
   // Upload file
   const fileData = await fs.readFile(audioFilePath)
   const uploadRes = await fetch(upload_url, {
@@ -100,7 +95,7 @@ export async function uploadPodcast(args: {
 
   // Publish episode
   log.info(`Publishing episode...`)
-  const publishRes = await fetch(`${baseUrl}/episodes/${episodeId}/publish`, {
+  await fetch(`${baseUrl}/episodes/${episodeId}/publish`, {
     method: 'PATCH',
     headers,
     body: JSON.stringify({
@@ -110,11 +105,10 @@ export async function uploadPodcast(args: {
       },
     }),
   }).then(res => {
-    log.info({ res, status: res.status, ok: res.ok })
+    log.info({ status: res.status })
     return res.json()
   })
 
-  log.deep({ publishResponse: JSON.stringify(publishRes) })
   log.info(`Published episode with ID: ${episodeId}`)
 }
 
