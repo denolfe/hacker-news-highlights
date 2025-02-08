@@ -19,6 +19,11 @@ export type StoryOutput = {
   points: number
 }
 
+export type CoveredStory = {
+  id: number
+  coveredAt: Date
+}
+
 export type SlimComment = Pick<Comment, 'author' | 'children' | 'created_at' | 'id' | 'text'>
 
 export type Comment = {

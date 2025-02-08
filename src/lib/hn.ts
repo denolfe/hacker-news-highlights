@@ -1,4 +1,4 @@
-import type { Comment, ResponseData, SlimComment, StoryOutput } from '../types.js'
+import type { Comment, CoveredStory, ResponseData, SlimComment, StoryOutput } from '../types.js'
 
 import { readFromCache, writeToCache } from '../utils/cache.js'
 import { childLogger } from '../utils/log.js'
@@ -55,20 +55,17 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
     }
   })
 
-  // Check if we have already covered the story
-  const covered = await readFromCache('covered-stories')
-  const coveredStories: number[] = covered ? JSON.parse(covered) : []
-
-  logger.info(`Found ${coveredStories.length} covered stories`, {
-    coveredStories,
+  const recentStories = await getRecentlyCoveredStories()
+  logger.info(`Found ${recentStories.length} recently covered stories`, {
+    coveredStories: recentStories,
   })
 
   // Filter out stories we have already covered
   const filtered = slim
     .filter(s => {
-      const wasCovered = coveredStories.includes(s.storyId)
+      const wasCovered = recentStories.some(c => c.id === s.storyId)
       if (wasCovered) {
-        logger.info({ storyId: s.storyId, wasCovered })
+        logger.warning(`Story ${s.storyId} was covered recently. Removing from list.`)
       }
       return !wasCovered
     })
@@ -87,7 +84,10 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
     throw new Error(msg)
   }
 
-  const newCovered = [...coveredStories, ...filtered.map(s => s.storyId)]
+  const newCovered: CoveredStory[] = [
+    ...recentStories,
+    ...filtered.map(s => ({ id: s.storyId, coveredAt: new Date() })),
+  ]
   logger.debug({ newCovered })
 
   // Save the covered stories, but only in CI to prevent dupes between daily runs
@@ -222,6 +222,34 @@ export async function fetchStoryDataById(storyId: number) {
     url: data.url,
     source: data.author,
   }
+}
+
+/**
+ * Retrieves covered stories from cache and filters out stories that are older than 36 hours.
+ */
+async function getRecentlyCoveredStories() {
+  const covered = await readFromCache('covered-stories')
+  const rawCoveredStories: { id: number; coveredAt: string }[] = covered ? JSON.parse(covered) : []
+
+  const coveredStories: CoveredStory[] = rawCoveredStories
+    .map(story => {
+      // Filter out stories that are older than 36 hours
+      const coveredAt = new Date(story.coveredAt)
+      if (Date.now() - coveredAt.getTime() > 36 * 60 * 60 * 1000) {
+        logger.info(
+          `Story ${story.id} was covered more than 36 hours ago. Removing from covered story cache.`,
+        )
+        return null
+      }
+
+      return {
+        id: story.id,
+        coveredAt,
+      }
+    })
+    .filter((story): story is CoveredStory => story !== null)
+
+  return coveredStories
 }
 
 type StoryDataByIdResponseChildren = {
