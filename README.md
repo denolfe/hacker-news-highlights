@@ -1,12 +1,19 @@
 # Hacker News Highlights
 
+[![Subscribe to Podcast](https://img.shields.io/badge/podcast-subscribe-blue?logo=applepodcasts&color=blue)](https://hacker-news-highlights.transistor.fm)
+[![Buy me a coffee](https://img.shields.io/badge/Buy_Me_a_Coffee-ffdd00?logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/denolfe)
+
 > Daily podcast summarizing Top 10 posts from Hacker News
+>
+> [Subscribe Here](https://hacker-news-highlights.transistor.fm)
 
-[Latest Episodes](https://hacker-news-highlights.transistor.fm/)
+<img src="cover.png" width="200">
 
-<p align="center">
-  <img src="cover.png" width="300">
-</p>
+## Support
+
+If you'd like to support the podcast, you can do so by [buying me a coffee](https://buymeacoffee.com/denolfe).
+
+(ElevenLabs text to speech isn't the cheapest 😅).
 
 ## Credit
 
