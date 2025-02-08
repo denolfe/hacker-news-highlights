@@ -139,7 +139,9 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
         }
         await writeToCache(cacheKey, htmlString)
       } catch (error) {
-        logger.error(`Failed to fetch content for ${story.url}: ${error.message}`)
+        logger.error(
+          `Failed to fetch content for ${story.url}: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
+        )
         continue
       }
     }
