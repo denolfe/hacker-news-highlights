@@ -121,6 +121,8 @@ Welcome to the ${PODCAST_NAME}, where we explore the top 10 posts on Hacker News
 
 ${summary}
 
+${process.env.VOICE_SERVICE === 'elevenlabs' ? `<break time="0.5s" />` : ''}
+
 Let's ${IMPERATIVE_PHRASES[Math.floor(Math.random() * IMPERATIVE_PHRASES.length)]}.
 `
 
