@@ -139,7 +139,7 @@ Given 3 stories from today's Hacker News:
 - Focus on the main subject or action of each story.
 - Remove any extra context that isn't crucial for understanding.
 
-Output in the format: "Today, we dive into [summary 1], [summary 2], and [summary 3].
+Output in the format: "Today, we dive into [summary 1], [summary 2], and [summary 3]."
 
 Here are the top 3 stories from today's Hacker News:
 
