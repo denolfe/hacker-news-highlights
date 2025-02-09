@@ -9,7 +9,7 @@ export function loadEnvIfExists(absPath?: string) {
   } catch (err: unknown) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((err as any)?.code !== 'ENOENT') {
-      // Swallow error if file does not exist
+      throw err
     }
   }
 }
