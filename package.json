@@ -1,6 +1,7 @@
 {
   "name": "hacker-news-highlights",
   "version": "1.0.0",
+  "private": true,
   "description": "",
   "keywords": [],
   "license": "GPL-3.0-only",
