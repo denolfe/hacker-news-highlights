@@ -1,6 +1,6 @@
 import minimist from 'minimist'
 
-import { generatePodcastIntro, generatePodcastTitle, summarize } from './lib/ai.js'
+import { generateEpisodeTitle, generatePodcastIntro, summarize } from './lib/ai.js'
 import { generateAudioFromText } from './lib/audio.js'
 import { EPISODE_OUTPUT } from './lib/constants.js'
 import { fetchTopStories } from './lib/hn.js'
@@ -77,7 +77,7 @@ async function main() {
   const intro = await generatePodcastIntro(storyData)
   intro.text = filterPronunciation(intro.text)
 
-  const title = await generatePodcastTitle(storyData)
+  const title = await generateEpisodeTitle(storyData)
   const unfilteredSummaries = await summarize(storyData)
   const summaries = unfilteredSummaries.map(s => {
     return s.summary

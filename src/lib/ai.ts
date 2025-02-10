@@ -135,7 +135,6 @@ Let's ${IMPERATIVE_PHRASES[Math.floor(Math.random() * IMPERATIVE_PHRASES.length)
   const { text } = await generateText({
     model: openai('gpt-4o-mini'),
     prompt: `
-
 Given 3 stories from today's Hacker News:
 
 - Summarize these 3 stories into a single sentence.
@@ -149,7 +148,10 @@ Output in the format: "Today, we dive into [summary 1], [summary 2], and [summar
 
 Here are the top 3 stories from today's Hacker News:
 
-${stories.map(story => `Title: ${story.title}\nContent: ${story.content}\n\n`).join('\n')}
+${stories
+  .slice(0, 3)
+  .map(story => `Title: ${story.title}\nContent: ${story.content}\n\n`)
+  .join('\n')}
 `,
   })
 
@@ -158,7 +160,7 @@ ${stories.map(story => `Title: ${story.title}\nContent: ${story.content}\n\n`).j
   return { cacheKey, text: intro, title: 'Intro' }
 }
 
-export async function generatePodcastTitle(stories: StoryOutput[]): Promise<string> {
+export async function generateEpisodeTitle(stories: StoryOutput[]): Promise<string> {
   logger.info('Generating podcast title...')
   const todaysDate = new Date().toLocaleDateString('en-US', {
     month: 'short',
