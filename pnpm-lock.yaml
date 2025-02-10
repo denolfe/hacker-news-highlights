@@ -32,6 +32,9 @@ importers:
       openai:
         specifier: ^4.78.1
         version: 4.78.1(zod@3.24.1)
+      tiktoken:
+        specifier: ^1.0.20
+        version: 1.0.20
     devDependencies:
       '@faker-js/faker':
         specifier: ^9.4.0
@@ -2357,6 +2360,9 @@ packages:
   throttleit@2.1.0:
     resolution: {integrity: sha512-nt6AMGKW1p/70DF/hGBdJB57B8Tspmbp5gfJ8ilhLnt7kkr2ye7hzD6NVG8GGErk2HWF34igrL2CXmNIkzKqKw==}
     engines: {node: '>=18'}
+
+  tiktoken@1.0.20:
+    resolution: {integrity: sha512-zVIpXp84kth/Ni2me1uYlJgl2RZ2EjxwDaWLeDY/s6fZiyO9n1QoTOM5P7ZSYfToPvAvwYNMbg5LETVYVKyzfQ==}
 
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
@@ -5295,6 +5301,8 @@ snapshots:
   text-table@0.2.0: {}
 
   throttleit@2.1.0: {}
+
+  tiktoken@1.0.20: {}
 
   tinybench@2.9.0: {}
 

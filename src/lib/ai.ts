@@ -5,6 +5,7 @@ import { createHash } from 'crypto'
 import type { SlimComment, StoryDataAggregate, StoryOutput } from '../types.js'
 
 import { readFromCache, writeToCache } from '../utils/cache.js'
+import { estimateTokens } from '../utils/estimateTokens.js'
 import { childLogger } from '../utils/log.js'
 import { IMPERATIVE_PHRASES, PODCAST_NAME } from './constants.js'
 
@@ -86,14 +87,19 @@ export async function summarizeStory(story: StoryDataAggregate): Promise<StoryDa
     return story
   }
 
+  const prompt =
+    storySummarizationPrompt +
+    `Title: ${story.title}\n\n` +
+    `Source: ${story.source}\n` +
+    `Content:\n${story.content}\n` +
+    `Comments data:\n${generateCommentTree(story.comments)}`
+
+  const tokenCount = estimateTokens(prompt)
+  logger.info(`Estimated tokens: ${tokenCount}`)
+
   const { text } = await generateText({
     model: openai('gpt-4o-mini'),
-    prompt:
-      storySummarizationPrompt +
-      `Title: ${story.title}\n\n` +
-      `Source: ${story.source}\n` +
-      `Content:\n${story.content}\n` +
-      `Comments data:\n${generateCommentTree(story.comments.slice(0, 5))}`,
+    prompt,
   })
   story.summary = text
   await writeToCache(cacheKey, text)
