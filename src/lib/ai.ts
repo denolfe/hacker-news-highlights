@@ -143,6 +143,7 @@ Given 3 stories from today's Hacker News:
 - Be sure to change the summaries into the present participle form, using '-ing' verbs to indicate ongoing actions.
 - Focus on the main subject or action of each story.
 - Remove any extra context that isn't crucial for understanding.
+- For any currency amounts, convert them to words and remove the currency symbol. For example, $10.50 should be written as "ten dollars and fifty cents."; $1.4 billion should be written as "one point four billion."
 
 Output in the format: "Today, we dive into [summary 1], [summary 2], and [summary 3]."
 
@@ -191,11 +192,12 @@ export async function generateEpisodeTitle(stories: StoryOutput[]): Promise<stri
   const { text } = await generateText({
     model: openai('gpt-4o-mini'),
     prompt: `
-Given 3 stories from today's Hacker News:
+Given 3 story titles from today's Hacker News:
 
 - Summarize each summary into only a few words
 - Keep any proper nouns
 - The output should be a single sentence
+- The sentence should use commas to separate each story's summary
 
 Here are the titles:
 
