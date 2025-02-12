@@ -9,7 +9,7 @@ export function filterPronunciation(text: string): string {
 
       // Add any pronunciation replacements here
       .replace(/\bgzip\b/gi, 'jee-zip')
-      .replace(/\bwasm\b/gi, 'wah-zum')
+      .replace(/\bwasm\b/gi, 'wazum')
       .replace(/\bsqlite\b/gi, 'ess-cue-lite')
       .replace(/\bgui\b/gi, 'gooey')
       .replace(/\browid\b/gi, 'row ID')

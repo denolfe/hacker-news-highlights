@@ -12,8 +12,8 @@ describe('filterPronunciation', () => {
   test.each([
     ['gzip', 'jee-zip'],
     ['GZIP', 'jee-zip'],
-    ['wasm', 'wah-zum'],
-    ['WASM', 'wah-zum'],
+    ['wasm', 'wazum'],
+    ['WASM', 'wazum'],
     ['sqlite', 'ess-cue-lite'],
     ['SQLITE', 'ess-cue-lite'],
     ['gui', 'gooey'],
