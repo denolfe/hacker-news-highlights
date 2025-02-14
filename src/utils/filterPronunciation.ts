@@ -8,12 +8,14 @@ export function filterPronunciation(text: string): string {
       .replace(/(?<=Source: )\S+\b/g, source => source.replace(/-/g, ' '))
 
       // Add any pronunciation replacements here
-      .replace(/\bgzip\b/gi, 'jee-zip')
-      .replace(/\bwasm\b/gi, 'wazum')
-      .replace(/\bsqlite\b/gi, 'ess-cue-lite')
       .replace(/\bgui\b/gi, 'gooey')
-      .replace(/\browid\b/gi, 'row ID')
+      .replace(/\bgzip\b/gi, 'jee-zip')
+      .replace(/\bpostgresql\b/gi, 'post-gress-cue-ell')
       .replace(/\bregex\b/gi, 'rehh-jecks')
+      .replace(/\browid\b/gi, 'row ID')
+      .replace(/\bsql\b/gi, 'sequel')
+      .replace(/\bsqlite\b/gi, 'ess-cue-lite')
+      .replace(/\bwasm\b/gi, 'wazum')
 
       // Remove any special characters that will never be pronounced properly such as "•" or "|"
       .replace(/[•|]/g, '')

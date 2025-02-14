@@ -10,18 +10,16 @@ describe('filterPronunciation', () => {
 
   // Simple word replacements
   test.each([
-    ['gzip', 'jee-zip'],
-    ['GZIP', 'jee-zip'],
-    ['wasm', 'wazum'],
-    ['WASM', 'wazum'],
-    ['sqlite', 'ess-cue-lite'],
-    ['SQLITE', 'ess-cue-lite'],
     ['gui', 'gooey'],
-    ['GUI', 'gooey'],
+    ['gzip', 'jee-zip'],
+    ['postgresql', 'post-gress-cue-ell'],
     ['rowid', 'row ID'],
-    ['ROWID', 'row ID'],
+    ['sql', 'sequel'],
+    ['sqlite', 'ess-cue-lite'],
+    ['wasm', 'wazum'],
   ])('replaces %s with %s', (input, expected) => {
     expect(filterPronunciation(input)).toBe(expected)
+    expect(filterPronunciation(input.toUpperCase())).toBe(expected)
   })
 
   // Special character removal
