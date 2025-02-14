@@ -6,7 +6,7 @@ import type { SlimComment, StoryDataAggregate, StoryOutput } from '../types.js'
 
 import { readFromCache, writeToCache } from '../utils/cache.js'
 import { estimateTokens } from '../utils/estimateTokens.js'
-import { childLogger } from '../utils/log.js'
+import { childLogger, log } from '../utils/log.js'
 import { IMPERATIVE_PHRASES, PODCAST_NAME } from './constants.js'
 
 const logger = childLogger('AI')
@@ -139,7 +139,7 @@ Let's ${IMPERATIVE_PHRASES[Math.floor(Math.random() * IMPERATIVE_PHRASES.length)
 Given 3 stories from today's Hacker News:
 
 - Summarize these 3 stories into a single sentence.
-- Keep each summary short, concise, and in a similar format for clarity and flow.
+- Keep each summary a few words long.
 - Ensure each summary is independent and does not combine multiple ideas.
 - Be sure to change the summaries into the present participle form, using '-ing' verbs to indicate ongoing actions.
 - Focus on the main subject or action of each story.
@@ -158,6 +158,7 @@ ${stories
   })
 
   const intro = introTemplate(text)
+  log.info(`Intro: ${intro}`)
   await writeToCache(cacheKey, intro)
   return { cacheKey, text: intro, title: 'Intro' }
 }
@@ -186,7 +187,7 @@ export async function generateEpisodeTitle(stories: StoryOutput[]): Promise<stri
   const cacheKey = `title-${hash}`
   const cached = await readFromCache(cacheKey)
   if (cached) {
-    logger.info(`Using cached title: ${cacheKey}`)
+    logger.info(`Using cached title: ${cached}`)
     return cached
   }
 
