@@ -140,6 +140,7 @@ Given 3 stories from today's Hacker News:
 
 - Summarize these 3 stories into a single sentence.
 - Keep each summary a few words long.
+- The order of the summaries should match the order they were presented.
 - Ensure each summary is independent and does not combine multiple ideas.
 - Be sure to change the summaries into the present participle form, using '-ing' verbs to indicate ongoing actions.
 - Focus on the main subject or action of each story.
