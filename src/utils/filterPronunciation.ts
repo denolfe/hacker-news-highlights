@@ -16,6 +16,7 @@ export function filterPronunciation(text: string): string {
       .replace(/\bsql\b/gi, 'sequel')
       .replace(/\bsqlite\b/gi, 'ess-cue-lite')
       .replace(/\bwasm\b/gi, 'wazum')
+      .replace(/\bmemecoin\b/gi, 'meme-coin')
 
       // Remove any special characters that will never be pronounced properly such as "•" or "|"
       .replace(/[•|]/g, '')

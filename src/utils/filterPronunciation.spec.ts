@@ -17,6 +17,7 @@ describe('filterPronunciation', () => {
     ['sql', 'sequel'],
     ['sqlite', 'ess-cue-lite'],
     ['wasm', 'wazum'],
+    ['memecoin', 'meme-coin'],
   ])('replaces %s with %s', (input, expected) => {
     expect(filterPronunciation(input)).toBe(expected)
     expect(filterPronunciation(input.toUpperCase())).toBe(expected)
