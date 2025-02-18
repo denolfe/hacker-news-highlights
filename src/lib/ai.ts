@@ -31,6 +31,7 @@ Instructions for Summarizing the link's content:
 - Do NOT use any markdown formatting such as bold or asterisks
 - Title and Source lines MUST end with a period.
 - For any currency amounts, convert them to words and remove the currency symbol. For example, $10.50 should be written as "ten dollars and fifty cents."; $1.4 billion should be written as "one point four billion dollars".
+- For any measurements or distances, convert them to words. For example, 5km should be written as "five kilometers"; 670nm should be written as "six hundred seventy nanometers".
 
 Instructions for Summarizing Comments:
 
@@ -146,6 +147,7 @@ Given 3 stories from today's Hacker News:
 - Focus on the main subject or action of each story.
 - Remove any extra context that isn't crucial for understanding.
 - For any currency amounts, convert them to words and remove the currency symbol. For example, $10.50 should be written as "ten dollars and fifty cents."; $1.4 billion should be written as "one point four billion dollars".
+- For any measurements or distances, convert them to words. For example, 5km should be written as "five kilometers"; 670nm should be written as "six hundred seventy nanometers".
 
 Output in the format: "Today, we dive into [summary 1], [summary 2], and [summary 3]."
 
