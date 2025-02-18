@@ -17,6 +17,7 @@ export function filterPronunciation(text: string): string {
       .replace(/\bsqlite\b/gi, 'ess-cue-lite')
       .replace(/\bwasm\b/gi, 'wazum')
       .replace(/\bmemecoin\b/gi, 'meme-coin')
+      .replace(/\bvram\b/gi, 'vee-ram')
 
       // Grok
       .replace(/\bgrok\b/gi, 'grock')
