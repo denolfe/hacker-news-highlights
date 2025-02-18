@@ -1,9 +1,9 @@
 import minimist from 'minimist'
 
-import { generateEpisodeTitle, generatePodcastIntro, summarize } from './lib/ai.js'
+import { generateEpisodeTitle, generatePodcastIntro, summarize, summarizeStory } from './lib/ai.js'
 import { generateAudioFromText } from './lib/audio.js'
 import { EPISODE_OUTPUT } from './lib/constants.js'
-import { fetchTopStories } from './lib/hn.js'
+import { fetchStoryDataById, fetchTopStories } from './lib/hn.js'
 import { getTtsService } from './lib/services.js'
 import { generateShowNotes } from './lib/show-notes.js'
 import { uploadPodcast } from './lib/upload-podcast.js'
@@ -19,7 +19,7 @@ loadEnvIfExists()
 const args = minimist(process.argv.slice(2))
 
 async function main() {
-  const { count, audio, preview, publish } = args as {
+  const { count, audio, preview, publish, storyId } = args as {
     count?: number
     // Can pass --no-audio to skip audio generation
     audio?: boolean
@@ -27,6 +27,7 @@ async function main() {
     // --publish to upload to podcast host, publishes automatically in CI
     publish?: boolean
     summarizeLink?: string
+    storyId?: number
   }
 
   // TODO: Use zod
@@ -52,6 +53,21 @@ async function main() {
     const { textContent, byline, excerpt, siteName } = await parseSiteContent(htmlString)
     log.info({ textContent, byline, excerpt, siteName })
     // TODO: Summarize this with AI
+    return
+  }
+
+  if (args.storyId) {
+    log.info(`Summarizing story: ${args.storyId}`)
+    log.info('Fetching story data...')
+    const story = await fetchStoryDataById(args.storyId)
+    log.info('Summarizing...')
+    const summary = await summarizeStory(story)
+    if (!summary.summary) {
+      log.error('No summary generated')
+      return
+    }
+    const filteredSummary = filterPronunciation(summary.summary)
+    log.info(`Summary for ${story.title}:\n\n${filteredSummary}`)
     return
   }
 
