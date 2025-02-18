@@ -18,6 +18,10 @@ export function filterPronunciation(text: string): string {
       .replace(/\bwasm\b/gi, 'wazum')
       .replace(/\bmemecoin\b/gi, 'meme-coin')
 
+      // Grok
+      .replace(/\bgrok\b/gi, 'grock')
+      .replace(/\bgrok(\d)\b/gi, 'grock $1')
+
       // Remove any special characters that will never be pronounced properly such as "•" or "|"
       .replace(/[•|]/g, '')
   )
