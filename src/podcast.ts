@@ -1,6 +1,5 @@
+import { log } from '@/utils/log.js'
 import fs from 'fs/promises'
-
-import { log } from '../utils/log.js'
 
 const showId = '60573'
 const baseUrl = 'https://api.transistor.fm/v1'

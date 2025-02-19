@@ -1,9 +1,8 @@
+import type { StoryDataAggregate } from '@/types.js'
+
+import { OUTPUT_DIR } from '@/constants.js'
+import { writeToFile } from '@/utils/writeToFile.js'
 import path from 'path'
-
-import type { StoryDataAggregate } from '../types.js'
-
-import { writeToFile } from '../utils/writeToFile.js'
-import { OUTPUT_DIR } from './constants.js'
 
 /**
  * Generates show notes and transcript files

@@ -1,8 +1,9 @@
-import type { Comment, CoveredStory, ResponseData, SlimComment, StoryOutput } from '../types.js'
+import type { Comment, CoveredStory, ResponseData, SlimComment, StoryOutput } from '@/types.js'
 
-import { readFromCache, writeToCache } from '../utils/cache.js'
-import { childLogger } from '../utils/log.js'
-import { parseSiteContent } from '../utils/parseSiteContent.js'
+import { readFromCache, writeToCache } from '@/utils/cache.js'
+import { childLogger } from '@/utils/log.js'
+
+import { parseSiteContent } from './parseSiteContent.js'
 
 const logger = childLogger('HN')
 
@@ -187,7 +188,7 @@ export async function fetchHnCommentsById(storyId: number): Promise<SlimComment[
   return data.children.map(extractComment)
 }
 
-export async function fetchStoryDataById(storyId: number) {
+export async function fetchStoryDataById(storyId: number): Promise<StoryOutput> {
   const response = await fetchWithTimeoutAndRetry(`https://hn.algolia.com/api/v1/items/${storyId}`)
   const data = (await response.json()) as StoryDataByIdResponse
 

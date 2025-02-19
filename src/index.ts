@@ -1,18 +1,22 @@
+import {
+  generateEpisodeTitle,
+  generatePodcastIntro,
+  summarize,
+  summarizeStory,
+} from '@/ai/index.js'
+import { filterPronunciation } from '@/audio/filterPronunciation.js'
+import { generateAudioFromText } from '@/audio/index.js'
+import { EPISODE_OUTPUT } from '@/constants.js'
+import { fetchStoryDataById, fetchTopStories } from '@/hn/index.js'
+import { parseSiteContent } from '@/hn/parseSiteContent.js'
+import { uploadPodcast } from '@/podcast.js'
+import { getTtsService } from '@/services.js'
+import { generateShowNotes } from '@/show-notes.js'
+import { initCacheDir } from '@/utils/cache.js'
+import { loadEnvIfExists } from '@/utils/env.js'
+import { initOutputDir } from '@/utils/initOutputDir.js'
+import { log } from '@/utils/log.js'
 import minimist from 'minimist'
-
-import { generateEpisodeTitle, generatePodcastIntro, summarize, summarizeStory } from './lib/ai.js'
-import { generateAudioFromText } from './lib/audio.js'
-import { EPISODE_OUTPUT } from './lib/constants.js'
-import { fetchStoryDataById, fetchTopStories } from './lib/hn.js'
-import { getTtsService } from './lib/services.js'
-import { generateShowNotes } from './lib/show-notes.js'
-import { uploadPodcast } from './lib/upload-podcast.js'
-import { initCacheDir } from './utils/cache.js'
-import { loadEnvIfExists } from './utils/env.js'
-import { filterPronunciation } from './utils/filterPronunciation.js'
-import { initOutputDir } from './utils/initOutputDir.js'
-import { log } from './utils/log.js'
-import { parseSiteContent } from './utils/parseSiteContent.js'
 
 loadEnvIfExists()
 

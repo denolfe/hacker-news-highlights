@@ -1,7 +1,7 @@
-import type { TtsService } from '../types.js'
+import type { TtsService } from '@/types.js'
 
-import { log } from '../utils/log.js'
-import { getElevenLabsClient, getOpenAI } from './clients.js'
+import { getElevenLabsClient, getOpenAI } from '@/clients.js'
+import { log } from '@/utils/log.js'
 
 export const getTtsService: () => TtsService = () => {
   log.info(`Using voice service: ${process.env.VOICE_SERVICE || 'openai'}`)

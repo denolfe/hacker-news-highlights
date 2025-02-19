@@ -1,7 +1,7 @@
+import { CACHE_DIR } from '@/constants.js'
 import fs from 'fs/promises'
 import path from 'path'
 
-import { CACHE_DIR } from '../lib/constants.js'
 import { directoryOrFileExists } from './directoryOrFileExists.js'
 import { log } from './log.js'
 

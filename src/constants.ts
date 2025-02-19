@@ -4,9 +4,9 @@ import path from 'path'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-export const PROJECT_ROOT = path.resolve(dirname, '../..')
-export const CACHE_DIR = path.resolve(dirname, '../../cache')
-export const OUTPUT_DIR = path.resolve(dirname, '../../output')
+export const PROJECT_ROOT = path.resolve(dirname, '..')
+export const CACHE_DIR = path.resolve(dirname, '../cache')
+export const OUTPUT_DIR = path.resolve(dirname, '../output')
 export const EPISODE_OUTPUT = path.resolve(OUTPUT_DIR, 'output.mp3')
 export const PODCAST_NAME = 'Hacker News Highlights'
 

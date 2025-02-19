@@ -4,10 +4,10 @@ import { createHash } from 'crypto'
 
 import type { SlimComment, StoryDataAggregate, StoryOutput } from '../types.js'
 
+import { IMPERATIVE_PHRASES, PODCAST_NAME } from '../constants.js'
 import { readFromCache, writeToCache } from '../utils/cache.js'
-import { estimateTokens } from '../utils/estimateTokens.js'
 import { childLogger, log } from '../utils/log.js'
-import { IMPERATIVE_PHRASES, PODCAST_NAME } from './constants.js'
+import { estimateTokens } from './estimateTokens.js'
 
 const logger = childLogger('AI')
 
