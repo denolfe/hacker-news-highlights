@@ -4,7 +4,7 @@ import {
   summarize,
   summarizeStory,
 } from '@/ai/index.js'
-import { filterPronunciation } from '@/audio/filterPronunciation.js'
+import { filterPronunciation } from '@/audio/adjustPronunciation.js'
 import { generateAudioFromText } from '@/audio/index.js'
 import { EPISODE_OUTPUT } from '@/constants.js'
 import { fetchStoryDataById, fetchTopStories } from '@/hn/index.js'
