@@ -19,6 +19,7 @@ export function filterPronunciation(text: string): string {
       .replace(/\bmemecoin\b/gi, 'meme-coin')
       .replace(/\bvram\b/gi, 'vee-ram')
       .replace(/\bcodegen\b/gi, 'code-gen')
+      .replace(/\bbluesky\b/gi, 'blue-sky')
 
       // Grok
       .replace(/\bgrok\b/gi, 'grock')
