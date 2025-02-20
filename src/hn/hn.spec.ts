@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker'
 import { beforeAll, describe, expect, test, vi } from 'vitest'
-import { disableCache, jsonResponse, textResponse } from '@/test-utils.js'
+import { disableCache, jsonResponse, textResponse } from '../test-utils.js'
 import { fetchTopStories } from './index.js'
 
 describe('hn', () => {
