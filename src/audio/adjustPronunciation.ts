@@ -20,6 +20,7 @@ export function filterPronunciation(text: string): string {
       .replace(/\bvram\b/gi, 'vee-ram')
       .replace(/\bcodegen\b/gi, 'code-gen')
       .replace(/\bbluesky\b/gi, 'blue-sky')
+      .replace(/\bgnu\b/gi, 'guh-new')
 
       // Grok
       .replace(/\bgrok\b/gi, 'grock')
