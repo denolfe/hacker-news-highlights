@@ -28,6 +28,18 @@ describe('filterPronunciation', () => {
     expect(filterPronunciation(input.toUpperCase())).toBe(expected)
   })
 
+  // Words containing '.' and followed by a comma
+  test.each([
+    ['Johnny.Decimal,', 'Johnny-Decimal,'],
+    ['test.domain.hello,', 'test-domain-hello,'],
+    ['noperiod,', 'noperiod,'],
+  ])(
+    'words that contain "." and followed by comma should replace with hyphen: %s',
+    (input, expected) => {
+      expect(filterPronunciation(input)).toBe(expected)
+    },
+  )
+
   // Special character removal
   test.each([
     ['•', ''],

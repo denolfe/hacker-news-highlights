@@ -27,6 +27,10 @@ export function filterPronunciation(text: string): string {
       .replace(/\bgrok\b/gi, 'grock')
       .replace(/\bgrok(\d)\b/gi, 'grock $1')
 
+      // For words with a '.' followed by a comma, ElevenLabs pronounces the word 'comma'.
+      // Replace the '.' with a hyphen to prevent this.
+      .replace(/\b[\w|.]+(?=,)\b/g, match => match.replaceAll('.', '-'))
+
       // Remove any special characters that will never be pronounced properly such as "•" or "|"
       .replace(/[•|]/g, '')
   )
