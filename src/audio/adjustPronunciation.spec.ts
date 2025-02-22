@@ -18,6 +18,11 @@ describe('filterPronunciation', () => {
     ['sqlite', 'ess-cue-lite'],
     ['wasm', 'wazum'],
     ['memecoin', 'meme-coin'],
+    ['vram', 'vee-ram'],
+    ['codegen', 'code-gen'],
+    ['bluesky', 'blue-sky'],
+    ['gnu', 'guh-new'],
+    ['next.js', 'next-jay-ess'],
   ])('replaces %s with %s', (input, expected) => {
     expect(filterPronunciation(input)).toBe(expected)
     expect(filterPronunciation(input.toUpperCase())).toBe(expected)
