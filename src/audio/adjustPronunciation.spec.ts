@@ -23,6 +23,7 @@ describe('filterPronunciation', () => {
     ['bluesky', 'blue-sky'],
     ['gnu', 'guh-new'],
     ['next.js', 'next-jay-ess'],
+    ['ffmpeg', 'eff-eff-empeg'],
   ])('replaces %s with %s', (input, expected) => {
     expect(filterPronunciation(input)).toBe(expected)
     expect(filterPronunciation(input.toUpperCase())).toBe(expected)

@@ -22,6 +22,7 @@ export function filterPronunciation(text: string): string {
       .replace(/\bbluesky\b/gi, 'blue-sky')
       .replace(/\bgnu\b/gi, 'guh-new')
       .replace(/\bnext\.js\b/gi, 'next-jay-ess')
+      .replace(/\bffmpeg\b/gi, 'eff-eff-empeg')
 
       // Grok
       .replace(/\bgrok\b/gi, 'grock')
