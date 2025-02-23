@@ -27,9 +27,19 @@ export function filterPronunciation(text: string): string {
       .replace(/\bgrok\b/gi, 'grock')
       .replace(/\bgrok(\d)\b/gi, 'grock $1')
 
-      // For words with a '.' followed by a comma, ElevenLabs pronounces the word 'comma'.
-      // Replace the '.' with a hyphen to prevent this.
-      .replace(/\b[\w|.]+(?=,)\b/g, match => match.replaceAll('.', '-'))
+      /**
+       * For words with a '.' followed by a comma, ElevenLabs pronounces the word 'comma'.
+       **/
+
+      // Common tlds domains - replace ',' with '-dot-'
+      .replace(
+        // eslint-disable-next-line regexp/no-unused-capturing-group
+        /\b\w*\.(com|org|net|io|dev|app|gg|tech|online|store|shop|blog|website|page|space|site|design|art|info|xyz|club|live|news|today|world|zone|center|company|global|group|international|life|systems|works|codes|email|media|solutions|studio|academy|agency|business|careers|digital|education|events|exchange|expert|guru|institute|marketing|partners|services|support|tools|training|ventures)(?=,)/g,
+        match => match.replaceAll('.', '-dot-'),
+      )
+
+      // Replace the '.' with '-'
+      .replace(/\b\w[\w|.]+(?=,)\b/g, match => match.replaceAll('.', '-'))
 
       // Remove any special characters that will never be pronounced properly such as "•" or "|"
       .replace(/[•|]/g, '')

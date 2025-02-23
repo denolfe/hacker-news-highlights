@@ -31,7 +31,8 @@ describe('filterPronunciation', () => {
   // Words containing '.' and followed by a comma
   test.each([
     ['Johnny.Decimal,', 'Johnny-Decimal,'],
-    ['test.domain.hello,', 'test-domain-hello,'],
+    ['somedomain.com,', 'somedomain-dot-com,'],
+    ['somedomain.org,', 'somedomain-dot-org,'],
     ['noperiod,', 'noperiod,'],
   ])(
     'words that contain "." and followed by comma should replace with hyphen: %s',
