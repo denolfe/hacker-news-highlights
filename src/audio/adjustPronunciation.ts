@@ -11,7 +11,7 @@ export function filterPronunciation(text: string): string {
       .replace(/\bgui\b/gi, 'gooey')
       .replace(/\bgzip\b/gi, 'jee-zip')
       .replace(/\bpostgresql\b/gi, 'post-gress-cue-ell')
-      .replace(/\bregex\b/gi, 'rehh-jecks')
+      .replace(/\bregex\b/gi, 'rehjex')
       .replace(/\browid\b/gi, 'row ID')
       .replace(/\bsql\b/gi, 'sequel')
       .replace(/\bsqlite\b/gi, 'ess-cue-lite')
