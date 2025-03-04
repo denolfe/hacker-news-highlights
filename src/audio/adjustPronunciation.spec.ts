@@ -49,4 +49,13 @@ describe('filterPronunciation', () => {
   ])(`removes special character: %s`, (input, expected) => {
     expect(filterPronunciation(input)).toBe(expected)
   })
+
+  test.each([
+    ["U.S.'s", "U-S's"],
+    ["U.S.A.'s", "U-S-A's"],
+    ['U.S.,', 'U-S,'],
+    ['U.S.A.,', 'U-S-A,'],
+  ])(`replaces "." with "-": %s`, (input, expected) => {
+    expect(filterPronunciation(input)).toBe(expected)
+  })
 })
