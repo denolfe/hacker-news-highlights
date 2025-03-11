@@ -10,7 +10,7 @@ export function filterPronunciation(text: string): string {
       // Add any pronunciation replacements here
       .replace(/\bgui\b/gi, 'gooey')
       .replace(/\bgzip\b/gi, 'jee-zip')
-      .replace(/\bpostgresql\b/gi, 'post-gress-cue-ell')
+      .replace(/\bpostgresql\b/gi, 'postgressQL')
       .replace(/\bregex\b/gi, 'rehjex')
       .replace(/\browid\b/gi, 'row ID')
       .replace(/\bsql\b/gi, 'sequel')
