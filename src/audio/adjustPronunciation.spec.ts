@@ -12,7 +12,7 @@ describe('filterPronunciation', () => {
   test.each([
     ['gui', 'gooey'],
     ['gzip', 'jee-zip'],
-    ['postgresql', 'post-gress-cue-ell'],
+    ['postgresql', 'postgressQL'],
     ['rowid', 'row ID'],
     ['sql', 'sequel'],
     ['sqlite', 'ess-cue-lite'],
