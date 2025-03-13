@@ -161,7 +161,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
     }
 
     output.push({
-      content: textContent,
+      content: textContent || excerpt || '',
       url: story.url,
       source: source || readableUrl,
       ...baseStoryOutput,
