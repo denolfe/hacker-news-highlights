@@ -149,7 +149,7 @@ Given 3 stories from today's Hacker News:
 - For any currency amounts, convert them to words and remove the currency symbol. For example, $10.50 should be written as "ten dollars and fifty cents."; $1.4 billion should be written as "one point four billion dollars".
 - For any measurements or distances, convert them to words. For example, 5km should be written as "five kilometers"; 670nm should be written as "six hundred seventy nanometers".
 
-Output in the format: "Today, we dive into [summary 1], [summary 2], and [summary 3]."
+Output in the format: "Today, we dive into [summary 1]... [summary 2]... and [summary 3]."
 
 Here are the top 3 stories from today's Hacker News:
 
