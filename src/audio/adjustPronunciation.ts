@@ -23,6 +23,8 @@ export function filterPronunciation(text: string): string {
       .replace(/\bgnu\b/gi, 'guh-new')
       .replace(/\bnext\.js\b/gi, 'next-jay-ess')
       .replace(/\bffmpeg\b/gi, 'eff-eff-empeg')
+      .replace(/\bC#/gi, 'C-Sharp')
+      .replace(/\bF#/gi, 'F-Sharp')
 
       // Grok
       .replace(/\bgrok\b/gi, 'grock')
