@@ -4,7 +4,7 @@ import {
   summarize,
   summarizeStory,
 } from '@/ai/index.js'
-import { filterPronunciation } from '@/audio/adjustPronunciation.js'
+import { adjustPronunciation } from '@/audio/adjustPronunciation.js'
 import { generateAudioFromText } from '@/audio/index.js'
 import { EPISODE_OUTPUT } from '@/constants.js'
 import { fetchStoryDataById, fetchTopStories } from '@/hn/index.js'
@@ -70,7 +70,7 @@ async function main() {
       log.error('No summary generated')
       return
     }
-    const filteredSummary = filterPronunciation(summary.summary)
+    const filteredSummary = adjustPronunciation(summary.summary)
     log.info(`Summary for ${story.title}:\n\n${filteredSummary}`)
     return
   }
@@ -95,7 +95,7 @@ async function main() {
   }
 
   const intro = await generatePodcastIntro(storyData)
-  intro.text = filterPronunciation(intro.text)
+  intro.text = adjustPronunciation(intro.text)
 
   const title = await generateEpisodeTitle(storyData)
   const unfilteredSummaries = await summarize(storyData)
@@ -103,7 +103,7 @@ async function main() {
     return s.summary
       ? {
           ...s,
-          summary: filterPronunciation(s.summary),
+          summary: adjustPronunciation(s.summary),
         }
       : s
   })

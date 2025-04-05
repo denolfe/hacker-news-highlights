@@ -1,7 +1,7 @@
 /**
  * TTS has issues with specific terms and patterns. This function replaces them with phonetic alternatives.
  */
-export function filterPronunciation(text: string): string {
+export function adjustPronunciation(text: string): string {
   return (
     text
       // Prevent pronouncing dashes in URLs

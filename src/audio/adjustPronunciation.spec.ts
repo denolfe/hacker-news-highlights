@@ -1,11 +1,11 @@
 import { describe, test, expect } from 'vitest'
-import { filterPronunciation } from './adjustPronunciation.js'
+import { adjustPronunciation } from './adjustPronunciation.js'
 
-describe('filterPronunciation', () => {
+describe('adjustPronunciation', () => {
   test('replaces hyphens in source line', () => {
     const input = 'Source: maxima-on-something.pages.dev'
     const expected = 'Source: maxima on something.pages.dev'
-    expect(filterPronunciation(input)).toBe(expected)
+    expect(adjustPronunciation(input)).toBe(expected)
   })
 
   // Simple word replacements
@@ -27,8 +27,8 @@ describe('filterPronunciation', () => {
     ['c#', 'C-Sharp'],
     ['f#', 'F-Sharp'],
   ])('replaces %s with %s', (input, expected) => {
-    expect(filterPronunciation(input)).toBe(expected)
-    expect(filterPronunciation(input.toUpperCase())).toBe(expected)
+    expect(adjustPronunciation(input)).toBe(expected)
+    expect(adjustPronunciation(input.toUpperCase())).toBe(expected)
   })
 
   // Words containing '.' and followed by a comma
@@ -40,7 +40,7 @@ describe('filterPronunciation', () => {
   ])(
     'words that contain "." and followed by comma should replace with hyphen: %s',
     (input, expected) => {
-      expect(filterPronunciation(input)).toBe(expected)
+      expect(adjustPronunciation(input)).toBe(expected)
     },
   )
 
@@ -49,7 +49,7 @@ describe('filterPronunciation', () => {
     ['•', ''],
     ['|', ''],
   ])(`removes special character: %s`, (input, expected) => {
-    expect(filterPronunciation(input)).toBe(expected)
+    expect(adjustPronunciation(input)).toBe(expected)
   })
 
   test.each([
@@ -58,6 +58,6 @@ describe('filterPronunciation', () => {
     ['U.S.,', 'U-S,'],
     ['U.S.A.,', 'U-S-A,'],
   ])(`replaces "." with "-": %s`, (input, expected) => {
-    expect(filterPronunciation(input)).toBe(expected)
+    expect(adjustPronunciation(input)).toBe(expected)
   })
 })
