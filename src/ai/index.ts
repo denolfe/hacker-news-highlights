@@ -168,12 +168,6 @@ ${stories
 
 export async function generateEpisodeTitle(stories: StoryOutput[]): Promise<string> {
   logger.info('Generating podcast title...')
-  const todaysDate = new Date().toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'America/New_York',
-  })
 
   const top3Stories = stories.slice(0, 3)
 
@@ -209,6 +203,16 @@ Here are the titles:
 ${top3Stories.map(story => `- ${story.title}\n`).join('')}
 `,
   })
+
+  const todaysDate = new Date()
+    .toLocaleDateString('en-US', {
+      month: 'numeric',
+      day: 'numeric',
+      year: '2-digit',
+      timeZone: 'America/New_York',
+    })
+    .split('/')
+    .join('.')
 
   const title = `${todaysDate} | ${text.replace(/\.$/, '')}`
   logger.info(`Title: ${title}`)
