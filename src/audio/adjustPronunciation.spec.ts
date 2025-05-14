@@ -12,7 +12,7 @@ describe('adjustPronunciation', () => {
   test.each([
     ['gui', 'gooey'],
     ['gzip', 'jee-zip'],
-    ['postgresql', 'postgressQL'],
+    ['postgresql', 'postgress QL'],
     ['rowid', 'row ID'],
     ['sql', 'sequel'],
     ['sqlite', 'ess-cue-lite'],
@@ -59,6 +59,15 @@ describe('adjustPronunciation', () => {
     ['U.S.,', 'U-S,'],
     ['U.S.A.,', 'U-S-A,'],
   ])(`replaces "." with "-": %s`, (input, expected) => {
+    expect(adjustPronunciation(input)).toBe(expected)
+  })
+
+  test.each([
+    ['OpenAI', 'Open AI'],
+    ['macOS', 'mac OS'],
+    ['FastVLM', 'Fast VLM'],
+    ['row ID', 'row ID'], // no change
+  ])('inserts space in words that end with an acronym: %s', (input, expected) => {
     expect(adjustPronunciation(input)).toBe(expected)
   })
 })

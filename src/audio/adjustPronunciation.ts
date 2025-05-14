@@ -50,6 +50,11 @@ export function adjustPronunciation(text: string): string {
         return p1.replace(/\./g, '-') + p2
       })
 
+      // Insert a space in words that end with an acronym. Ex. "OpenAI" -> "Open AI", "macOS" -> "mac OS"
+      .replace(/\b([a-z]+(?:[A-Z][a-z]+)?|[A-Z][a-z]+)([A-Z]{2,})\b/g, (match, p1, p2) => {
+        return p1 + ' ' + p2
+      })
+
       // Replace the '.' with '-'
       .replace(/\b\w[\w|.]+(?=,)\b/g, match => match.replaceAll('.', '-'))
 
