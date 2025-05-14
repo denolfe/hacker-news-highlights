@@ -62,6 +62,13 @@ describe('adjustPronunciation', () => {
     expect(adjustPronunciation(input)).toBe(expected)
   })
 
+  test.each([['itter.sh', 'itter dot SH']])(
+    'replace .sh suffix with pronouncable: %s',
+    (input, expected) => {
+      expect(adjustPronunciation(input)).toBe(expected)
+    },
+  )
+
   test.each([
     ['OpenAI', 'Open AI'],
     ['macOS', 'mac OS'],

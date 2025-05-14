@@ -45,6 +45,11 @@ export function adjustPronunciation(text: string): string {
       // Words ending in '.js', common for frameworks and libraries
       .replace(/\b\w+\.js\b/gi, match => match.replaceAll('.', ' dot j.s.'))
 
+      // Words ending in '.sh', common for frameworks and libraries
+      .replace(/\b(\w+)\.sh\b/gi, (match, p1) => {
+        return p1 + ' dot SH'
+      })
+
       // Replace abbreviations followed by apostrophe or comma with hyphen ie. U.S.'s -> U-S's or U.S., -> U-S,
       .replace(/\b([A-Z](?:\.[A-Z])+)\.('s|,)/g, (match, p1, p2) => {
         return p1.replace(/\./g, '-') + p2
