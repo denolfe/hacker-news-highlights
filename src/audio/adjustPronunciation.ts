@@ -21,7 +21,6 @@ export function adjustPronunciation(text: string): string {
       .replace(/\bcodegen\b/gi, 'code-gen')
       .replace(/\bbluesky\b/gi, 'blue-sky')
       .replace(/\bgnu\b/gi, 'guh-new')
-      .replace(/\bnext\.js\b/gi, 'next-jay-ess')
       .replace(/\bffmpeg\b/gi, 'eff-eff-empeg')
       .replace(/\bC#/gi, 'C-Sharp')
       .replace(/\bF#/gi, 'F-Sharp')
@@ -42,21 +41,23 @@ export function adjustPronunciation(text: string): string {
         match => match.replaceAll('.', '-dot-'),
       )
 
-      // Words ending in '.js', common for frameworks and libraries
-      .replace(/\b\w+\.js\b/gi, match => match.replaceAll('.', ' dot j.s.'))
+      // Words ending in '.js' to pronunce acronym JS, common for frameworks and libraries
+      .replace(/\b(\w+)\.js\b/gi, (_, p1) => {
+        return p1 + ' JS'
+      })
 
-      // Words ending in '.sh', common for frameworks and libraries
-      .replace(/\b(\w+)\.sh\b/gi, (match, p1) => {
+      // Words ending in '.sh' to be pronounced "dot SH", common for frameworks and libraries
+      .replace(/\b(\w+)\.sh\b/gi, (_, p1) => {
         return p1 + ' dot SH'
       })
 
       // Replace abbreviations followed by apostrophe or comma with hyphen ie. U.S.'s -> U-S's or U.S., -> U-S,
-      .replace(/\b([A-Z](?:\.[A-Z])+)\.('s|,)/g, (match, p1, p2) => {
+      .replace(/\b([A-Z](?:\.[A-Z])+)\.('s|,)/g, (_, p1, p2) => {
         return p1.replace(/\./g, '-') + p2
       })
 
       // Insert a space in words that end with an acronym. Ex. "OpenAI" -> "Open AI", "macOS" -> "mac OS"
-      .replace(/\b([a-z]+(?:[A-Z][a-z]+)?|[A-Z][a-z]+)([A-Z]{2,})\b/g, (match, p1, p2) => {
+      .replace(/\b([a-z]+(?:[A-Z][a-z]+)?|[A-Z][a-z]+)([A-Z]{2,})\b/g, (_, p1, p2) => {
         return p1 + ' ' + p2
       })
 

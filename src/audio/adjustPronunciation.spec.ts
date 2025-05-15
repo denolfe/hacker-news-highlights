@@ -22,7 +22,6 @@ describe('adjustPronunciation', () => {
     ['codegen', 'code-gen'],
     ['bluesky', 'blue-sky'],
     ['gnu', 'guh-new'],
-    ['next.js', 'next-jay-ess'],
     ['ffmpeg', 'eff-eff-empeg'],
     ['c#', 'C-Sharp'],
     ['f#', 'F-Sharp'],
@@ -59,6 +58,13 @@ describe('adjustPronunciation', () => {
     ['U.S.,', 'U-S,'],
     ['U.S.A.,', 'U-S-A,'],
   ])(`replaces "." with "-": %s`, (input, expected) => {
+    expect(adjustPronunciation(input)).toBe(expected)
+  })
+
+  test.each([
+    ['Next.js', 'Next JS'],
+    ['PDF.js', 'PDF JS'],
+  ])('replaces .js suffix with pronouncable: %s', (input, expected) => {
     expect(adjustPronunciation(input)).toBe(expected)
   })
 
