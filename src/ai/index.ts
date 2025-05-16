@@ -32,6 +32,7 @@ Instructions for Summarizing the link's content:
 - Title and Source lines MUST end with a period.
 - For any currency amounts, convert them to words and remove the currency symbol. For example, $10.50 should be written as "ten dollars and fifty cents."; $1.4 billion should be written as "one point four billion dollars".
 - For any measurements or distances, convert them to words. For example, 5km should be written as "five kilometers"; 670nm should be written as "six hundred seventy nanometers".
+- For any usage of the ~ symbol, convert it to "approximately", "around", or "about" - depending on the context. For example, ~500 should be written as "about five hundred" or "approximately five hundred"; ~200ms should be written as "around two hundred milliseconds" or "approximately two hundred milliseconds".
 
 Instructions for Summarizing Comments:
 
