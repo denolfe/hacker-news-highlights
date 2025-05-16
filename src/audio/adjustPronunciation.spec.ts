@@ -26,6 +26,7 @@ describe('adjustPronunciation', () => {
     ['c#', 'C-Sharp'],
     ['f#', 'F-Sharp'],
     ['redis', 'red-iss'],
+    ['systemd', 'system D'],
   ])('replaces %s with %s', (input, expected) => {
     expect(adjustPronunciation(input)).toBe(expected)
     expect(adjustPronunciation(input.toUpperCase())).toBe(expected)

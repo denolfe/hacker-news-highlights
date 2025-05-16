@@ -25,6 +25,7 @@ export function adjustPronunciation(text: string): string {
       .replace(/\bC#/gi, 'C-Sharp')
       .replace(/\bF#/gi, 'F-Sharp')
       .replace(/\bredis\b/gi, 'red-iss')
+      .replace(/\bsystemd\b/gi, 'system D')
 
       // Grok
       .replace(/\bgrok\b/gi, 'grock')
