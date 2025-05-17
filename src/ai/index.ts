@@ -156,7 +156,14 @@ Here are the top 3 stories from today's Hacker News:
 
 ${stories
   .slice(0, 3)
-  .map(story => `Title: ${story.title}\nContent: ${story.content}\n\n`)
+  .map(story => {
+    const storyTitleAndContent = `Title: ${story.title}\nContent: ${story.content}\n\n`
+    const tokenCount = estimateTokens(storyTitleAndContent)
+    // gpt-4o-mini max is 128k tokens. prompt tokens 237
+    // Remaining tokens of 127,763, divided by 3 stories = ~42,500 tokens per story
+    // Only use the title if the content is too long
+    return tokenCount > 42_500 ? `Title: ${story.title}\n\n` : storyTitleAndContent
+  })
   .join('\n')}
 `,
   })
