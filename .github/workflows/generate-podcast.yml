@@ -39,7 +39,8 @@ jobs:
         run: sudo ethtool -K eth0 tx off rx off
 
       - name: Setup FFmpeg
-        uses: federicocarboni/setup-ffmpeg@v3.1
+        # Forked this PR: https://github.com/federicocarboni/setup-ffmpeg/pull/23
+        uses: denolfe/setup-ffmpeg@retries
 
       - name: Node setup
         uses: ./.github/actions/setup
