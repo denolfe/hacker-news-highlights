@@ -15,9 +15,8 @@ on:
         default: 'openai'
         type: choice
 
-  # every morning at 4am EST
   schedule:
-    - cron: '30 9 * * *' # 4:30am EST
+    - cron: '30 10 * * *' # 6:30am EST daily
 
 permissions:
   contents: read
