@@ -25,6 +25,9 @@ export async function generateShowNotes({
   })
 
   let showNotes = `This is a recap of the top 10 posts on Hacker News on ${formattedDate}.\n\n`
+
+  showNotes += `{{chapters}}\n\n`
+
   showNotes += stories
     .map(story => {
       let str = `${story.title}\n`
