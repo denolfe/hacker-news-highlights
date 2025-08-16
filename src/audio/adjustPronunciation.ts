@@ -28,6 +28,7 @@ export function adjustPronunciation(text: string): string {
       .replace(/\bsystemd\b/gi, 'system D')
       .replace(/\bnas\b/gi, 'nazz')
       .replace(/\bfreenas\b/gi, 'freenazz')
+      .replace(/\bnginx\b/gi, 'engine-X')
 
       // Grok
       .replace(/\bgrok\b/gi, 'grock')
