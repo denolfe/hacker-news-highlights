@@ -29,6 +29,7 @@ export function adjustPronunciation(text: string): string {
       .replace(/\bnas\b/gi, 'nazz')
       .replace(/\bfreenas\b/gi, 'freenazz')
       .replace(/\bnginx\b/gi, 'engine-X')
+      .replace(/\bocaml\b/gi, 'O-Camel')
 
       // Grok
       .replace(/\bgrok\b/gi, 'grock')
