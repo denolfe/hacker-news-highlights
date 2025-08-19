@@ -149,8 +149,6 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
 
     const { textContent, byline, excerpt, siteName } = await parseSiteContent(htmlString)
 
-    logger.debug({ byline, excerpt, siteName })
-
     // If siteName or byline is same as title, walk down the chain to find something different
     // split on ' - ' or ' | ' and take the first part
     let source = (siteName || byline || undefined)?.split(/\s[-\\|<>]/)[0]
@@ -159,6 +157,16 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
     if (source === story.title) {
       source = readableUrl
     }
+
+    logger.info({
+      msg: 'Parsed site content',
+      storyId: story.storyId,
+      byline,
+      excerpt,
+      siteName,
+      readableUrl,
+      source,
+    })
 
     output.push({
       content: textContent || excerpt || '',
