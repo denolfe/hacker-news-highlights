@@ -32,6 +32,7 @@ describe('adjustPronunciation', () => {
     ['nginx', 'engine-X'],
     ['ocaml', 'O-Camel'],
     ['wysiwyg', 'wizzy-wig'],
+    ['ascii', 'askee'],
   ])('replaces %s with %s', (input, expected) => {
     expect(adjustPronunciation(input)).toBe(expected)
     expect(adjustPronunciation(input.toUpperCase())).toBe(expected)
