@@ -14,7 +14,7 @@ export function adjustPronunciation(text: string): string {
       .replace(/\bregex\b/gi, 'rehjex')
       .replace(/\browid\b/gi, 'row ID')
       .replace(/\bsql\b/gi, 'sequel')
-      .replace(/\bsqlite\b/gi, 'ess-cue-lite')
+      .replace(/\bsqlite\b/gi, 'SQ-lite')
       .replace(/\bwasm\b/gi, 'wazum')
       .replace(/\bmemecoin\b/gi, 'meme-coin')
       .replace(/\bvram\b/gi, 'vee-ram')

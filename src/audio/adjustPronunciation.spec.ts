@@ -15,7 +15,7 @@ describe('adjustPronunciation', () => {
     ['postgresql', 'postgress QL'],
     ['rowid', 'row ID'],
     ['sql', 'sequel'],
-    ['sqlite', 'ess-cue-lite'],
+    ['sqlite', 'SQ-lite'],
     ['wasm', 'wazum'],
     ['memecoin', 'meme-coin'],
     ['vram', 'vee-ram'],
