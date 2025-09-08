@@ -4,8 +4,15 @@
 export function adjustPronunciation(text: string): string {
   return (
     text
-      // Prevent pronouncing dashes in URLs
-      .replace(/(?<=Source: )\S+\b/g, source => source.replace(/-/g, ' '))
+      .replace(/(?<=Source: )\S+\b/g, source => {
+        return (
+          source
+            // Prevent pronouncing dashes in URLs
+            .replace(/-/g, ' ')
+            // nytimes.com does not have a siteName/byline. Could move this somewhere else eventually.
+            .replace(/\bnytimes\.com\b/gi, 'The New York Times')
+        )
+      })
 
       // Add any pronunciation replacements here
       .replace(/\bgui\b/gi, 'gooey')

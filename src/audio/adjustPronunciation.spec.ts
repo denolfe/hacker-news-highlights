@@ -8,6 +8,12 @@ describe('adjustPronunciation', () => {
     expect(adjustPronunciation(input)).toBe(expected)
   })
 
+  test('replaces nytimes.com with The New York Times', () => {
+    const input = 'Source: nytimes.com'
+    const expected = 'Source: The New York Times'
+    expect(adjustPronunciation(input)).toBe(expected)
+  })
+
   // Simple word replacements
   test.each([
     ['gui', 'gooey'],
