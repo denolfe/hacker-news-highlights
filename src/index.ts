@@ -6,7 +6,7 @@ import {
 } from '@/ai/index.js'
 import { adjustPronunciation } from '@/audio/adjustPronunciation.js'
 import { generateAudioFromText } from '@/audio/index.js'
-import { EPISODE_OUTPUT } from '@/constants.js'
+import { EPISODE_OUTPUT, podcastOutroWithGitHub } from '@/constants.js'
 import { fetchStoryDataById, fetchTopStories } from '@/hn/index.js'
 import { parseSiteContent } from '@/hn/parseSiteContent.js'
 import { uploadPodcast } from '@/podcast.js'

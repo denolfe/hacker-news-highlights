@@ -26,6 +26,8 @@ export async function generateShowNotes({
 
   let showNotes = `This is a recap of the top 10 posts on Hacker News on ${formattedDate}.\n\n`
 
+  showNotes += `Feel free to leave feedback on Github: https://github.com/denolfe/hacker-news-highlights\n\n`
+
   showNotes += `{{chapters}}\n\n`
 
   showNotes += stories

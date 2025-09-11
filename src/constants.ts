@@ -11,6 +11,7 @@ export const EPISODE_OUTPUT = path.resolve(OUTPUT_DIR, 'output.mp3')
 export const PODCAST_NAME = 'Hacker News Highlights'
 
 export const podcastOutro = `Thank you for joining us on another episode of the ${PODCAST_NAME}. Have a great day!`
+export const podcastOutroWithGitHub = `Thank you for joining us on another episode of the ${PODCAST_NAME}. If you have suggestions to improve the podcast, feel free to leave them on GitHub. Have a great day!`
 export const IMPERATIVE_PHRASES = [
   'begin',
   'dive in',
