@@ -12,7 +12,7 @@ import { parseSiteContent } from '@/hn/parseSiteContent.js'
 import { uploadPodcast } from '@/podcast.js'
 import { getTtsService } from '@/services.js'
 import { generateShowNotes } from '@/show-notes.js'
-import { initCacheDir } from '@/utils/cache.js'
+import { initCacheDir, writeToCache } from '@/utils/cache.js'
 import { loadEnvIfExists } from '@/utils/env.js'
 import { initOutputDir } from '@/utils/initOutputDir.js'
 import { log } from '@/utils/log.js'
@@ -32,6 +32,7 @@ async function main() {
     publish?: boolean
     summarizeLink?: string
     storyId?: number
+    textToAudio?: string
   }
 
   // TODO: Use zod
@@ -72,6 +73,16 @@ async function main() {
     }
     const filteredSummary = adjustPronunciation(summary.summary)
     log.info(`Summary for ${story.title}:\n\n${filteredSummary}`)
+    return
+  }
+
+  // Generate audio from arbitrary text
+  if (args.textToAudio) {
+    log.info('Generating audio from text')
+    const buffer = await ttsService.convert(args.textToAudio)
+    const filename = 'texttoaudio-output.mp3'
+    log.info(`Audio file generated: ${filename}`)
+    await writeToCache(filename, buffer)
     return
   }
 
