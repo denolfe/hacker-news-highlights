@@ -120,6 +120,7 @@ export async function joinAudioFiles(
         logger.error('Error occurred:', err)
         reject(err)
       })
+      .audioBitrate('192k')
       .mergeToFile(noChapterOutputFilename, CACHE_DIR)
   })
 
@@ -146,6 +147,7 @@ export async function joinAudioFiles(
       .audioCodec('copy')
       .outputOptions('-map_metadata', '1')
       .outputOptions('-metadata', `title=${PODCAST_NAME}`)
+      .audioBitrate('192k')
       .save(outputFilename)
   })
 
