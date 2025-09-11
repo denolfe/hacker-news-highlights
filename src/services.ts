@@ -14,6 +14,7 @@ export const getTtsService: () => TtsService = () => {
           {
             text,
             model_id: 'eleven_turbo_v2',
+            output_format: 'mp3_44100_192',
           },
         )
         return await streamToBuffer(audioStream)
