@@ -19,9 +19,16 @@ const openai = createOpenAI({
 const storySummarizationPrompt = `
 You are an AI language model tasked with generating a recap of a top story from Hacker News (news.ycombinator.com). For the given story, perform the following tasks:
 
-1. State the content's title: Clearly announce the title of the content.
+1. State the content's title: Clearly announce the title of the content. Modify the title following the specific instructions provided below.
 2. Summarize the link's content: Provide a concise summary of the content's main points, capturing the essence of the story.
 3. Summarize the conversations in the comments: Analyze the comments section to extract key themes, debates, and insights shared by the community.
+
+Instructions for modifying the title and content:
+
+- For any currency amounts, convert them to words and remove the currency symbol. For example, $10.50 should be written as "ten dollars and fifty cents."; $1.4 billion should be written as "one point four billion dollars".
+- For any measurements or distances, convert them to words. For example, 5km should be written as "five kilometers"; 670nm should be written as "six hundred seventy nanometers".
+- For any usage of the ~ symbol, convert it to "approximately", "around", or "about" - depending on the context. For example, ~500 should be written as "about five hundred" or "approximately five hundred"; ~200ms should be written as "around two hundred milliseconds" or "approximately two hundred milliseconds".
+- For any version numbers, replace the '.' with the word "point". For example, v2.0 should be written as "version two point oh"; 3.0 should be written as "three point oh"; 3.11 should be written as "three point eleven".
 
 Instructions for Summarizing the link's content:
 
@@ -30,9 +37,6 @@ Instructions for Summarizing the link's content:
 - Use concise language
 - Do NOT use any markdown formatting such as bold or asterisks
 - Title and Source lines MUST end with a period.
-- For any currency amounts, convert them to words and remove the currency symbol. For example, $10.50 should be written as "ten dollars and fifty cents."; $1.4 billion should be written as "one point four billion dollars".
-- For any measurements or distances, convert them to words. For example, 5km should be written as "five kilometers"; 670nm should be written as "six hundred seventy nanometers".
-- For any usage of the ~ symbol, convert it to "approximately", "around", or "about" - depending on the context. For example, ~500 should be written as "about five hundred" or "approximately five hundred"; ~200ms should be written as "around two hundred milliseconds" or "approximately two hundred milliseconds".
 
 Instructions for Summarizing Comments:
 
