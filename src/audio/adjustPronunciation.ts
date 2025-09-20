@@ -9,8 +9,10 @@ export function adjustPronunciation(text: string): string {
           source
             // Prevent pronouncing dashes in URLs
             .replace(/-/g, ' ')
-            // nytimes.com does not have a siteName/byline. Could move this somewhere else eventually.
+
+            // Sites with paywalls do not return a siteName/byline.
             .replace(/\bnytimes\.com\b/gi, 'The New York Times')
+            .replace(/\bwsj\.com\b/gi, 'The Wall Street Journal')
         )
       })
 
