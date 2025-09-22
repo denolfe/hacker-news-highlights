@@ -41,6 +41,7 @@ export function adjustPronunciation(text: string): string {
       .replace(/\bocaml\b/gi, 'O-Camel')
       .replace(/\bwysiwyg\b/gi, 'wizzy-wig')
       .replace(/\bascii\b/gi, 'askee')
+      .replace(/\bmonorepo\b/gi, 'mono-repo')
 
       // Grok
       .replace(/\bgrok\b/gi, 'grock')

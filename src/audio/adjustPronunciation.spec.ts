@@ -39,6 +39,7 @@ describe('adjustPronunciation', () => {
     ['ocaml', 'O-Camel'],
     ['wysiwyg', 'wizzy-wig'],
     ['ascii', 'askee'],
+    ['monorepo', 'mono-repo'],
   ])('replaces %s with %s', (input, expected) => {
     expect(adjustPronunciation(input)).toBe(expected)
     expect(adjustPronunciation(input.toUpperCase())).toBe(expected)
