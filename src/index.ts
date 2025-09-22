@@ -20,21 +20,23 @@ import minimist from 'minimist'
 
 loadEnvIfExists()
 
-const args = minimist(process.argv.slice(2))
+const args = minimist(process.argv.slice(2)) as {
+  /** Number of top stories to fetch */
+  count?: number
+  /** Can pass --no-audio to skip audio generation */
+  audio?: boolean
+  preview?: boolean
+  /** --publish to upload to podcast host, publishes automatically in CI */
+  publish?: boolean
+  /** Get raw data of url via readability */
+  summarizeLink?: string
+  /** Summarize a specific story by its HN id */
+  storyId?: number
+  /** Generate audio from arbitrary text */
+  textToAudio?: string
+}
 
 async function main() {
-  const { count, audio, preview, publish, storyId } = args as {
-    count?: number
-    // Can pass --no-audio to skip audio generation
-    audio?: boolean
-    preview?: boolean
-    // --publish to upload to podcast host, publishes automatically in CI
-    publish?: boolean
-    summarizeLink?: string
-    storyId?: number
-    textToAudio?: string
-  }
-
   // TODO: Use zod
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('Missing required env OPENAI_API_KEY')
@@ -86,9 +88,9 @@ async function main() {
     return
   }
 
-  const storyData = await fetchTopStories(count ?? 10)
+  const storyData = await fetchTopStories(args.count ?? 10)
 
-  if (preview) {
+  if (args.preview) {
     log.info(
       '\n' +
         storyData
@@ -121,7 +123,7 @@ async function main() {
 
   const showNotes = await generateShowNotes({ stories: summaries, introText: intro.text })
 
-  if (audio === false) {
+  if (args.audio === false) {
     log.info('SKIPPING audio generation')
   } else {
     await generateAudioFromText(
@@ -129,7 +131,7 @@ async function main() {
       ttsService,
     )
     log.info(`Total character count: ${showNotes.replace(/\s+/g, '').length}`)
-    if (process.env.CI || publish === true) {
+    if (process.env.CI || args.publish === true) {
       await uploadPodcast({
         audioFilePath: EPISODE_OUTPUT,
         title,
