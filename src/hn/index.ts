@@ -3,6 +3,7 @@ import type { Comment, CoveredStory, ResponseData, SlimComment, StoryOutput } fr
 import { readFromCache, writeToCache } from '@/utils/cache.js'
 import { childLogger } from '@/utils/log.js'
 
+import { fetchPdfText } from './fetchPdfText.js'
 import { parseSiteContent } from './parseSiteContent.js'
 
 const logger = childLogger('HN')
@@ -103,7 +104,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
     logger.info(`[${i + 1}/${filtered.length}] ${story.storyId} - ${story.title} - ${story.url}`)
     const cacheKey = 'story-' + story.storyId.toString()
 
-    let htmlString = await readFromCache(cacheKey)
+    let cachedStoryContent = await readFromCache(cacheKey)
 
     const baseStoryOutput: Pick<
       StoryOutput,
@@ -131,14 +132,20 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
       continue
     }
 
-    if (!htmlString) {
+    if (!cachedStoryContent) {
       try {
-        htmlString = await fetchWithTimeoutAndRetry(story.url).then(res => res.text())
-        if (!htmlString) {
+        if (story.url.endsWith('.pdf')) {
+          logger.info('Link is a PDF, parsing PDF content...')
+          cachedStoryContent = await fetchPdfText(story.url)
+        } else {
+          cachedStoryContent = await fetchWithTimeoutAndRetry(story.url).then(res => res.text())
+        }
+
+        if (!cachedStoryContent) {
           logger.info(`No content found for ${story.url}`)
           continue
         }
-        await writeToCache(cacheKey, htmlString)
+        await writeToCache(cacheKey, cachedStoryContent)
       } catch (error) {
         logger.error(
           `Failed to fetch content for ${story.url}: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
@@ -147,7 +154,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
       }
     }
 
-    const { textContent, byline, excerpt, siteName } = await parseSiteContent(htmlString)
+    const { textContent, byline, excerpt, siteName } = await parseSiteContent(cachedStoryContent)
 
     // If siteName or byline is same as title, walk down the chain to find something different
     // split on ' - ' or ' | ' and take the first part

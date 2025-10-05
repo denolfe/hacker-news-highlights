@@ -45,6 +45,7 @@
     "jsdom": "^26.0.0",
     "minimist": "^1.2.8",
     "openai": "^4.87.4",
+    "pdf-parse": "^2.1.7",
     "tiktoken": "^1.0.21"
   },
   "devDependencies": {
