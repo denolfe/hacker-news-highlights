@@ -56,8 +56,7 @@ async function main() {
 
   if (args.summarizeLink) {
     log.info('Summarizing link', { url: args.summarizeLink })
-    const htmlString = await fetch(args.summarizeLink).then(res => res.text())
-    const { textContent, byline, excerpt, siteName } = await parseSiteContent(htmlString)
+    const { textContent, byline, excerpt, siteName } = await parseSiteContent(args.summarizeLink)
     log.info({ textContent, byline, excerpt, siteName })
     // TODO: Summarize this with AI
     return
