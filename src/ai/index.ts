@@ -17,58 +17,49 @@ const openai = createOpenAI({
 })
 
 const storySummarizationPrompt = `
-You are an AI language model tasked with generating a recap of a top story from Hacker News (news.ycombinator.com). For the given story, perform the following tasks:
+You are an AI language model tasked with generating a recap of a top story from Hacker News (news.ycombinator.com).
+<instructions>
+  - State the content's title: Clearly announce the title of the content. Follow the <pronunciation_adjustments>
+  - Summarize the link's content: Provide a concise summary of the content's main points, capturing the essence of the story.
+  - Summarize the conversations in the comments: Analyze the comments section to extract key themes, debates, and insights shared by the community.
+</instructions>
+<pronunciation_adjustments>
+  - For any currency amounts, convert them to words and remove the currency symbol. For example, $10.50 should be written as "ten dollars and fifty cents."; $1.4 billion should be written as "one point four billion dollars".
+  - For any measurements or distances, convert them to words. For example, 5km should be written as "five kilometers"; 670nm should be written as "six hundred seventy nanometers".
+  - For any usage of the ~ symbol, convert it to "approximately", "around", or "about" - depending on the context. For example, ~500 should be written as "about five hundred" or "approximately five hundred"; ~200ms should be written as "around two hundred milliseconds" or "approximately two hundred milliseconds".
+  - For any version numbers, replace the '.' with the word "point". For example, v2.0 should be written as "version two point oh"; 3.0 should be written as "three point oh"; 3.11 should be written as "three point eleven".
+</pronunciation_adjustments>
+<content_summary>
+  - Limit sentence count to 3-5 sentences for the summary
+  - When referring to the content, use the terms "article", "news story", "post", "project", "tweet", or "video" depending on what the content is and where from.
+  - Use concise language
+  - Do NOT use any markdown formatting such as bold or asterisks
+  - Title and Source lines MUST end with a period.
+</content_summary>
+<comments_summary>
+  - Identify the main topics of discussion in the comments.
+  - Highlight any significant debates or differing opinions among users.
+  - Note any recurring themes or insights that provide additional context or perspectives on the content.
+  - Capture the general sentiment of the community regarding the content and its implications.
+  - Avoid including specific usernames or quoting comments verbatim; instead, focus on summarizing the overall discourse.
+</comments_summary>
+<example>
+  <input>
+    <title>[Content Title]</title>
+    <source>[Site Name, Byline, or Readable Hostname]</source>
+    <content>[Content]</content>
+    <comments_data>[comments in a tree structure]</comments_data>
+  </input>
+  <expected_output>
+    Title: [Content Title].
 
-1. State the content's title: Clearly announce the title of the content. Follow the pronunciation adjustments as per the rules below.
-2. Summarize the link's content: Provide a concise summary of the content's main points, capturing the essence of the story.
-3. Summarize the conversations in the comments: Analyze the comments section to extract key themes, debates, and insights shared by the community.
+    Source: [Site Name, Byline, or Readable Hostname].
 
-Instructions for adjusting pronunciation the title and content:
+    The [article, new story, post, project, tweet, video] is a [brief description of the content's focus]. [Summary of the content's main points, highlighting key arguments or findings].
 
-- For any currency amounts, convert them to words and remove the currency symbol. For example, $10.50 should be written as "ten dollars and fifty cents."; $1.4 billion should be written as "one point four billion dollars".
-- For any measurements or distances, convert them to words. For example, 5km should be written as "five kilometers"; 670nm should be written as "six hundred seventy nanometers".
-- For any usage of the ~ symbol, convert it to "approximately", "around", or "about" - depending on the context. For example, ~500 should be written as "about five hundred" or "approximately five hundred"; ~200ms should be written as "around two hundred milliseconds" or "approximately two hundred milliseconds".
-- For any version numbers, replace the '.' with the word "point". For example, v2.0 should be written as "version two point oh"; 3.0 should be written as "three point oh"; 3.11 should be written as "three point eleven".
-
-Instructions for Summarizing the link's content:
-
-- Limit sentence count to 3-5 sentences for the summary
-- When referring to the content, use the terms "article", "news story", "post", "project", "tweet", or "video" depending on what the content is and where from.
-- Use concise language
-- Do NOT use any markdown formatting such as bold or asterisks
-- Title and Source lines MUST end with a period.
-
-Instructions for Summarizing Comments:
-
--  Identify the main topics of discussion in the comments.
--  Highlight any significant debates or differing opinions among users.
--  Note any recurring themes or insights that provide additional context or perspectives on the content.
--  Capture the general sentiment of the community regarding the content and its implications.
--  Avoid including specific usernames or quoting comments verbatim; instead, focus on summarizing the overall discourse.
-
-**Example Input:**
-
-Title: [Content Title]
-
-Source: [Site Name, Byline, or Readable Hostname]
-
-Content:
-[Content]
-
-Comments data:
-[comments in a tree structure]
-
-**Expected Output:**
-
-Title: [Content Title].
-
-Source: [Site Name, Byline, or Readable Hostname].
-
-The [article, new story, post, project, tweet, video] is a [brief description of the content's focus].
-[Summary of the content's main points, highlighting key arguments or findings].
-In the comments, users discussed [main topics of discussion], focusing on [specific aspects or implications].
-They debated [key debates or differing opinions], and shared insights on [recurring themes or additional context].
-The general sentiment was [overall sentiment], with users expressing [specific reactions or concerns].
+    In the comments, users discussed [main topics of discussion], focusing on [specific aspects or implications]. They debated [key debates or differing opinions], and shared insights on [recurring themes or additional context]. The general sentiment was [overall sentiment], with users expressing [specific reactions or concerns].
+  </expected_output>
+</example>
 `
 
 export async function summarize(stories: StoryDataAggregate[]): Promise<StoryDataAggregate[]> {
@@ -96,10 +87,10 @@ export async function summarizeStory(story: StoryDataAggregate): Promise<StoryDa
 
   const prompt =
     storySummarizationPrompt +
-    `Title: ${story.title}\n\n` +
-    `Source: ${story.source}\n` +
-    `Content:\n${story.content}\n` +
-    `Comments data:\n${generateCommentTree(story.comments)}`
+    `<title>${story.title}</title>\n` +
+    `<source>${story.source}</source>\n` +
+    `<content>${story.content}\n</content>\n` +
+    `<comments_data>${generateCommentTree(story.comments)}\n</comments_data>`
 
   const tokenCount = estimateTokens(prompt)
   logger.info(`Estimated tokens: ${tokenCount}`)
