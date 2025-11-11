@@ -1,6 +1,12 @@
 import type { StoryDataAggregate, TtsService } from '@/types.js'
 
-import { CACHE_DIR, EPISODE_OUTPUT, PODCAST_NAME, podcastOutroWithGitHub } from '@/constants.js'
+import {
+  CACHE_DIR,
+  EPISODE_OUTPUT,
+  PODCAST_NAME,
+  podcastOutro,
+  podcastOutroWithGitHub,
+} from '@/constants.js'
 import { readFromCache, writeToCache } from '@/utils/cache.js'
 import { childLogger, log } from '@/utils/log.js'
 import ffmpeg from 'fluent-ffmpeg'
@@ -69,11 +75,20 @@ export async function generateAudioFromText(
     }
   }
 
-  segments.push({
-    audioFilename: path.resolve(dirname, 'outro-with-github.mp3'),
-    title: 'Outro',
-    summary: podcastOutroWithGitHub,
-  })
+  // Use outro with github on Monday episodes, all others use regular outro
+  if (new Date().getDay() === 1) {
+    segments.push({
+      audioFilename: path.resolve(dirname, 'outro-with-github.mp3'),
+      title: 'Outro',
+      summary: podcastOutroWithGitHub,
+    })
+  } else {
+    segments.push({
+      audioFilename: path.resolve(dirname, 'outro.mp3'),
+      title: 'Outro',
+      summary: podcastOutro,
+    })
+  }
 
   await joinAudioFiles(segments, EPISODE_OUTPUT)
 }
