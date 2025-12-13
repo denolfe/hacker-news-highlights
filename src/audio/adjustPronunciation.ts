@@ -45,6 +45,7 @@ export function adjustPronunciation(text: string): string {
       .replace(/\bmacos\b/gi, 'mack-OS') // "mac OS" still gets pronounced incorrectly
       .replace(/\bimgur\b/gi, 'imager')
       .replace(/\bmixpanel\b/gi, 'mix-panel')
+      .replace(/\bjpeg\b/gi, 'J-peg')
 
       // Grok
       .replace(/\bgrok\b/gi, 'grock')

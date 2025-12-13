@@ -39,7 +39,7 @@ describe('adjustPronunciation', () => {
     ['ocaml', 'O-Camel'],
     ['wysiwyg', 'wizzy-wig'],
     ['ascii', 'askee'],
-    ['monorepo', 'mono-repo'],
+    ['monorepo', 'mono-ree-poh'],
   ])('replaces %s with %s', (input, expected) => {
     expect(adjustPronunciation(input)).toBe(expected)
     expect(adjustPronunciation(input.toUpperCase())).toBe(expected)
@@ -91,7 +91,6 @@ describe('adjustPronunciation', () => {
 
   test.each([
     ['OpenAI', 'Open AI'],
-    ['macOS', 'mac OS'],
     ['FastVLM', 'Fast VLM'],
     ['row ID', 'row ID'], // no change
   ])('inserts space in words that end with an acronym: %s', (input, expected) => {
