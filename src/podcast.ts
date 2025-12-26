@@ -30,9 +30,14 @@ export async function uploadPodcast(args: {
     return res.json()
   })) as AuthorizeUploadResponse | undefined
 
-  if (!authorizeRes?.data?.attributes.upload_url || !authorizeRes.data.attributes.audio_url) {
+  if (!authorizeRes?.data?.attributes) {
     log.info({ authorizeRes })
     throw new Error('Failed to authorize upload')
+  }
+
+  if (!authorizeRes.data.attributes.upload_url || !authorizeRes.data.attributes.audio_url) {
+    log.info({ authorizeRes })
+    throw new Error('Failed to authorize upload - missing URLs')
   }
 
   const {

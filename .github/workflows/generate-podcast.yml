@@ -11,9 +11,11 @@ on:
       voice_service:
         description: 'Voice service to use'
         required: false
-        options: ['openai', 'elevenlabs']
         default: 'openai'
         type: choice
+        options:
+          - openai
+          - elevenlabs
 
   schedule:
     - cron: '30 10 * * *' # 6:30am EST daily

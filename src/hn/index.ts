@@ -37,6 +37,10 @@ async function fetchWithTimeoutAndRetry(
   throw new Error(`Failed to fetch ${url} after ${retries} attempts`)
 }
 
+/**
+ * Fetches top stories from Hacker News, filters out recently covered stories,
+ * and enriches with content and comments.
+ */
 export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]> {
   logger.info(`Fetching top ${count} stories...`)
 
@@ -142,7 +146,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
         }
 
         if (!cachedStoryContent) {
-          logger.info(`No content found for ${story.url}`)
+          logger.warning(`No content found for ${story.url} - story will be incomplete`)
           continue
         }
         await writeToCache(cacheKey, cachedStoryContent)
@@ -186,6 +190,9 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   return output
 }
 
+/**
+ * Fetches all comments for a given story ID from Hacker News API.
+ */
 export async function fetchHnCommentsById(storyId: number): Promise<SlimComment[]> {
   const response = await fetchWithTimeoutAndRetry(`https://hn.algolia.com/api/v1/items/${storyId}`)
   const data = await response.json()
@@ -203,6 +210,9 @@ export async function fetchHnCommentsById(storyId: number): Promise<SlimComment[
   return data.children.map(extractComment)
 }
 
+/**
+ * Fetches complete story data including metadata, content, and comments by story ID.
+ */
 export async function fetchStoryDataById(storyId: number): Promise<StoryOutput> {
   const response = await fetchWithTimeoutAndRetry(`https://hn.algolia.com/api/v1/items/${storyId}`)
   const data = (await response.json()) as StoryDataByIdResponse
