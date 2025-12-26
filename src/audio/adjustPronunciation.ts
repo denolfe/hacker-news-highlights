@@ -82,6 +82,12 @@ export function adjustPronunciation(text: string): string {
         return p1 + ' ' + p2
       })
 
+      // Convert version numbers (e.g., "GPT-5.2" -> "GPT-5-point-2", "4.0.0" -> "4-point-0-point-0")
+      .replace(/\b[a-z0-9-]+(?:\.\d+)+/gi, match => {
+        // Replace all dots with "-point-"
+        return match.replace(/\./g, '-point-')
+      })
+
       // Replace the '.' with '-'
       .replace(/\b\w[\w|.]+(?=,)\b/g, match => match.replaceAll('.', '-'))
 

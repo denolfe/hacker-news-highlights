@@ -96,4 +96,16 @@ describe('adjustPronunciation', () => {
   ])('inserts space in words that end with an acronym: %s', (input, expected) => {
     expect(adjustPronunciation(input)).toBe(expected)
   })
+
+  test.each([
+    ['gpt-5.2', 'gpt-5-point-2'], // case insensitive
+    ['v1.2', 'v1-point-2'],
+    ['Python 3.9', 'Python 3-point-9'],
+    ['Node.js 20.5', 'Node JS 20-point-5'], // combines with .js pattern
+    ['React 18.2', 'React 18-point-2'],
+    ['Ruby 4.0.0', 'Ruby 4-point-0-point-0'],
+    ['version 2.0', 'version 2-point-0'],
+  ])('converts version numbers to use "-point-": %s', (input, expected) => {
+    expect(adjustPronunciation(input)).toBe(expected)
+  })
 })
