@@ -8,7 +8,7 @@ import {
   podcastOutroWithGitHub,
 } from '@/constants.js'
 import { readFromCache, writeToCache } from '@/utils/cache.js'
-import { childLogger, log } from '@/utils/log.js'
+import { childLogger } from '@/utils/log.js'
 import ffmpeg from 'fluent-ffmpeg'
 import { fileURLToPath } from 'node:url'
 import path from 'path'
@@ -106,7 +106,7 @@ export async function joinAudioFiles(
   })
 
   const durations = await calculateChapters(segmentsWithSilence)
-  log.info({ durations })
+  logger.info({ durations })
 
   // Write chapter metadata to file
   const metadataContent = createMetadataContent(durations)
@@ -139,7 +139,7 @@ export async function joinAudioFiles(
       .mergeToFile(noChapterOutputFilename, CACHE_DIR)
   })
 
-  log.info('Writing metadata to file...')
+  logger.info('Writing metadata to file...')
 
   // Write metadata to the file
   // ffmpeg -i output.mp3 -i chapters.txt -map_metadata 1 -codec copy output.mp3.chapters.mp3
@@ -166,7 +166,7 @@ export async function joinAudioFiles(
       .save(outputFilename)
   })
 
-  log.info('Audio file created')
+  logger.info('Audio file created')
 }
 
 function insertBetween(
