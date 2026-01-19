@@ -190,23 +190,25 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   return output
 }
 
+/** Recursively extracts comment data from HN API response. */
+function extractComment(
+  c: any,
+): Pick<Comment, 'author' | 'children' | 'created_at' | 'id' | 'text'> {
+  return {
+    id: c.id,
+    created_at: c.created_at,
+    text: c.text,
+    author: c.author,
+    children: c.children.map(extractComment),
+  }
+}
+
 /**
  * Fetches all comments for a given story ID from Hacker News API.
  */
 export async function fetchHnCommentsById(storyId: number): Promise<SlimComment[]> {
   const response = await fetchWithTimeoutAndRetry(`https://hn.algolia.com/api/v1/items/${storyId}`)
   const data = await response.json()
-  // Extract only author, children, created_at, and text. Recursively extract children's children.
-  const extractComment = (
-    c: any,
-  ): Pick<Comment, 'author' | 'children' | 'created_at' | 'id' | 'text'> => ({
-    id: c.id,
-    created_at: c.created_at,
-    text: c.text,
-    author: c.author,
-    children: c.children.map(extractComment),
-  })
-
   return data.children.map(extractComment)
 }
 
@@ -216,18 +218,6 @@ export async function fetchHnCommentsById(storyId: number): Promise<SlimComment[
 export async function fetchStoryDataById(storyId: number): Promise<StoryOutput> {
   const response = await fetchWithTimeoutAndRetry(`https://hn.algolia.com/api/v1/items/${storyId}`)
   const data = (await response.json()) as StoryDataByIdResponse
-
-  // Extract only author, children, created_at, and text. Recursively extract children's children.
-  const extractComment = (
-    c: any,
-  ): Pick<Comment, 'author' | 'children' | 'created_at' | 'id' | 'text'> => ({
-    id: c.id,
-    created_at: c.created_at,
-    text: c.text,
-    author: c.author,
-    children: c.children.map(extractComment),
-  })
-
   const comments = data.children.map(extractComment)
 
   const baseStoryOutput: { text: null | string } & Pick<

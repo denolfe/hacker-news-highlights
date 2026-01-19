@@ -76,19 +76,12 @@ export async function generateAudioFromText(
   }
 
   // Use outro with github on Monday episodes, all others use regular outro
-  if (new Date().getDay() === 1) {
-    segments.push({
-      audioFilename: path.resolve(dirname, 'outro-with-github.mp3'),
-      title: 'Outro',
-      summary: podcastOutroWithGitHub,
-    })
-  } else {
-    segments.push({
-      audioFilename: path.resolve(dirname, 'outro.mp3'),
-      title: 'Outro',
-      summary: podcastOutro,
-    })
-  }
+  const isMonday = new Date().getDay() === 1
+  segments.push({
+    audioFilename: path.resolve(dirname, isMonday ? 'outro-with-github.mp3' : 'outro.mp3'),
+    title: 'Outro',
+    summary: isMonday ? podcastOutroWithGitHub : podcastOutro,
+  })
 
   await joinAudioFiles(segments, EPISODE_OUTPUT)
 }
