@@ -136,7 +136,7 @@ Let's ${IMPERATIVE_PHRASES[Math.floor(Math.random() * IMPERATIVE_PHRASES.length)
 Given 3 stories from today's Hacker News:
 
 - Summarize these 3 stories into a single sentence.
-- Keep each summary a few words long. If there is an absence of content, simply use the title or a summary of the title.
+- Keep each summary a few words long. When content is empty or missing, you MUST derive a summary from the title - never mention that content is missing or absent.
 - The order of the summaries should match the order they were presented.
 - Ensure each summary is independent and does not combine multiple ideas.
 - Be sure to change the summaries into the present participle form, using '-ing' verbs to indicate ongoing actions.
@@ -152,6 +152,9 @@ Here are the top 3 stories from today's Hacker News:
 ${stories
   .slice(0, 3)
   .map(story => {
+    if (!story.content) {
+      logger.warning(`Story ${story.storyId} has no content - intro will use title only`)
+    }
     const storyTitleAndContent = `Title: ${story.title}\nContent: ${story.content}\n\n`
     const tokenCount = estimateTokens(storyTitleAndContent)
     // gpt-4o-mini max is 128k tokens. prompt tokens 237

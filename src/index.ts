@@ -34,6 +34,8 @@ const args = minimist(process.argv.slice(2)) as {
   storyId?: number
   /** Generate audio from arbitrary text */
   textToAudio?: string
+  /** Generate intro from 3 comma-separated story IDs (e.g., --testIntro 123,456,789) */
+  testIntro?: string
 }
 
 async function main() {
@@ -84,6 +86,23 @@ async function main() {
     const filename = 'texttoaudio-output.mp3'
     log.info(`Audio file generated: ${filename}`)
     await writeToCache(filename, buffer)
+    return
+  }
+
+  // Test intro generation with specific story IDs
+  if (args.testIntro) {
+    const ids = args.testIntro.split(',').map(id => parseInt(id.trim(), 10))
+    if (ids.length !== 3 || ids.some(isNaN)) {
+      log.error('--testIntro requires exactly 3 comma-separated story IDs')
+      return
+    }
+    log.info(`Testing intro with story IDs: ${ids.join(', ')}`)
+    const stories = await Promise.all(ids.map(id => fetchStoryDataById(id)))
+    stories.forEach((s, i) => {
+      log.info(`[${i + 1}] ${s.title} | content length: ${s.content?.length ?? 0}`)
+    })
+    const intro = await generatePodcastIntro(stories)
+    log.info(`\nGenerated intro:\n${intro.text}`)
     return
   }
 
