@@ -6,11 +6,44 @@ import puppeteer from 'puppeteer'
 
 import { generateFallbackImage } from './fallback.js'
 
-/** CSS to hide X/Twitter UI elements */
-const TWITTER_HIDE_CSS = `
+/** CSS to hide site-specific popups, ads, and UI elements */
+const HIDE_ELEMENTS_CSS = `
+  /* X/Twitter */
   [data-testid="BottomBar"],
   [data-testid="sidebarColumn"],
-  [data-testid="sheetDialog"] {
+  [data-testid="sheetDialog"],
+
+  /* Common consent platforms */
+  #onetrust-consent-sdk,
+  #onetrust-banner-sdk,
+  .qc-cmp2-container,
+  #CybotCookiebotDialog,
+  .truste_overlay,
+  .truste_box_overlay,
+  .osano-cm-window,
+  #didomi-host,
+  .cc-window,
+  #sp_message_container,
+
+  /* Generic modal/dialog patterns */
+  [role="dialog"][aria-modal="true"],
+  div:has(> [role="dialog"][aria-modal="true"]),
+
+  /* Common ad slot patterns */
+  [data-testid="ad-unit"],
+  [data-ad-unit],
+  [data-dfp],
+  .ad-slot-header__wrapper,
+  .ad-slot,
+  .ad-container,
+  .adsbygoogle,
+  [id^="google_ads"],
+  [id^="div-gpt-ad"],
+
+  /* Newsletter/subscription popups */
+  [data-testid="newsletter-popup"],
+  .newsletter-popup,
+  .subscribe-popup {
     display: none !important;
   }
 `
@@ -27,14 +60,60 @@ export async function captureScreenshot(params: { url: string; storyId: string }
 
   log.info(`[SCREENSHOT] Capturing: ${url}`)
 
-  const browser = await puppeteer.launch({ headless: true })
+  const args = [
+    // Enhanced anti-detection for Cloudflare
+    '--disable-blink-features=AutomationControlled',
+    '--disable-features=IsolateOrigins,site-per-process',
+    '--disable-infobars',
+    '--disable-notifications',
+    '--disable-popup-blocking',
+    '--disable-default-apps',
+    '--disable-extensions',
+    '--disable-translate',
+    '--disable-sync',
+    '--disable-background-networking',
+    '--disable-client-side-phishing-detection',
+    '--disable-component-update',
+    '--disable-hang-monitor',
+    '--disable-prompt-on-repost',
+    '--disable-domain-reliability',
+    '--disable-renderer-backgrounding',
+    '--disable-background-timer-throttling',
+    '--disable-backgrounding-occluded-windows',
+    '--disable-breakpad',
+    '--disable-component-extensions-with-background-pages',
+    '--disable-ipc-flooding-protection',
+    '--disable-back-forward-cache',
+    '--disable-partial-raster',
+    '--disable-skia-runtime-opts',
+    '--disable-smooth-scrolling',
+    '--disable-features=site-per-process,TranslateUI,BlinkGenPropertyTrees',
+    '--enable-features=NetworkService,NetworkServiceInProcess',
+  ]
+
+  const browser = await puppeteer.launch({ headless: true, args })
   try {
     const page = await browser.newPage()
     await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 3 })
-    await page.goto(url, { waitUntil: 'networkidle0', timeout: 15000 })
 
-    // Hide X/Twitter UI elements
-    await page.addStyleTag({ content: TWITTER_HIDE_CSS })
+    // Try networkidle0 first, fall back to domcontentloaded on timeout
+    try {
+      await page.goto(url, { waitUntil: 'networkidle0', timeout: 15000 })
+    } catch (error) {
+      if (error instanceof Error && error.name === 'TimeoutError') {
+        log.warning(`[SCREENSHOT] networkidle0 timeout, retrying with domcontentloaded`)
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 })
+      } else {
+        throw error
+      }
+    }
+
+    // Try to inject CSS to hide popups/ads, continue without if CSP blocks it
+    try {
+      await page.addStyleTag({ content: HIDE_ELEMENTS_CSS })
+    } catch {
+      log.warning(`[SCREENSHOT] Could not inject CSS (CSP?), continuing without`)
+    }
 
     await page.screenshot({ path: filepath, type: 'png' })
     log.info(`[SCREENSHOT] Saved: ${filename}`)
