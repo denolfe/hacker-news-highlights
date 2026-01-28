@@ -99,9 +99,12 @@ async function main() {
   // Test screenshot capture for a URL
   if (args.testScreenshot) {
     log.info(`Testing screenshot capture for: ${args.testScreenshot}`)
+    const domain = new URL(args.testScreenshot).hostname.replace(/^www\./, '')
+    const randomChars = Math.random().toString(36).substring(2, 8)
+    const storyId = `${domain}-${randomChars}`
     const filepath = await captureScreenshot({
       url: args.testScreenshot,
-      storyId: 'test',
+      storyId,
     })
     log.info(`Screenshot saved to: ${filepath}`)
     return
