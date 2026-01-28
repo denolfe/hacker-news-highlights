@@ -40,7 +40,6 @@ export async function generateVideo(params: { chapters: ChapterInput[] }): Promi
     })),
   })
 
-  // Get first 3 story chapters for intro preview
   const storyChapters = chapters.filter(c => c.url !== null)
   const storyPreviews: StoryPreview[] = storyChapters.slice(0, 3).map(chapter => {
     const screenshotPath = screenshotMap.get(chapter.storyId)
@@ -56,8 +55,18 @@ export async function generateVideo(params: { chapters: ChapterInput[] }): Promi
     const isIntro = index === 0 && chapter.url === null
     const isOutro = index === chapters.length - 1 && chapter.url === null
 
+    const getChapterType = (): 'intro' | 'outro' | 'story' => {
+      if (isIntro) {
+        return 'intro'
+      }
+      if (isOutro) {
+        return 'outro'
+      }
+      return 'story'
+    }
+
     return {
-      type: isIntro ? 'intro' : isOutro ? 'outro' : 'story',
+      type: getChapterType(),
       title: chapter.title,
       source: chapter.source,
       url: chapter.url,
@@ -110,7 +119,6 @@ export async function generateVideo(params: { chapters: ChapterInput[] }): Promi
     { stdio: 'inherit' },
   )
 
-  // Clean up temp file
   fs.unlinkSync(VIDEO_NO_AUDIO)
 
   log.info(`[VIDEO] Video saved to: ${VIDEO_OUTPUT}`)

@@ -3,54 +3,6 @@ import { log } from '@/utils/log.js'
 import path from 'path'
 import puppeteer from 'puppeteer'
 
-/**
- * Attempts to fetch a logo URL and returns it if valid (returns image content-type).
- * Returns null if the URL fails or doesn't return an image.
- */
-async function tryFetchLogo(url: string): Promise<null | string> {
-  try {
-    const response = await fetch(url, {
-      method: 'HEAD',
-      signal: AbortSignal.timeout(5000),
-    })
-    const contentType = response.headers.get('content-type') || ''
-    if (response.ok && contentType.startsWith('image/')) {
-      return url
-    }
-  } catch {
-    // Fetch failed, return null
-  }
-  return null
-}
-
-/**
- * Tries multiple logo sources in order of preference:
- * 1. icon.horse - aggregates best available icon
- * 2. apple-touch-icon - high-res icon from site root
- * 3. Google favicon - reliable fallback at 128px
- */
-async function getBestLogoUrl(domain: string): Promise<string> {
-  // icon.horse finds the best available icon (often 180px+)
-  const iconHorseUrl = `https://icon.horse/icon/${encodeURIComponent(domain)}`
-  const iconHorse = await tryFetchLogo(iconHorseUrl)
-  if (iconHorse) {
-    log.info(`[FALLBACK] Using icon.horse for ${domain}`)
-    return iconHorse
-  }
-
-  // apple-touch-icon is commonly 180x180
-  const appleTouchUrl = `https://${domain}/apple-touch-icon.png`
-  const appleTouch = await tryFetchLogo(appleTouchUrl)
-  if (appleTouch) {
-    log.info(`[FALLBACK] Using apple-touch-icon for ${domain}`)
-    return appleTouch
-  }
-
-  // Google favicon as last resort (max 128px)
-  log.info(`[FALLBACK] Using Google favicon for ${domain}`)
-  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`
-}
-
 export async function generateFallbackImage(params: {
   title: string
   source: string
@@ -120,4 +72,46 @@ export async function generateFallbackImage(params: {
   } finally {
     await browser.close()
   }
+}
+
+/**
+ * Tries multiple logo sources in order of preference:
+ * 1. icon.horse - aggregates best available icon
+ * 2. apple-touch-icon - high-res icon from site root
+ * 3. Google favicon - reliable fallback at 128px
+ */
+async function getBestLogoUrl(domain: string): Promise<string> {
+  const iconHorseUrl = `https://icon.horse/icon/${encodeURIComponent(domain)}`
+  const iconHorse = await tryFetchLogo(iconHorseUrl)
+  if (iconHorse) {
+    log.info(`[FALLBACK] Using icon.horse for ${domain}`)
+    return iconHorse
+  }
+
+  const appleTouchUrl = `https://${domain}/apple-touch-icon.png`
+  const appleTouch = await tryFetchLogo(appleTouchUrl)
+  if (appleTouch) {
+    log.info(`[FALLBACK] Using apple-touch-icon for ${domain}`)
+    return appleTouch
+  }
+
+  log.info(`[FALLBACK] Using Google favicon for ${domain}`)
+  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`
+}
+
+/** Returns the URL if it responds with an image content-type, null otherwise */
+async function tryFetchLogo(url: string): Promise<null | string> {
+  try {
+    const response = await fetch(url, {
+      method: 'HEAD',
+      signal: AbortSignal.timeout(5000),
+    })
+    const contentType = response.headers.get('content-type') || ''
+    if (response.ok && contentType.startsWith('image/')) {
+      return url
+    }
+  } catch {
+    // Network error
+  }
+  return null
 }
