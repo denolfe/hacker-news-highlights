@@ -6,46 +6,12 @@ import puppeteer from 'puppeteer'
 
 import { generateFallbackImage } from './fallback.js'
 
-/** CSS to hide common banners, modals, and login prompts */
-const BANNER_HIDE_CSS = `
-  /* X/Twitter bottom banner and sidebar */
+/** CSS to hide X/Twitter UI elements */
+const TWITTER_HIDE_CSS = `
   [data-testid="BottomBar"],
-  [data-testid="sheetDialog"],
   [data-testid="sidebarColumn"],
-  [role="dialog"],
-
-  /* Common cookie/consent banners */
-  [class*="cookie"],
-  [class*="Cookie"],
-  [class*="consent"],
-  [class*="Consent"],
-  [id*="cookie"],
-  [id*="consent"],
-
-  /* Login/signup prompts */
-  [class*="login-prompt"],
-  [class*="signup-prompt"],
-  [class*="LoginPrompt"],
-  [class*="SignupPrompt"],
-
-  /* Fixed bottom bars */
-  [class*="bottom-bar"],
-  [class*="BottomBar"],
-  [class*="stickyFooter"],
-  [class*="sticky-footer"],
-
-  /* Newsletter popups */
-  [class*="newsletter"],
-  [class*="Newsletter"],
-  [class*="popup"],
-  [class*="Popup"]:not([class*="TooltipPopup"]),
-
-  /* Generic overlay/modal */
-  [class*="overlay"]:not([class*="ImageOverlay"]),
-  [class*="modal"]:not(body):not(html)
-  {
+  [data-testid="sheetDialog"] {
     display: none !important;
-    visibility: hidden !important;
   }
 `
 
@@ -67,11 +33,8 @@ export async function captureScreenshot(params: { url: string; storyId: string }
     await page.setViewport({ width: 1920, height: 1080 })
     await page.goto(url, { waitUntil: 'networkidle0', timeout: 15000 })
 
-    // CSS fallback for elements that slip through the blocker
-    await page.addStyleTag({ content: BANNER_HIDE_CSS })
-
-    // Brief pause to let styles apply
-    await new Promise(resolve => setTimeout(resolve, 100))
+    // Hide X/Twitter UI elements
+    await page.addStyleTag({ content: TWITTER_HIDE_CSS })
 
     await page.screenshot({ path: filepath, type: 'png' })
     log.info(`[SCREENSHOT] Saved: ${filename}`)
