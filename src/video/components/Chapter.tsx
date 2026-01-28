@@ -1,6 +1,6 @@
 // @ts-nocheck - Remotion uses Webpack which has different module resolution than Node ESM
 import React from 'react'
-import { Img, useVideoConfig } from 'remotion'
+import { Img, staticFile, useVideoConfig } from 'remotion'
 
 import type { VideoChapter } from '../types'
 
@@ -59,7 +59,7 @@ export const Chapter: React.FC<ChapterProps> = ({ chapter }) => {
       >
         {chapter.screenshotPath ? (
           <Img
-            src={chapter.screenshotPath}
+            src={staticFile(chapter.screenshotPath)}
             style={{ maxWidth: width, maxHeight: screenshotHeight, objectFit: 'contain' }}
           />
         ) : null}

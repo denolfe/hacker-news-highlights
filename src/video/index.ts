@@ -1,4 +1,4 @@
-import { EPISODE_OUTPUT, OUTPUT_DIR } from '@/constants.js'
+import { CACHE_DIR, EPISODE_OUTPUT, OUTPUT_DIR } from '@/constants.js'
 import { log } from '@/utils/log.js'
 import { bundle } from '@remotion/bundler'
 import { renderMedia, selectComposition } from '@remotion/renderer'
@@ -38,7 +38,8 @@ export async function generateVideo(params: { chapters: ChapterInput[] }): Promi
       title: chapter.title,
       source: chapter.source,
       url: chapter.url,
-      screenshotPath: screenshotPath ? `file://${screenshotPath}` : '',
+      // Just the filename - will be loaded via staticFile() from publicDir
+      screenshotPath: screenshotPath ? path.basename(screenshotPath) : '',
       startFrame: Math.round(chapter.start * FPS),
       durationFrames: Math.round((chapter.end - chapter.start) * FPS),
     }
@@ -53,6 +54,7 @@ export async function generateVideo(params: { chapters: ChapterInput[] }): Promi
   log.info('[VIDEO] Bundling Remotion project...')
   const bundleLocation = await bundle({
     entryPoint: path.resolve(__dirname, 'remotion-entry.tsx'),
+    publicDir: CACHE_DIR,
   })
 
   const composition = await selectComposition({
