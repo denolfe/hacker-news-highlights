@@ -2,11 +2,20 @@ import { CACHE_DIR } from '@/constants.js'
 import { cacheExists } from '@/utils/cache.js'
 import { log } from '@/utils/log.js'
 import path from 'path'
-import puppeteer from 'puppeteer'
+import puppeteer from 'puppeteer-extra'
+import AdblockerPlugin from 'puppeteer-extra-plugin-adblocker'
 
 import { generateFallbackImage } from './fallback.js'
 
-/** CSS to hide site-specific popups, ads, and UI elements */
+// Enable adblocker - blocks ads/trackers and hides empty ad containers
+puppeteer.use(
+  AdblockerPlugin({
+    blockTrackers: true,
+    blockTrackersAndAnnoyances: true,
+  }),
+)
+
+/** CSS to hide UI elements not covered by adblocker (consent popups, modals, ad containers) */
 const HIDE_ELEMENTS_CSS = `
   /* X/Twitter */
   [data-testid="BottomBar"],
@@ -28,24 +37,22 @@ const HIDE_ELEMENTS_CSS = `
   /* Generic modal/dialog patterns */
   [role="dialog"][aria-modal="true"],
 
-  /* Common ad slot patterns */
-  [data-testid="ad-unit"],
-  [data-ad-unit],
-  [data-dfp],
-  .ad-slot-header__wrapper,
-  .ad-slot,
-  .ad-container,
-  .adsbygoogle,
-  [id^="google_ads"],
-  [id^="div-gpt-ad"],
-  /* DFP leaderboard ads (windowscentral.com) */
-  .dfp-leaderboard-container,
-  [id^="bordeaux-"],
-
   /* Newsletter/subscription popups */
   [data-testid="newsletter-popup"],
   .newsletter-popup,
-  .subscribe-popup {
+  .subscribe-popup,
+
+  /* Ad container placeholders (adblocker blocks content, CSS hides empty containers) */
+  [class*="ad-container"],
+  [class*="ad-slot"],
+  [class*="ad-wrapper"],
+  [class*="ad-banner"],
+  [class*="advert-"],
+  [id*="google_ads"],
+  [id*="div-gpt-ad"],
+  .adsbygoogle,
+  .dfp-leaderboard-container,
+  [id^="bordeaux-"] {
     display: none !important;
   }
 `
@@ -123,6 +130,19 @@ export async function captureScreenshot(params: { url: string; storyId: string }
     } catch {
       log.warning(`[SCREENSHOT] Could not inject CSS (CSP?), continuing without`)
     }
+
+    // Collapse empty ad placeholder containers (have min-height but no content)
+    await page.evaluate(() => {
+      for (const div of document.querySelectorAll('div')) {
+        const style = window.getComputedStyle(div)
+        const minH = parseInt(style.minHeight) || 0
+        const text = div.innerText?.trim() || ''
+        if (minH > 100 && text.length < 50) {
+          ;(div as HTMLElement).style.minHeight = '0'
+          ;(div as HTMLElement).style.height = 'auto'
+        }
+      }
+    })
 
     await page.screenshot({ path: filepath, type: 'png' })
     log.info(`[SCREENSHOT] Saved: ${filename}`)
