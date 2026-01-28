@@ -7,7 +7,7 @@ import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'path'
 
-import type { ChapterInput, VideoChapter } from './types.js'
+import type { ChapterInput, StoryPreview, VideoChapter } from './types.js'
 
 import { captureScreenshots } from './screenshots.js'
 
@@ -40,9 +40,23 @@ export async function generateVideo(params: { chapters: ChapterInput[] }): Promi
     })),
   })
 
-  const videoChapters: VideoChapter[] = chapters.map(chapter => {
+  // Get first 3 story chapters for intro preview
+  const storyChapters = chapters.filter(c => c.url !== null)
+  const storyPreviews: StoryPreview[] = storyChapters.slice(0, 3).map(chapter => {
     const screenshotPath = screenshotMap.get(chapter.storyId)
     return {
+      title: chapter.title,
+      screenshotPath: screenshotPath ? path.basename(screenshotPath) : '',
+    }
+  })
+
+  const videoChapters: VideoChapter[] = chapters.map((chapter, index) => {
+    const screenshotPath = screenshotMap.get(chapter.storyId)
+    const isIntro = index === 0 && chapter.url === null
+    const isOutro = index === chapters.length - 1 && chapter.url === null
+
+    return {
+      type: isIntro ? 'intro' : isOutro ? 'outro' : 'story',
       title: chapter.title,
       source: chapter.source,
       url: chapter.url,
@@ -50,6 +64,7 @@ export async function generateVideo(params: { chapters: ChapterInput[] }): Promi
       screenshotPath: screenshotPath ? path.basename(screenshotPath) : '',
       startFrame: Math.round(chapter.start * FPS),
       durationFrames: Math.round((chapter.end - chapter.start) * FPS),
+      ...(isIntro && { storyPreviews }),
     }
   })
 

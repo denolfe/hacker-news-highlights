@@ -1,10 +1,17 @@
+export type StoryPreview = {
+  title: string
+  screenshotPath: string
+}
+
 export type VideoChapter = {
+  type: 'intro' | 'outro' | 'story'
   title: string
   source: string
   url: null | string
   screenshotPath: string
   startFrame: number
   durationFrames: number
+  storyPreviews?: StoryPreview[] // Only for intro
 }
 
 export type VideoProps = {

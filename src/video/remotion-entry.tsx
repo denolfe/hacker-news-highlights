@@ -7,29 +7,42 @@ import type { VideoProps } from './types'
 import { PodcastVideo } from './composition'
 
 // Mock data for Remotion preview
+const PREVIEW_STORIES = [
+  { title: 'First Story With a Longer Title Here', screenshotPath: 'src/video/story-preview.png' },
+  {
+    title: 'Second Story About Something Interesting',
+    screenshotPath: 'src/video/story-preview.png',
+  },
+  { title: 'Third Story on Tech News Today', screenshotPath: 'src/video/story-preview.png' },
+]
+
 const PREVIEW_CHAPTERS = [
   {
+    type: 'intro' as const,
     title: 'Intro',
     source: 'Hacker News Highlights',
     url: null,
     screenshotPath: '',
     startFrame: 0,
-    durationFrames: 90, // 3 seconds
+    durationFrames: 450, // 15 seconds for intro
+    storyPreviews: PREVIEW_STORIES,
   },
   {
+    type: 'story' as const,
     title: 'Example Story Title That Might Be Quite Long',
     source: 'example.com',
     url: 'https://example.com',
     screenshotPath: 'src/video/story-preview.png',
-    startFrame: 90,
+    startFrame: 450,
     durationFrames: 150, // 5 seconds
   },
   {
+    type: 'outro' as const,
     title: 'Outro',
     source: 'Hacker News Highlights',
     url: null,
     screenshotPath: '',
-    startFrame: 240,
+    startFrame: 600,
     durationFrames: 60, // 2 seconds
   },
 ]
@@ -48,10 +61,10 @@ export const RemotionRoot: React.FC = () => {
         {
           chapters: PREVIEW_CHAPTERS,
           fps: 30,
-          totalDurationInFrames: 300,
+          totalDurationInFrames: 660,
         } satisfies VideoProps
       }
-      durationInFrames={300}
+      durationInFrames={660}
       fps={30}
       height={1080}
       id="PodcastVideo"
