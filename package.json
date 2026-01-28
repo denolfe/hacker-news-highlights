@@ -17,8 +17,10 @@
     "clean:cache": "rm -rf cache/*",
     "clean:covered-stories": "rm -rf cache/covered-stories",
     "clean:output": "rm -rf output/*",
+    "clean:screenshots": "rm -rf cache/screenshot-*",
     "clean:stories": "rm -rf cache/story-*",
     "clean:summaries": "rm -rf cache/summary-* cache/intro-*",
+    "clean:video": "rm -rf output/*.mp4",
     "format": "prettier --write .",
     "lint": "eslint .",
     "lint-staged": "lint-staged",
@@ -26,6 +28,7 @@
     "mp4": "ffmpeg -loop 1 -i youtube-thumbnail.png -i output/output.mp3 -c:v libx264 -c:a aac -b:a 192k -shortest -fflags +shortest -pix_fmt yuv420p output/output.mp4",
     "prepare": "husky",
     "start": "NODE_OPTIONS=--no-deprecation tsx src/index.ts",
+    "start:video": "NODE_OPTIONS=--no-deprecation tsx src/index.ts --video",
     "test": "vitest --run",
     "test:watch": "vitest"
   },
@@ -39,6 +42,7 @@
   "dependencies": {
     "@ai-sdk/openai": "^1.2.8",
     "@mozilla/readability": "^0.6.0",
+    "@remotion/bundler": "^4.0.409",
     "@remotion/cli": "^4.0.409",
     "@remotion/renderer": "^4.0.409",
     "ai": "^4.1.66",
