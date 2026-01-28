@@ -12,11 +12,7 @@ export const PodcastVideo: React.FC<VideoProps> = ({ chapters }) => {
     <AbsoluteFill style={{ backgroundColor: '#1a1a1a' }}>
       {chapters.map((chapter, index) => (
         <Sequence durationInFrames={chapter.durationFrames} from={chapter.startFrame} key={index}>
-          {chapter.screenshotPath ? (
-            <Chapter chapter={chapter} />
-          ) : (
-            <Branding title={chapter.title} />
-          )}
+          {chapter.url ? <Chapter chapter={chapter} /> : <Branding title={chapter.title} />}
         </Sequence>
       ))}
     </AbsoluteFill>

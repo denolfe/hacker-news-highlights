@@ -1,6 +1,7 @@
 export type VideoChapter = {
   title: string
   source: string
+  url: null | string
   screenshotPath: string
   startFrame: number
   durationFrames: number
