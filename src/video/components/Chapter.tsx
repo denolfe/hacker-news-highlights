@@ -44,6 +44,11 @@ export const Chapter: React.FC<ChapterProps> = ({ chapter }) => {
   const screenshotOpacity = Math.min(screenshotFadeIn, fadeOut)
   const screenshotY = interpolate(frame, [0, 20], [50, 0], { extrapolateRight: 'clamp' })
 
+  // Slow zoom over chapter duration
+  const screenshotScale = interpolate(frame, [0, durationFrames], [1, 1.08], {
+    extrapolateRight: 'clamp',
+  })
+
   return (
     <div
       style={{
@@ -109,7 +114,7 @@ export const Chapter: React.FC<ChapterProps> = ({ chapter }) => {
               maxHeight: screenshotHeight,
               objectFit: 'contain',
               opacity: screenshotOpacity,
-              transform: `translateY(${screenshotY}px)`,
+              transform: `translateY(${screenshotY}px) scale(${screenshotScale})`,
               borderRadius: '16px 16px 0 0',
             }}
           />
