@@ -18,6 +18,7 @@ import { initOutputDir } from '@/utils/initOutputDir.js'
 import { log } from '@/utils/log.js'
 import { writeToFile } from '@/utils/writeToFile.js'
 import { generateVideo, generateYouTubeChapters } from '@/video/index.js'
+import { captureScreenshot } from '@/video/screenshots.js'
 import minimist from 'minimist'
 
 loadEnvIfExists()
@@ -40,6 +41,8 @@ const args = minimist(process.argv.slice(2)) as {
   testIntro?: string
   /** Generate video from podcast audio */
   video?: boolean
+  /** Test screenshot capture for a URL */
+  testScreenshot?: string
 }
 
 async function main() {
@@ -90,6 +93,17 @@ async function main() {
     const filename = 'texttoaudio-output.mp3'
     log.info(`Audio file generated: ${filename}`)
     await writeToCache(filename, buffer)
+    return
+  }
+
+  // Test screenshot capture for a URL
+  if (args.testScreenshot) {
+    log.info(`Testing screenshot capture for: ${args.testScreenshot}`)
+    const filepath = await captureScreenshot({
+      url: args.testScreenshot,
+      storyId: 'test',
+    })
+    log.info(`Screenshot saved to: ${filepath}`)
     return
   }
 
