@@ -1,6 +1,6 @@
+// @ts-nocheck - Remotion uses Webpack which has different module resolution than Node ESM
 import { loadFont } from '@remotion/google-fonts/Inter'
 import { loadFont as loadMonoFont } from '@remotion/google-fonts/JetBrainsMono'
-// @ts-nocheck - Remotion uses Webpack which has different module resolution than Node ESM
 import React from 'react'
 import { Img, staticFile, useVideoConfig } from 'remotion'
 
