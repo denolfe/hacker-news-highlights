@@ -22,6 +22,7 @@
     "clean:summaries": "rm -rf cache/summary-* cache/intro-*",
     "clean:video": "rm -rf output/*.mp4",
     "format": "prettier --write .",
+    "postinstall": "puppeteer browsers install chrome",
     "lint": "eslint .",
     "lint-staged": "lint-staged",
     "lint:fix": "eslint . --fix",

@@ -157,11 +157,7 @@ Video output (`--video` flag) generates an MP4 alongside the podcast audio:
 
 ### Setup
 
-Puppeteer requires Chrome browser. Install on first run:
-
-```bash
-npx puppeteer browsers install chrome
-```
+Puppeteer Chrome browser is installed automatically via `postinstall` script when running `pnpm install`.
 
 ### Video Architecture
 
