@@ -1,5 +1,5 @@
 import React from 'react'
-import { Composition } from 'remotion'
+import { Composition, registerRoot } from 'remotion'
 
 import type { VideoProps } from './types.js'
 
@@ -30,3 +30,5 @@ export const RemotionRoot: React.FC = () => {
     />
   )
 }
+
+registerRoot(RemotionRoot)
