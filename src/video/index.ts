@@ -46,6 +46,7 @@ export async function generateVideo(params: { chapters: ChapterInput[] }): Promi
     const screenshotPath = screenshotMap.get(chapter.storyId)
     return {
       title: chapter.title,
+      source: chapter.source,
       screenshotPath: screenshotPath ? path.basename(screenshotPath) : '',
     }
   })

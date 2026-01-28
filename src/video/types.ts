@@ -1,5 +1,6 @@
 export type StoryPreview = {
   title: string
+  source: string
   screenshotPath: string
 }
 

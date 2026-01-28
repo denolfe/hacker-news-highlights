@@ -1,11 +1,16 @@
 // @ts-nocheck - Remotion uses Webpack which has different module resolution than Node ESM
 import { loadFont } from '@remotion/google-fonts/Inter'
+import { loadFont as loadMonoFont } from '@remotion/google-fonts/JetBrainsMono'
 import React from 'react'
 import { Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from 'remotion'
 
 import type { StoryPreview } from '../types'
 
 const { fontFamily: interFont } = loadFont('normal', { subsets: ['latin'], weights: ['700'] })
+const { fontFamily: jetbrainsFont } = loadMonoFont('normal', {
+  subsets: ['latin'],
+  weights: ['400'],
+})
 
 type IntroProps = {
   durationFrames: number
@@ -140,6 +145,36 @@ export const Intro: React.FC<IntroProps> = ({ durationFrames, storyPreviews }) =
               flexDirection: 'column',
             }}
           >
+            <div
+              style={{
+                padding: '24px 32px 16px',
+                textAlign: 'center',
+              }}
+            >
+              <div
+                style={{
+                  color: 'white',
+                  fontSize: 32,
+                  fontFamily: interFont,
+                  fontWeight: 'bold',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {story.title}
+              </div>
+              <div
+                style={{
+                  color: '#888',
+                  fontSize: 22,
+                  marginTop: 8,
+                  fontFamily: jetbrainsFont,
+                }}
+              >
+                {story.source}
+              </div>
+            </div>
             {story.screenshotPath ? (
               <Img
                 src={staticFile(story.screenshotPath)}
@@ -152,18 +187,6 @@ export const Intro: React.FC<IntroProps> = ({ durationFrames, storyPreviews }) =
             ) : (
               <div style={{ flex: 1, backgroundColor: '#2a2a2a' }} />
             )}
-            <div
-              style={{
-                padding: '24px 32px',
-                color: 'white',
-                fontSize: 32,
-                fontFamily: interFont,
-                fontWeight: 'bold',
-                textAlign: 'center',
-              }}
-            >
-              {story.title}
-            </div>
           </div>
         )
       })}

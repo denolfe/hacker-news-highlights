@@ -8,12 +8,21 @@ import { PodcastVideo } from './composition'
 
 // Mock data for Remotion preview
 const PREVIEW_STORIES = [
-  { title: 'First Story With a Longer Title Here', screenshotPath: 'src/video/story-preview.png' },
   {
-    title: 'Second Story About Something Interesting',
+    title: 'First Story With a Longer Title Here',
+    source: 'example.com',
     screenshotPath: 'src/video/story-preview.png',
   },
-  { title: 'Third Story on Tech News Today', screenshotPath: 'src/video/story-preview.png' },
+  {
+    title: 'Second Story About Something Interesting',
+    source: 'github.com',
+    screenshotPath: 'src/video/story-preview.png',
+  },
+  {
+    title: 'Third Story on Tech News Today',
+    source: 'techcrunch.com',
+    screenshotPath: 'src/video/story-preview.png',
+  },
 ]
 
 const PREVIEW_CHAPTERS = [
