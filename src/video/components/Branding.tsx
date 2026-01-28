@@ -1,12 +1,8 @@
+// @ts-nocheck - Remotion uses Webpack which has different module resolution than Node ESM
 import React from 'react'
-import { useVideoConfig } from 'remotion'
+import { Img, staticFile, useVideoConfig } from 'remotion'
 
-type BrandingProps = {
-  title: string
-  subtitle?: string
-}
-
-export const Branding: React.FC<BrandingProps> = ({ title, subtitle }) => {
+export const Branding: React.FC = () => {
   const { width, height } = useVideoConfig()
 
   return (
@@ -15,20 +11,16 @@ export const Branding: React.FC<BrandingProps> = ({ title, subtitle }) => {
         width,
         height,
         backgroundColor: '#1a1a1a',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
       }}
     >
-      <div style={{ color: 'white', fontSize: 64, fontWeight: 'bold', textAlign: 'center' }}>
-        {title}
-      </div>
-      {subtitle ? (
-        <div style={{ color: '#888', fontSize: 32, marginTop: 20, textAlign: 'center' }}>
-          {subtitle}
-        </div>
-      ) : null}
+      <Img
+        src={staticFile('cover.png')}
+        style={{
+          width,
+          height,
+          objectFit: 'cover',
+        }}
+      />
     </div>
   )
 }
