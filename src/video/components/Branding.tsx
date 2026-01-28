@@ -18,7 +18,7 @@ export const Branding: React.FC = () => {
         style={{
           width,
           height,
-          objectFit: 'cover',
+          objectFit: 'contain',
         }}
       />
     </div>
