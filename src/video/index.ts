@@ -1,7 +1,9 @@
-import { OUTPUT_DIR } from '@/constants.js'
+import { EPISODE_OUTPUT, OUTPUT_DIR } from '@/constants.js'
 import { log } from '@/utils/log.js'
 import { bundle } from '@remotion/bundler'
 import { renderMedia, selectComposition } from '@remotion/renderer'
+import { execSync } from 'node:child_process'
+import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'path'
 
@@ -11,6 +13,7 @@ import { captureScreenshots } from './screenshots.js'
 
 const FPS = 30
 const VIDEO_OUTPUT = path.resolve(OUTPUT_DIR, 'output.mp4')
+const VIDEO_NO_AUDIO = path.resolve(OUTPUT_DIR, 'output-no-audio.mp4')
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -58,18 +61,27 @@ export async function generateVideo(params: { chapters: ChapterInput[] }): Promi
     },
   })
 
-  log.info('[VIDEO] Rendering video...')
+  log.info('[VIDEO] Rendering video (no audio)...')
   await renderMedia({
     composition,
     serveUrl: bundleLocation,
     codec: 'h264',
-    outputLocation: VIDEO_OUTPUT,
+    outputLocation: VIDEO_NO_AUDIO,
     inputProps: {
       chapters: videoChapters,
       fps: FPS,
       totalDurationInFrames,
     },
   })
+
+  log.info('[VIDEO] Adding audio track...')
+  execSync(
+    `ffmpeg -y -i "${VIDEO_NO_AUDIO}" -i "${EPISODE_OUTPUT}" -c:v copy -c:a aac -map 0:v:0 -map 1:a:0 "${VIDEO_OUTPUT}"`,
+    { stdio: 'inherit' },
+  )
+
+  // Clean up temp file
+  fs.unlinkSync(VIDEO_NO_AUDIO)
 
   log.info(`[VIDEO] Video saved to: ${VIDEO_OUTPUT}`)
 }
