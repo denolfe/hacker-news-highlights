@@ -1,8 +1,13 @@
+import { loadFont } from '@remotion/google-fonts/Inter'
+import { loadFont as loadMonoFont } from '@remotion/google-fonts/JetBrainsMono'
 // @ts-nocheck - Remotion uses Webpack which has different module resolution than Node ESM
 import React from 'react'
 import { Img, staticFile, useVideoConfig } from 'remotion'
 
 import type { VideoChapter } from '../types'
+
+const { fontFamily: interFont } = loadFont()
+const { fontFamily: jetbrainsFont } = loadMonoFont()
 
 type ChapterProps = {
   chapter: VideoChapter
@@ -39,6 +44,7 @@ export const Chapter: React.FC<ChapterProps> = ({ chapter }) => {
             color: 'white',
             fontSize: 36,
             fontWeight: 'bold',
+            fontFamily: interFont,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -46,7 +52,9 @@ export const Chapter: React.FC<ChapterProps> = ({ chapter }) => {
         >
           {chapter.title}
         </div>
-        <div style={{ color: '#888', fontSize: 24, marginTop: 8 }}>{chapter.source}</div>
+        <div style={{ color: '#888', fontSize: 24, marginTop: 8, fontFamily: jetbrainsFont }}>
+          {chapter.source}
+        </div>
       </div>
       <div
         style={{
