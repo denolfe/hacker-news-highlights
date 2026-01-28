@@ -92,7 +92,24 @@ export async function captureScreenshot(params: { url: string; storyId: string }
     // CSS fallback for elements that slip through the blocker
     await page.addStyleTag({ content: BANNER_HIDE_CSS })
 
-    // Brief pause to let styles apply
+    // DOM removal for stubborn elements (more reliable than CSS for some sites)
+    await page.evaluate(() => {
+      const selectorsToRemove = [
+        // X/Twitter
+        '[data-testid="BottomBar"]',
+        '[data-testid="sidebarColumn"]',
+        '[data-testid="sheetDialog"]',
+        '[role="dialog"]',
+        // Generic patterns
+        '[aria-label*="cookie" i]',
+        '[aria-label*="consent" i]',
+      ]
+      for (const selector of selectorsToRemove) {
+        document.querySelectorAll(selector).forEach(el => el.remove())
+      }
+    })
+
+    // Brief pause to let changes settle
     await new Promise(resolve => setTimeout(resolve, 100))
 
     await page.screenshot({ path: filepath, type: 'png' })
