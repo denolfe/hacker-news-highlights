@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Daily podcast generator that summarizes top 10 Hacker News posts using AI and text-to-speech. Audio is generated via OpenAI TTS or ElevenLabs and published to Transistor.fm podcast host.
+Daily podcast generator that summarizes top 10 Hacker News posts using AI and text-to-speech. Audio is generated via OpenAI TTS or ElevenLabs and published to Transistor.fm podcast host. Optionally generates YouTube-ready video with story screenshots and chapter timestamps.
 
 ## Development Commands
 
@@ -28,7 +28,9 @@ pnpm clean:cache       # Remove all cache files
 pnpm clean:stories     # Remove cached story data
 pnpm clean:summaries   # Remove cached summaries and intros
 pnpm clean:audio       # Remove cached MP3 files
+pnpm clean:screenshots # Remove cached screenshot images
 pnpm clean:output      # Remove output files
+pnpm clean:video       # Remove video output files
 ```
 
 ## CLI Arguments

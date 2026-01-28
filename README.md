@@ -7,9 +7,14 @@
 >
 > [Subscribe Here](https://hacker-news-highlights.transistor.fm)
 
-Also generates YouTube-ready video with story screenshots and chapter timestamps.
-
 <img src="cover.png" width="200">
+
+## Features
+
+- **AI Summaries**: GPT-4o-mini summarizes story content and top comments
+- **Text-to-Speech**: OpenAI TTS or ElevenLabs voice synthesis
+- **Podcast Publishing**: Automatic upload to Transistor.fm
+- **Video Output**: YouTube-ready MP4 with story screenshots and chapter timestamps
 
 ## Support
 
