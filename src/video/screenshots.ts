@@ -96,6 +96,20 @@ const HIDE_ELEMENTS_CSS = `
   [role="dialog"][aria-modal="true"],
   div[aria-hidden="true"]:has([role="dialog"]),
 
+  /* NYTimes login/registration modal */
+  #gateway-content,
+  [data-testid="inline-message"],
+  [class*="gate-"],
+  [class*="Gateway"],
+  [data-testid="paywall"],
+  [data-testid="registration-wall"],
+  /* NYTimes modal backdrop and gradient fade */
+  [class*="Backdrop"],
+  [class*="Overlay"]:has([role="dialog"]),
+  [class*="gradient" i],
+  [class*="Gradient"],
+  [class*="truncate-content" i],
+
   /* Newsletter/subscription popups */
   [data-testid="newsletter-popup"],
   .newsletter-popup,
@@ -214,6 +228,7 @@ export async function captureScreenshot(params: { url: string; storyId: string }
 
     // Collapse empty ad placeholder containers (have min-height but no content)
     // Also hide Usercentrics custom elements (uc-* tags with shadow DOM)
+    // And remove gradient overlays used by paywalls
     await page.evaluate(() => {
       for (const el of document.querySelectorAll('*')) {
         const tagName = el.tagName.toLowerCase()
@@ -222,9 +237,21 @@ export async function captureScreenshot(params: { url: string; storyId: string }
           ;(el as HTMLElement).style.display = 'none'
           continue
         }
+
+        const style = window.getComputedStyle(el)
+
+        // Hide overlay-positioned elements with gradient backgrounds (paywall fade overlays)
+        // Only target fixed/absolute positioned elements to avoid hiding legitimate gradients
+        const bg = style.backgroundImage || ''
+        const position = style.position
+        const isOverlay = position === 'fixed' || position === 'absolute'
+        if (bg.includes('linear-gradient') && isOverlay) {
+          ;(el as HTMLElement).style.display = 'none'
+          continue
+        }
+
         // Collapse empty divs with min-height (ad placeholders)
         if (tagName === 'div') {
-          const style = window.getComputedStyle(el)
           const minH = parseInt(style.minHeight) || 0
           const text = el.textContent?.trim() || ''
           if (minH > 100 && text.length < 50) {
