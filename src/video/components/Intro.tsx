@@ -46,7 +46,7 @@ export const Intro: React.FC<IntroProps> = ({ durationFrames, storyPreviews }) =
   const coverFadeIn = interpolate(frame, [0, 20], [0, 1], { extrapolateRight: 'clamp' })
   const coverOpacity = Math.min(coverFadeIn, fadeOut)
 
-  const coverStartSize = 400
+  const coverStartSize = 700
   const coverSize = interpolate(
     frame,
     [LOGO_ANIM_START, LOGO_ANIM_END],
@@ -80,9 +80,11 @@ export const Intro: React.FC<IntroProps> = ({ durationFrames, storyPreviews }) =
 
   // Story card dimensions - large and centered
   const cardWidth = width * 0.7
-  const cardHeight = height * 0.6
+  const textSectionHeight = 120
+  const cardHeight = height * 0.7 + textSectionHeight
   const cardX = (width - cardWidth) / 2
   const cardY = (height - cardHeight) / 2
+  const screenshotHeight = cardHeight - textSectionHeight
 
   return (
     <div style={{ width, height, backgroundColor: '#1a1a1a', position: 'relative' }}>
@@ -127,6 +129,19 @@ export const Intro: React.FC<IntroProps> = ({ durationFrames, storyPreviews }) =
           extrapolateRight: 'clamp',
         })
 
+        // Staggered title/source fade in (like Chapter component)
+        const titleFadeIn = interpolate(frame, [storyStart, storyStart + 15], [0, 1], {
+          extrapolateLeft: 'clamp',
+          extrapolateRight: 'clamp',
+        })
+        const titleOpacity = Math.min(titleFadeIn, storyFadeOut, fadeOut)
+
+        const sourceFadeIn = interpolate(frame, [storyStart + 9, storyStart + 24], [0, 1], {
+          extrapolateLeft: 'clamp',
+          extrapolateRight: 'clamp',
+        })
+        const sourceOpacity = Math.min(sourceFadeIn, storyFadeOut, fadeOut)
+
         return (
           <div
             key={index}
@@ -136,7 +151,6 @@ export const Intro: React.FC<IntroProps> = ({ durationFrames, storyPreviews }) =
               top: cardY,
               width: cardWidth,
               height: cardHeight,
-              backgroundColor: 'rgba(0, 0, 0, 0.85)',
               borderRadius: 16,
               overflow: 'hidden',
               opacity: storyOpacity,
@@ -145,9 +159,26 @@ export const Intro: React.FC<IntroProps> = ({ durationFrames, storyPreviews }) =
               flexDirection: 'column',
             }}
           >
+            <div style={{ height: screenshotHeight, overflow: 'hidden', borderRadius: 16 }}>
+              {story.screenshotPath ? (
+                <Img
+                  src={staticFile(story.screenshotPath)}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : (
+                <div style={{ width: '100%', height: '100%', backgroundColor: '#2a2a2a' }} />
+              )}
+            </div>
             <div
               style={{
-                padding: '24px 32px 16px',
+                height: textSectionHeight,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
                 textAlign: 'center',
               }}
             >
@@ -160,6 +191,8 @@ export const Intro: React.FC<IntroProps> = ({ durationFrames, storyPreviews }) =
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
+                  padding: '0 32px',
+                  opacity: titleOpacity,
                 }}
               >
                 {story.title}
@@ -168,25 +201,14 @@ export const Intro: React.FC<IntroProps> = ({ durationFrames, storyPreviews }) =
                 style={{
                   color: '#888',
                   fontSize: 22,
-                  marginTop: 8,
+                  marginTop: 4,
                   fontFamily: jetbrainsFont,
+                  opacity: sourceOpacity,
                 }}
               >
                 {story.source}
               </div>
             </div>
-            {story.screenshotPath ? (
-              <Img
-                src={staticFile(story.screenshotPath)}
-                style={{
-                  width: '100%',
-                  flex: 1,
-                  objectFit: 'cover',
-                }}
-              />
-            ) : (
-              <div style={{ flex: 1, backgroundColor: '#2a2a2a' }} />
-            )}
           </div>
         )
       })}

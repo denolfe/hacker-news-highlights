@@ -6,52 +6,67 @@ import type { VideoProps } from './types'
 
 import { PodcastVideo } from './composition'
 
-// Mock data for Remotion preview
-const PREVIEW_STORIES = [
+const STORIES = [
   {
-    title: 'First Story With a Longer Title Here',
-    source: 'example.com',
-    screenshotPath: 'src/video/story-preview.png',
+    title: '430k-year-old Wooden Tools',
+    source: 'NY Times',
+    screenshotPath: 'src/video/data/screenshot-nytimes.png',
+    url: 'ttps://www.nytimes.com/2026/01/26/science/archaeology-neanderthals-tools.html',
   },
   {
-    title: 'Second Story About Something Interesting',
-    source: 'github.com',
-    screenshotPath: 'src/video/story-preview.png',
+    title: 'Apple introduces new AirTag with longer range and improved findability',
+    source: 'Apple',
+    screenshotPath: 'src/video/data/screenshot-apple.png',
+    url: 'https://www.apple.com/newsroom/2024/03/apple-introduces-new-airtag-with-longer-range-and-improved-findability/',
   },
   {
-    title: 'Third Story on Tech News Today',
-    source: 'techcrunch.com',
-    screenshotPath: 'src/video/story-preview.png',
+    title: 'Introducing Prism',
+    source: 'openai.com',
+    screenshotPath: 'src/video/data/screenshot-openai.png',
+    url: 'https://openai.com/research/prism',
   },
 ]
 
 const PREVIEW_CHAPTERS = [
   {
-    type: 'intro' as const,
+    type: 'intro',
     title: 'Intro',
     source: 'Hacker News Highlights',
     url: null,
     screenshotPath: '',
     startFrame: 0,
     durationFrames: 450, // 15 seconds for intro
-    storyPreviews: PREVIEW_STORIES,
+    storyPreviews: STORIES.map(s => ({
+      title: s.title,
+      source: s.source,
+      screenshotPath: s.screenshotPath,
+    })),
   },
   {
-    type: 'story' as const,
-    title: 'Example Story Title That Might Be Quite Long',
-    source: 'example.com',
-    url: 'https://example.com',
-    screenshotPath: 'src/video/story-preview.png',
+    type: 'story',
+    ...STORIES[0],
     startFrame: 450,
     durationFrames: 150, // 5 seconds
   },
   {
-    type: 'outro' as const,
+    type: 'story',
+    ...STORIES[1],
+    startFrame: 600,
+    durationFrames: 150, // 5 seconds
+  },
+  {
+    type: 'story',
+    ...STORIES[2],
+    startFrame: 750,
+    durationFrames: 150, // 5 seconds
+  },
+  {
+    type: 'outro',
     title: 'Outro',
     source: 'Hacker News Highlights',
     url: null,
     screenshotPath: '',
-    startFrame: 600,
+    startFrame: 900,
     durationFrames: 60, // 2 seconds
   },
 ]
@@ -62,19 +77,19 @@ export const RemotionRoot: React.FC = () => {
       calculateMetadata={({ props }) => {
         return {
           durationInFrames: props.totalDurationInFrames || 1,
-          fps: props.fps || 30,
+          fps: props.fps || 60,
         }
       }}
       component={PodcastVideo}
       defaultProps={
         {
           chapters: PREVIEW_CHAPTERS,
-          fps: 30,
-          totalDurationInFrames: 660,
+          fps: 60,
+          totalDurationInFrames: 960,
         } satisfies VideoProps
       }
       durationInFrames={660}
-      fps={30}
+      fps={60}
       height={1080}
       id="PodcastVideo"
       width={1920}

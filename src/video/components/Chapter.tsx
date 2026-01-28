@@ -57,7 +57,6 @@ export const Chapter: React.FC<ChapterProps> = ({ chapter }) => {
       <div
         style={{
           height: BANNER_HEIGHT,
-          backgroundColor: 'rgba(0, 0, 0, 0.85)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
@@ -111,6 +110,7 @@ export const Chapter: React.FC<ChapterProps> = ({ chapter }) => {
               objectFit: 'contain',
               opacity: screenshotOpacity,
               transform: `translateY(${screenshotY}px)`,
+              borderRadius: '16px 16px 0 0',
             }}
           />
         ) : null}
