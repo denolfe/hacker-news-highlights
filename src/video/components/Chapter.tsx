@@ -63,6 +63,7 @@ export const Chapter: React.FC<ChapterProps> = ({ chapter }) => {
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
+          position: 'relative',
         }}
       >
         {chapter.screenshotPath ? (
@@ -71,6 +72,16 @@ export const Chapter: React.FC<ChapterProps> = ({ chapter }) => {
             style={{ maxWidth: width, maxHeight: screenshotHeight, objectFit: 'contain' }}
           />
         ) : null}
+        <Img
+          src={staticFile('cover.png')}
+          style={{
+            position: 'absolute',
+            bottom: 20,
+            left: 20,
+            width: 120,
+            height: 'auto',
+          }}
+        />
       </div>
     </div>
   )
