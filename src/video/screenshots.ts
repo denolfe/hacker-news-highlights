@@ -27,7 +27,6 @@ const HIDE_ELEMENTS_CSS = `
 
   /* Generic modal/dialog patterns */
   [role="dialog"][aria-modal="true"],
-  div:has(> [role="dialog"][aria-modal="true"]),
 
   /* Common ad slot patterns */
   [data-testid="ad-unit"],
@@ -39,6 +38,9 @@ const HIDE_ELEMENTS_CSS = `
   .adsbygoogle,
   [id^="google_ads"],
   [id^="div-gpt-ad"],
+  /* DFP leaderboard ads (windowscentral.com) */
+  .dfp-leaderboard-container,
+  [id^="bordeaux-"],
 
   /* Newsletter/subscription popups */
   [data-testid="newsletter-popup"],
@@ -106,6 +108,13 @@ export async function captureScreenshot(params: { url: string; storyId: string }
       } else {
         throw error
       }
+    }
+
+    // Wait for article to render (JS-heavy sites)
+    try {
+      await page.waitForSelector('article', { timeout: 5000 })
+    } catch {
+      // No article element, continue anyway
     }
 
     // Try to inject CSS to hide popups/ads, continue without if CSP blocks it
