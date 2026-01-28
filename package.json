@@ -32,6 +32,7 @@
     "start": "NODE_OPTIONS=--no-deprecation tsx src/index.ts",
     "start:video": "NODE_OPTIONS=--no-deprecation tsx src/index.ts --video",
     "test": "vitest --run",
+    "test:screenshots": "NODE_OPTIONS=--no-deprecation tsx scripts/test-screenshots.ts",
     "test:watch": "vitest"
   },
   "lint-staged": {
