@@ -45,6 +45,7 @@
     "@mozilla/readability": "^0.6.0",
     "@remotion/bundler": "^4.0.409",
     "@remotion/cli": "^4.0.409",
+    "@remotion/google-fonts": "^4.0.409",
     "@remotion/renderer": "^4.0.409",
     "ai": "^4.1.66",
     "elevenlabs": "^1.54.0",
