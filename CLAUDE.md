@@ -15,6 +15,7 @@ pnpm start
 # Run tests
 pnpm test              # Run all tests once
 pnpm test:watch        # Run tests in watch mode
+pnpm test:screenshots  # Manual screenshot capture verification
 
 # Type checking and linting
 pnpm build             # TypeScript type check (no output)
@@ -175,6 +176,20 @@ src/video/
     ├── Chapter.tsx    # Story chapter view (title banner + screenshot)
     └── Branding.tsx   # Intro/outro branding screen
 ```
+
+### Screenshot Capture
+
+Uses puppeteer-extra with plugins for reliable screenshots:
+- **Stealth plugin**: Bypasses Cloudflare and basic bot detection
+- **Adblocker plugin**: Removes ads and trackers
+- **CSS injection**: Hides consent popups (OneTrust, CookieYes, Usercentrics, etc.)
+- **JS evaluation**: Collapses empty ad placeholders, hides shadow DOM elements
+
+Bot protection detection triggers fallback image generation when:
+- Page body text < 200 characters
+- Challenge keywords detected (e.g., "verifying", "access denied", "ray id")
+
+Test URLs and fixes documented in `scripts/test-screenshots.json`. Run `pnpm test:screenshots` to verify.
 
 ### Remotion Notes
 

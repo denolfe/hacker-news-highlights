@@ -1,6 +1,8 @@
 # Screenshot Test Sites
 
-Test URLs used to validate screenshot capture fixes.
+Test URLs used to validate screenshot capture fixes. Run `pnpm test:screenshots` to verify all fixes.
+
+Test URL config: `scripts/test-screenshots.json`
 
 ## Error Handling
 
