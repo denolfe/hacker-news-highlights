@@ -1,10 +1,27 @@
 import { CACHE_DIR } from '@/constants.js'
 import { cacheExists } from '@/utils/cache.js'
 import { log } from '@/utils/log.js'
+import { PuppeteerBlocker } from '@ghostery/adblocker-puppeteer'
 import path from 'path'
 import puppeteer from 'puppeteer'
 
 import { generateFallbackImage } from './fallback.js'
+
+/** Lazy-loaded ad/banner blocker using community filter lists */
+let blockerPromise: null | Promise<PuppeteerBlocker> = null
+
+function getBlocker(): Promise<PuppeteerBlocker> {
+  if (!blockerPromise) {
+    log.info('[SCREENSHOT] Loading ad blocker filter lists...')
+    blockerPromise = PuppeteerBlocker.fromLists(fetch, [
+      // Fanboy's cookie/annoyance list - blocks cookie banners, GDPR notices, etc.
+      'https://secure.fanboy.co.nz/fanboy-cookiemonster.txt',
+      // EasyList annoyances - blocks social widgets, newsletter popups, etc.
+      'https://easylist.to/easylist/easylist.txt',
+    ])
+  }
+  return blockerPromise
+}
 
 /** CSS to hide common banners, modals, and login prompts */
 const BANNER_HIDE_CSS = `
@@ -65,9 +82,14 @@ export async function captureScreenshot(params: { url: string; storyId: string }
   try {
     const page = await browser.newPage()
     await page.setViewport({ width: 1920, height: 1080 })
+
+    // Enable ad/banner blocker before navigation
+    const blocker = await getBlocker()
+    await blocker.enableBlockingInPage(page)
+
     await page.goto(url, { waitUntil: 'networkidle0', timeout: 15000 })
 
-    // Hide common banners and login prompts
+    // CSS fallback for elements that slip through the blocker
     await page.addStyleTag({ content: BANNER_HIDE_CSS })
 
     // Brief pause to let styles apply
