@@ -42,7 +42,12 @@ export const Chapter: React.FC<ChapterProps> = ({ chapter }) => {
   // Screenshot slides up from +50px and fades in over frames 0-20
   const screenshotFadeIn = interpolate(frame, [0, 20], [0, 1], { extrapolateRight: 'clamp' })
   const screenshotOpacity = Math.min(screenshotFadeIn, fadeOut)
-  const screenshotY = interpolate(frame, [0, 20], [50, 0], { extrapolateRight: 'clamp' })
+  const screenshotYIn = interpolate(frame, [0, 20], [50, 0], { extrapolateRight: 'clamp' })
+  const screenshotYOut = interpolate(frame, [fadeOutStart, durationFrames], [0, 50], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  })
+  const screenshotY = screenshotYIn + screenshotYOut
 
   // Slow zoom over chapter duration
   const screenshotScale = interpolate(frame, [0, durationFrames], [1, 1.08], {
