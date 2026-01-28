@@ -32,14 +32,17 @@ export async function generateVideo(params: { chapters: ChapterInput[] }): Promi
     })),
   })
 
-  const videoChapters: VideoChapter[] = chapters.map(chapter => ({
-    title: chapter.title,
-    source: chapter.source,
-    url: chapter.url,
-    screenshotPath: screenshotMap.get(chapter.storyId) ?? '',
-    startFrame: Math.round(chapter.start * FPS),
-    durationFrames: Math.round((chapter.end - chapter.start) * FPS),
-  }))
+  const videoChapters: VideoChapter[] = chapters.map(chapter => {
+    const screenshotPath = screenshotMap.get(chapter.storyId)
+    return {
+      title: chapter.title,
+      source: chapter.source,
+      url: chapter.url,
+      screenshotPath: screenshotPath ? `file://${screenshotPath}` : '',
+      startFrame: Math.round(chapter.start * FPS),
+      durationFrames: Math.round((chapter.end - chapter.start) * FPS),
+    }
+  })
 
   const totalDurationInFrames = videoChapters.reduce((sum, c) => sum + c.durationFrames, 0)
 
