@@ -4,8 +4,12 @@ import { log } from '@/utils/log.js'
 import path from 'path'
 import puppeteer from 'puppeteer-extra'
 import AdblockerPlugin from 'puppeteer-extra-plugin-adblocker'
+import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 
 import { generateFallbackImage } from './fallback.js'
+
+// Enable stealth mode to bypass bot detection
+puppeteer.use(StealthPlugin())
 
 // Enable adblocker - blocks ads/trackers and hides empty ad containers
 puppeteer.use(
@@ -74,6 +78,9 @@ const HIDE_ELEMENTS_CSS = `
   /* Generic GDPR patterns */
   [class^="gdpr-"],
   [id^="gdpr-"],
+  /* Modality (latimes.com legal popup) */
+  modality-custom-element,
+  [id^="modality-"],
   [class*="cookie-banner"],
   [class*="cookie-consent"],
   [id*="cookie-banner"],
