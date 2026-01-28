@@ -33,6 +33,51 @@ const HIDE_ELEMENTS_CSS = `
   #didomi-host,
   .cc-window,
   #sp_message_container,
+  /* CookieYes (cky-*) */
+  [class^="cky-"],
+  [class*=" cky-"],
+  [id^="cky-"],
+  /* Usercentrics (uc-*) */
+  #usercentrics-root,
+  [class^="uc-"],
+  [class*=" uc-"],
+  /* Termly */
+  [class^="termly-"],
+  [id^="termly-"],
+  /* iubenda */
+  #iubenda-cs-banner,
+  [class^="iubenda-"],
+  /* Klaro */
+  .klaro,
+  #klaro,
+  /* Complianz (cmplz-*) */
+  [class^="cmplz-"],
+  [id^="cmplz-"],
+  /* Cookie Notice */
+  #cookie-notice,
+  [class^="cookie-notice"],
+  /* Borlabs Cookie */
+  .BorlabsCookie,
+  #BorlabsCookieBox,
+  /* Axeptio */
+  [id^="axeptio_"],
+  [class^="axeptio-"],
+  /* Cookie Script */
+  [id^="cookiescript_"],
+  [class^="cookiescript_"],
+  /* Consentmanager.net */
+  #cmpbox,
+  [class^="cmpbox"],
+  /* LiveRamp/Evidon */
+  [class^="evidon-"],
+  [id^="evidon-"],
+  /* Generic GDPR patterns */
+  [class^="gdpr-"],
+  [id^="gdpr-"],
+  [class*="cookie-banner"],
+  [class*="cookie-consent"],
+  [id*="cookie-banner"],
+  [id*="cookie-consent"],
 
   /* Generic modal/dialog patterns */
   [role="dialog"][aria-modal="true"],
@@ -132,14 +177,24 @@ export async function captureScreenshot(params: { url: string; storyId: string }
     }
 
     // Collapse empty ad placeholder containers (have min-height but no content)
+    // Also hide Usercentrics custom elements (uc-* tags with shadow DOM)
     await page.evaluate(() => {
-      for (const div of document.querySelectorAll('div')) {
-        const style = window.getComputedStyle(div)
-        const minH = parseInt(style.minHeight) || 0
-        const text = div.innerText?.trim() || ''
-        if (minH > 100 && text.length < 50) {
-          ;(div as HTMLElement).style.minHeight = '0'
-          ;(div as HTMLElement).style.height = 'auto'
+      for (const el of document.querySelectorAll('*')) {
+        const tagName = el.tagName.toLowerCase()
+        // Hide Usercentrics custom elements (uc-layer, uc-layer2, etc.)
+        if (tagName.startsWith('uc-')) {
+          ;(el as HTMLElement).style.display = 'none'
+          continue
+        }
+        // Collapse empty divs with min-height (ad placeholders)
+        if (tagName === 'div') {
+          const style = window.getComputedStyle(el)
+          const minH = parseInt(style.minHeight) || 0
+          const text = el.textContent?.trim() || ''
+          if (minH > 100 && text.length < 50) {
+            ;(el as HTMLElement).style.minHeight = '0'
+            ;(el as HTMLElement).style.height = 'auto'
+          }
         }
       }
     })
