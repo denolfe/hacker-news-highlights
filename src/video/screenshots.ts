@@ -176,6 +176,28 @@ export async function captureScreenshot(params: { url: string; storyId: string }
       // No article element, continue anyway
     }
 
+    // Detect bot protection pages (very little content or challenge keywords)
+    const isBotProtected = await page.evaluate(() => {
+      const text = document.body?.innerText?.toLowerCase() || ''
+      const hasLittleContent = text.length < 200
+      const challengeKeywords = [
+        'verifying',
+        'validation required',
+        'access denied',
+        'please wait',
+        'checking your browser',
+        'just a moment',
+        'enable javascript',
+        'ray id',
+      ]
+      const hasChallenge = challengeKeywords.some(kw => text.includes(kw))
+      return hasLittleContent || hasChallenge
+    })
+
+    if (isBotProtected) {
+      throw new Error('Bot protection detected - page has no content or shows challenge')
+    }
+
     // Try to inject CSS to hide popups/ads, continue without if CSP blocks it
     try {
       await page.addStyleTag({ content: HIDE_ELEMENTS_CSS })

@@ -14,6 +14,9 @@ export async function generateFallbackImage(params: {
 
   log.info(`[FALLBACK] Generating fallback image for: ${title}`)
 
+  // Use Google's favicon service for reliable logo fetching
+  const faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(source)}&sz=128`
+
   const html = `
     <!DOCTYPE html>
     <html>
@@ -29,6 +32,12 @@ export async function generateFallbackImage(params: {
           align-items: center;
           justify-content: center;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .logo {
+          width: 128px;
+          height: 128px;
+          margin-bottom: 32px;
+          border-radius: 16px;
         }
         .title {
           color: white;
@@ -46,6 +55,7 @@ export async function generateFallbackImage(params: {
       </style>
     </head>
     <body>
+      <img class="logo" src="${faviconUrl}" alt="" />
       <div class="title">${title}</div>
       <div class="source">${source}</div>
     </body>
@@ -56,7 +66,7 @@ export async function generateFallbackImage(params: {
   try {
     const page = await browser.newPage()
     await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 3 })
-    await page.setContent(html)
+    await page.setContent(html, { waitUntil: 'networkidle0' })
     await page.screenshot({ path: filepath, type: 'png' })
     return filepath
   } finally {
