@@ -1,9 +1,10 @@
+// @ts-nocheck - Remotion uses Webpack which has different module resolution than Node ESM
 import React from 'react'
 import { Composition, registerRoot } from 'remotion'
 
-import type { VideoProps } from './types.js'
+import type { VideoProps } from './types'
 
-import { PodcastVideo } from './composition.js'
+import { PodcastVideo } from './composition'
 
 export const RemotionRoot: React.FC = () => {
   return (

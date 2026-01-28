@@ -1,10 +1,11 @@
+// @ts-nocheck - Remotion uses Webpack which has different module resolution than Node ESM
 import React from 'react'
 import { AbsoluteFill, Sequence } from 'remotion'
 
-import type { VideoProps } from './types.js'
+import type { VideoProps } from './types'
 
-import { Branding } from './components/Branding.js'
-import { Chapter } from './components/Chapter.js'
+import { Branding } from './components/Branding'
+import { Chapter } from './components/Chapter'
 
 export const PodcastVideo: React.FC<VideoProps> = ({ chapters }) => {
   return (

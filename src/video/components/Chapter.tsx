@@ -1,7 +1,8 @@
+// @ts-nocheck - Remotion uses Webpack which has different module resolution than Node ESM
 import React from 'react'
 import { Img, useVideoConfig } from 'remotion'
 
-import type { VideoChapter } from '../types.js'
+import type { VideoChapter } from '../types'
 
 type ChapterProps = {
   chapter: VideoChapter
