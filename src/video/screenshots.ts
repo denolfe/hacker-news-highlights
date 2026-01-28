@@ -1,12 +1,19 @@
+import type { PuppeteerExtra } from 'puppeteer-extra'
+
 import { CACHE_DIR } from '@/constants.js'
 import { cacheExists } from '@/utils/cache.js'
 import { log } from '@/utils/log.js'
 import path from 'path'
-import puppeteer from 'puppeteer-extra'
-import AdblockerPlugin from 'puppeteer-extra-plugin-adblocker'
-import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 
 import { generateFallbackImage } from './fallback.js'
+
+// puppeteer-extra has CJS/ESM interop issues - require at runtime
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const puppeteer = require('puppeteer-extra') as PuppeteerExtra
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const StealthPlugin = require('puppeteer-extra-plugin-stealth')
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const AdblockerPlugin = require('puppeteer-extra-plugin-adblocker').default
 
 // Enable stealth mode to bypass bot detection
 puppeteer.use(StealthPlugin())
