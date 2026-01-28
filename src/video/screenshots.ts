@@ -8,9 +8,10 @@ import { generateFallbackImage } from './fallback.js'
 
 /** CSS to hide common banners, modals, and login prompts */
 const BANNER_HIDE_CSS = `
-  /* X/Twitter bottom banner */
+  /* X/Twitter bottom banner and sidebar */
   [data-testid="BottomBar"],
   [data-testid="sheetDialog"],
+  [data-testid="sidebarColumn"],
   [role="dialog"],
 
   /* Common cookie/consent banners */
