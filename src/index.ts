@@ -171,6 +171,17 @@ async function main() {
     )
     log.info(`Total character count: ${showNotes.replace(/\s+/g, '').length}`)
 
+    // Publish podcast before video generation so it succeeds even if video fails
+    if (process.env.CI || args.publish === true) {
+      await uploadPodcast({
+        audioFilePath: EPISODE_OUTPUT,
+        title,
+        showNotes,
+      })
+    } else {
+      log.info('SKIPPING episode publish')
+    }
+
     if (args.video || process.env.CI) {
       const videoChapters = [
         {
@@ -202,16 +213,6 @@ async function main() {
       })
       await writeToFile(YOUTUBE_CHAPTERS_OUTPUT, youtubeChapters)
       log.info(`YouTube chapters saved to: ${YOUTUBE_CHAPTERS_OUTPUT}`)
-    }
-
-    if (process.env.CI || args.publish === true) {
-      await uploadPodcast({
-        audioFilePath: EPISODE_OUTPUT,
-        title,
-        showNotes,
-      })
-    } else {
-      log.info('SKIPPING episode publish')
     }
   }
 
