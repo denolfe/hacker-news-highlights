@@ -18,10 +18,18 @@ const VIDEO_NO_AUDIO = path.resolve(OUTPUT_DIR, 'output-no-audio.mp4')
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+const COVER_SOURCE = path.resolve(__dirname, '../../cover.png')
+const COVER_DEST = path.resolve(CACHE_DIR, 'cover.png')
+
 export async function generateVideo(params: { chapters: ChapterInput[] }): Promise<void> {
   const { chapters } = params
 
   log.info('[VIDEO] Starting video generation...')
+
+  // Copy cover.png to cache dir so staticFile() can find it
+  if (!fs.existsSync(COVER_DEST)) {
+    fs.copyFileSync(COVER_SOURCE, COVER_DEST)
+  }
 
   log.info('[VIDEO] Capturing screenshots...')
   const screenshotMap = await captureScreenshots({

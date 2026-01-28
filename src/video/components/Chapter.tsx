@@ -6,8 +6,8 @@ import { Img, staticFile, useVideoConfig } from 'remotion'
 
 import type { VideoChapter } from '../types'
 
-const { fontFamily: interFont } = loadFont()
-const { fontFamily: jetbrainsFont } = loadMonoFont()
+const { fontFamily: interFont } = loadFont({ subsets: ['latin'], weights: ['700'] })
+const { fontFamily: jetbrainsFont } = loadMonoFont({ subsets: ['latin'], weights: ['400'] })
 
 type ChapterProps = {
   chapter: VideoChapter
