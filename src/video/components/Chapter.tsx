@@ -61,7 +61,9 @@ export const Chapter: React.FC<ChapterProps> = ({ chapter }) => {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
+          alignItems: 'center',
           padding: '0 40px',
+          textAlign: 'center',
         }}
       >
         <div

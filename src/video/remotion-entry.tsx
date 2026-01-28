@@ -6,6 +6,34 @@ import type { VideoProps } from './types'
 
 import { PodcastVideo } from './composition'
 
+// Mock data for Remotion preview
+const PREVIEW_CHAPTERS = [
+  {
+    title: 'Intro',
+    source: 'Hacker News Highlights',
+    url: null,
+    screenshotPath: '',
+    startFrame: 0,
+    durationFrames: 90, // 3 seconds
+  },
+  {
+    title: 'Example Story Title That Might Be Quite Long',
+    source: 'example.com',
+    url: 'https://example.com',
+    screenshotPath: 'src/video/story-preview.png',
+    startFrame: 90,
+    durationFrames: 150, // 5 seconds
+  },
+  {
+    title: 'Outro',
+    source: 'Hacker News Highlights',
+    url: null,
+    screenshotPath: '',
+    startFrame: 240,
+    durationFrames: 60, // 2 seconds
+  },
+]
+
 export const RemotionRoot: React.FC = () => {
   return (
     <Composition
@@ -18,12 +46,12 @@ export const RemotionRoot: React.FC = () => {
       component={PodcastVideo}
       defaultProps={
         {
-          chapters: [],
+          chapters: PREVIEW_CHAPTERS,
           fps: 30,
-          totalDurationInFrames: 1,
+          totalDurationInFrames: 300,
         } satisfies VideoProps
       }
-      durationInFrames={1}
+      durationInFrames={300}
       fps={30}
       height={1080}
       id="PodcastVideo"

@@ -28,6 +28,7 @@
     "lint:fix": "eslint . --fix",
     "mp4": "ffmpeg -loop 1 -i youtube-thumbnail.png -i output/output.mp3 -c:v libx264 -c:a aac -b:a 192k -shortest -fflags +shortest -pix_fmt yuv420p output/output.mp4",
     "prepare": "husky",
+    "preview:video": "remotion preview src/video/remotion-entry.tsx --public-dir .",
     "start": "NODE_OPTIONS=--no-deprecation tsx src/index.ts",
     "start:video": "NODE_OPTIONS=--no-deprecation tsx src/index.ts --video",
     "test": "vitest --run",

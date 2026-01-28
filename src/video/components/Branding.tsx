@@ -21,19 +21,26 @@ export const Branding: React.FC<BrandingProps> = ({ durationFrames }) => {
   const fadeIn = interpolate(frame, [0, 20], [0, 1], { extrapolateRight: 'clamp' })
   const opacity = Math.min(fadeIn, fadeOut)
 
+  const padding = 80
+
   return (
     <div
       style={{
         width,
         height,
         backgroundColor: '#1a1a1a',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding,
+        boxSizing: 'border-box',
       }}
     >
       <Img
         src={staticFile('cover.png')}
         style={{
-          width,
-          height,
+          maxWidth: width - padding * 2,
+          maxHeight: height - padding * 2,
           objectFit: 'contain',
           opacity,
         }}
