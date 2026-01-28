@@ -47,8 +47,9 @@ export async function captureScreenshots(params: {
     try {
       const filepath = await captureScreenshot({ url: chapter.url, storyId: chapter.storyId })
       screenshotMap.set(chapter.storyId, filepath)
-    } catch {
+    } catch (error) {
       log.warning(`[SCREENSHOT] Failed for ${chapter.storyId}, generating fallback`)
+      log.debug('[SCREENSHOT] Error:', error)
       try {
         const filepath = await generateFallbackImage({
           title: chapter.title,
@@ -56,8 +57,8 @@ export async function captureScreenshots(params: {
           storyId: chapter.storyId,
         })
         screenshotMap.set(chapter.storyId, filepath)
-      } catch {
-        log.error(`[SCREENSHOT] Fallback also failed for ${chapter.storyId}`)
+      } catch (fallbackError) {
+        log.error(`[SCREENSHOT] Fallback also failed for ${chapter.storyId}:`, fallbackError)
       }
     }
   }
