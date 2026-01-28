@@ -56,6 +56,12 @@ pnpm start -- --summarizeLink https://example.com
 
 # Generate audio from arbitrary text
 pnpm start -- --textToAudio "Some text to speak"
+
+# Generate video alongside audio (also runs automatically in CI)
+pnpm start -- --video
+
+# Video generation shorthand
+pnpm start:video
 ```
 
 ## Architecture
@@ -66,7 +72,8 @@ pnpm start -- --textToAudio "Some text to speak"
 2. **Summarize** (`src/ai/index.ts`) - Generates summaries using OpenAI GPT-4o-mini with structured prompts for story content + comments
 3. **Adjust Pronunciation** (`src/audio/adjustPronunciation.ts`) - Pattern-based text transformations for TTS mispronunciations
 4. **Generate Audio** (`src/audio/index.ts`) - Converts text to speech via OpenAI or ElevenLabs, concatenates segments with ffmpeg
-5. **Publish** (`src/podcast.ts`) - Uploads to Transistor.fm API with show notes
+5. **Generate Video** (`src/video/index.ts`) - Optional: Captures screenshots of story URLs, renders video with Remotion, muxes audio with ffmpeg
+6. **Publish** (`src/podcast.ts`) - Uploads to Transistor.fm API with show notes
 
 ### Key Modules
 
@@ -74,6 +81,7 @@ pnpm start -- --textToAudio "Some text to speak"
 - **`src/hn/`** - HN API integration, content parsing (Readability + JSDOM), PDF text extraction
 - **`src/ai/`** - OpenAI integration for summarization, intro generation, episode title generation
 - **`src/audio/`** - TTS integration (OpenAI/ElevenLabs), pronunciation adjustments, audio concatenation
+- **`src/video/`** - Video generation with Remotion, Puppeteer screenshots, YouTube chapter timestamps
 - **`src/services.ts`** - TTS service factory (OpenAI vs ElevenLabs based on `VOICE_SERVICE` env)
 - **`src/podcast.ts`** - Transistor.fm API client for episode upload/publish
 - **`src/utils/cache.ts`** - File-based caching for summaries, audio segments, covered stories
@@ -85,6 +93,7 @@ All intermediate data is cached to `cache/` directory to avoid redundant API cal
 - Podcast intro: `cache/intro-{hash}`
 - Episode title: `cache/title-{hash}`
 - Audio segments: `cache/intro-{hash}.mp3`, `cache/story-{storyId}.mp3`
+- Screenshots: `cache/screenshot-{storyId}.png` (for video generation)
 - Covered stories: `cache/covered-stories` (JSON array, also cached in GitHub Actions)
 
 In CI, `cache/covered-stories` is restored/saved via GitHub Actions cache to prevent duplicate episodes.
@@ -136,3 +145,40 @@ GitHub Actions workflow runs daily at 6:30am EST via cron schedule (`generate-po
 3. Publishes episode automatically (CI env var triggers publish)
 4. Updates covered-stories cache for next run
 5. Uploads artifacts (output + cache) for debugging
+
+## Video Generation
+
+Video output (`--video` flag) generates an MP4 alongside the podcast audio:
+
+- **Screenshots**: Puppeteer captures each story URL at 1920x1080
+- **Composition**: Remotion renders video with title banner + screenshot per chapter
+- **Audio**: ffmpeg muxes the podcast audio into the final video
+- **Output**: `output/output.mp4` and `output/youtube-chapters.txt`
+
+### Setup
+
+Puppeteer requires Chrome browser. Install on first run:
+
+```bash
+npx puppeteer browsers install chrome
+```
+
+### Video Architecture
+
+```
+src/video/
+├── index.ts           # Entry point - generateVideo(), generateYouTubeChapters()
+├── composition.tsx    # Main Remotion composition
+├── remotion-entry.tsx # Remotion registerRoot entry
+├── screenshots.ts     # Puppeteer screenshot capture with caching
+├── fallback.ts        # Fallback image generation for failed screenshots
+├── types.ts           # VideoChapter, VideoProps, ChapterInput types
+└── components/
+    ├── Chapter.tsx    # Story chapter view (title banner + screenshot)
+    └── Branding.tsx   # Intro/outro branding screen
+```
+
+### Remotion Notes
+
+- Remotion uses Webpack (not Node ESM) - files in `src/video/` use `@ts-nocheck` and imports without `.js` extensions
+- Screenshots served via `publicDir` pointing to cache directory, loaded with `staticFile()`

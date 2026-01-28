@@ -7,6 +7,8 @@
 >
 > [Subscribe Here](https://hacker-news-highlights.transistor.fm)
 
+Also generates YouTube-ready video with story screenshots and chapter timestamps.
+
 <img src="cover.png" width="200">
 
 ## Support
