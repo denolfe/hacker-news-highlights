@@ -1,7 +1,7 @@
+import { launchBrowser } from '@/browser/index.js'
 import { CACHE_DIR } from '@/constants.js'
 import { log } from '@/utils/log.js'
 import path from 'path'
-import puppeteer from 'puppeteer'
 
 export async function generateFallbackImage(params: {
   title: string
@@ -62,7 +62,7 @@ export async function generateFallbackImage(params: {
     </html>
   `
 
-  const browser = await puppeteer.launch({ headless: true })
+  const browser = await launchBrowser()
   try {
     const page = await browser.newPage()
     await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 3 })
