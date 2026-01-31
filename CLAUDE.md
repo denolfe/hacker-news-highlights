@@ -6,6 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Daily podcast generator that summarizes top 10 Hacker News posts using AI and text-to-speech. Audio is generated via OpenAI TTS or ElevenLabs and published to Transistor.fm podcast host. Optionally generates YouTube-ready video with story screenshots and chapter timestamps.
 
+## Terminology
+
+- Story - A Hacker News post (article, link, or discussion)
+- Episode - A podcast episode covering the top stories
+- Intro - Short AI-generated introduction for the episode mentioning the top 3 headlines
+- Summary - AI-generated summary of a story's content and top comments
+
 ## Development Commands
 
 ```bash
