@@ -1,29 +1,10 @@
-import type { PuppeteerExtra } from 'puppeteer-extra'
-
+import { launchBrowser } from '@/browser/index.js'
 import { CACHE_DIR } from '@/constants.js'
 import { cacheExists } from '@/utils/cache.js'
 import { log } from '@/utils/log.js'
-import { createRequire } from 'module'
 import path from 'path'
 
 import { generateFallbackImage } from './fallback.js'
-
-// puppeteer-extra has CJS/ESM interop issues - use createRequire for CJS modules
-const require = createRequire(import.meta.url)
-const puppeteer = require('puppeteer-extra') as PuppeteerExtra
-const StealthPlugin = require('puppeteer-extra-plugin-stealth')
-const AdblockerPlugin = require('puppeteer-extra-plugin-adblocker').default
-
-// Enable stealth mode to bypass bot detection
-puppeteer.use(StealthPlugin())
-
-// Enable adblocker - blocks ads/trackers and hides empty ad containers
-puppeteer.use(
-  AdblockerPlugin({
-    blockTrackers: true,
-    blockTrackersAndAnnoyances: true,
-  }),
-)
 
 /** CSS to hide UI elements not covered by adblocker (consent popups, modals, ad containers) */
 const HIDE_ELEMENTS_CSS = `
@@ -142,49 +123,19 @@ export async function captureScreenshot(params: { url: string; storyId: string }
 
   log.info(`[SCREENSHOT] Capturing: ${url}`)
 
-  const args = [
-    // Enhanced anti-detection for Cloudflare
-    '--disable-blink-features=AutomationControlled',
-    '--disable-features=IsolateOrigins,site-per-process',
-    '--disable-infobars',
-    '--disable-notifications',
-    '--disable-popup-blocking',
-    '--disable-default-apps',
-    '--disable-extensions',
-    '--disable-translate',
-    '--disable-sync',
-    '--disable-background-networking',
-    '--disable-client-side-phishing-detection',
-    '--disable-component-update',
-    '--disable-hang-monitor',
-    '--disable-prompt-on-repost',
-    '--disable-domain-reliability',
-    '--disable-renderer-backgrounding',
-    '--disable-background-timer-throttling',
-    '--disable-backgrounding-occluded-windows',
-    '--disable-breakpad',
-    '--disable-component-extensions-with-background-pages',
-    '--disable-ipc-flooding-protection',
-    '--disable-back-forward-cache',
-    '--disable-partial-raster',
-    '--disable-skia-runtime-opts',
-    '--disable-smooth-scrolling',
-    '--disable-features=site-per-process,TranslateUI,BlinkGenPropertyTrees',
-    '--enable-features=NetworkService,NetworkServiceInProcess',
-  ]
-
-  const browser = await puppeteer.launch({ headless: true, args })
+  const browser = await launchBrowser()
   try {
     const page = await browser.newPage()
+    // Higher deviceScaleFactor for crisp screenshots
     await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 3 })
 
     // Try networkidle0 first, fall back to domcontentloaded on timeout
     try {
       await page.goto(url, { waitUntil: 'networkidle0', timeout: 15000 })
     } catch (error) {
-      if (error instanceof Error && error.name === 'TimeoutError') {
+      if (error instanceof Error && error.message.includes('timeout')) {
         log.warning(`[SCREENSHOT] networkidle0 timeout, retrying with domcontentloaded`)
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 })
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
       } else {
         throw error
       }
