@@ -65,6 +65,12 @@ jobs:
         # Forked this PR: https://github.com/federicocarboni/setup-ffmpeg/pull/23
         uses: denolfe/setup-ffmpeg@retries
 
+      - name: Cache Puppeteer browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/puppeteer
+          key: puppeteer-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+
       - name: Node setup
         uses: ./.github/actions/setup
         with:
