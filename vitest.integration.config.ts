@@ -3,8 +3,9 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
-    // Exclude integration tests by default (they hit real URLs and are slow)
-    exclude: ['**/*.integration.spec.ts', '**/node_modules/**'],
+    include: ['**/*.integration.spec.ts'],
+    testTimeout: 60_000, // 60s per test
+    hookTimeout: 60_000,
   },
   plugins: [tsconfigPaths()],
 })

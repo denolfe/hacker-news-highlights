@@ -6,7 +6,7 @@ import {
 } from '@/ai/index.js'
 import { adjustPronunciation } from '@/audio/adjustPronunciation.js'
 import { generateAudioFromText } from '@/audio/index.js'
-import { EPISODE_OUTPUT } from '@/constants.js'
+import { EPISODE_OUTPUT, PODCAST_NAME, YOUTUBE_CHAPTERS_OUTPUT } from '@/constants.js'
 import { fetchStoryDataById, fetchTopStories } from '@/hn/index.js'
 import { parseSiteContent } from '@/hn/parseSiteContent.js'
 import { uploadPodcast } from '@/podcast.js'
@@ -16,6 +16,9 @@ import { initCacheDir, writeToCache } from '@/utils/cache.js'
 import { loadEnvIfExists } from '@/utils/env.js'
 import { initOutputDir } from '@/utils/initOutputDir.js'
 import { log } from '@/utils/log.js'
+import { writeToFile } from '@/utils/writeToFile.js'
+import { generateVideo, generateYouTubeChapters } from '@/video/index.js'
+import { captureScreenshot } from '@/video/screenshots.js'
 import minimist from 'minimist'
 
 loadEnvIfExists()
@@ -36,6 +39,10 @@ const args = minimist(process.argv.slice(2)) as {
   textToAudio?: string
   /** Generate intro from 3 comma-separated story IDs (e.g., --testIntro 123,456,789) */
   testIntro?: string
+  /** Generate video from podcast audio */
+  video?: boolean
+  /** Test screenshot capture for a URL */
+  testScreenshot?: string
 }
 
 async function main() {
@@ -44,7 +51,7 @@ async function main() {
     throw new Error('Missing required env OPENAI_API_KEY')
   }
   if (process.env.CI) {
-    if (!process.env.TRANSISTOR_API_KEY) {
+    if (args.publish !== false && !process.env.TRANSISTOR_API_KEY) {
       throw new Error('Missing required env TRANSISTOR_API_KEY')
     }
     if (process.env.VOICE_SERVICE === 'elevenlabs' && !process.env.ELEVEN_LABS_API_KEY) {
@@ -86,6 +93,20 @@ async function main() {
     const filename = 'texttoaudio-output.mp3'
     log.info(`Audio file generated: ${filename}`)
     await writeToCache(filename, buffer)
+    return
+  }
+
+  // Test screenshot capture for a URL
+  if (args.testScreenshot) {
+    log.info(`Testing screenshot capture for: ${args.testScreenshot}`)
+    const domain = new URL(args.testScreenshot).hostname.replace(/^www\./, '')
+    const randomChars = Math.random().toString(36).substring(2, 8)
+    const storyId = `${domain}-${randomChars}`
+    const filepath = await captureScreenshot({
+      url: args.testScreenshot,
+      storyId,
+    })
+    log.info(`Screenshot saved to: ${filepath}`)
     return
   }
 
@@ -144,12 +165,15 @@ async function main() {
   if (args.audio === false) {
     log.info('SKIPPING audio generation')
   } else {
-    await generateAudioFromText(
+    const { chapters } = await generateAudioFromText(
       [{ summary: intro.text, storyId: intro.cacheKey, title: intro.title }, ...summaries],
       ttsService,
     )
     log.info(`Total character count: ${showNotes.replace(/\s+/g, '').length}`)
-    if (process.env.CI || args.publish === true) {
+
+    // Publish podcast before video generation so it succeeds even if video fails
+    const shouldPublish = (process.env.CI || args.publish === true) && args.publish !== false
+    if (shouldPublish) {
       await uploadPodcast({
         audioFilePath: EPISODE_OUTPUT,
         title,
@@ -157,6 +181,40 @@ async function main() {
       })
     } else {
       log.info('SKIPPING episode publish')
+    }
+
+    const shouldGenerateVideo = (args.video || process.env.CI) && args.video !== false
+    if (shouldGenerateVideo) {
+      const videoChapters = [
+        {
+          title: intro.title,
+          source: PODCAST_NAME,
+          url: null,
+          storyId: intro.cacheKey,
+          start: chapters[0].start,
+          end: chapters[0].end,
+        },
+        ...summaries.map((s, i) => {
+          const story = storyData[i]
+          const chapter = chapters[i + 1]
+          return {
+            title: s.title,
+            source: story.source,
+            url: story.url ?? story.hnUrl,
+            storyId: String(s.storyId),
+            start: chapter.start,
+            end: chapter.end,
+          }
+        }),
+      ]
+
+      await generateVideo({ chapters: videoChapters })
+
+      const youtubeChapters = generateYouTubeChapters({
+        chapters: chapters.map(c => ({ title: c.title, start: c.start })),
+      })
+      await writeToFile(YOUTUBE_CHAPTERS_OUTPUT, youtubeChapters)
+      log.info(`YouTube chapters saved to: ${YOUTUBE_CHAPTERS_OUTPUT}`)
     }
   }
 

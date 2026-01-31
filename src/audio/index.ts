@@ -37,12 +37,12 @@ type PodcastSegmentWithAudio = { audioFilename: string; isSilence?: boolean } & 
   'storyId'
 >
 
-type Chapter = { title: string; start: number; end: number }
+export type Chapter = { title: string; start: number; end: number }
 
 export async function generateAudioFromText(
   storyData: (PodcastSegment | StoryDataAggregate)[],
   ttsService: TtsService,
-): Promise<void> {
+): Promise<{ chapters: Chapter[] }> {
   const segments: PodcastSegmentWithAudio[] = []
 
   for (const [i, story] of storyData.entries()) {
@@ -83,13 +83,14 @@ export async function generateAudioFromText(
     summary: isMonday ? podcastOutroWithGitHub : podcastOutro,
   })
 
-  await joinAudioFiles(segments, EPISODE_OUTPUT)
+  const chapters = await joinAudioFiles(segments, EPISODE_OUTPUT)
+  return { chapters }
 }
 
 export async function joinAudioFiles(
   segments: PodcastSegmentWithAudio[],
   outputFilename: string,
-): Promise<void> {
+): Promise<Chapter[]> {
   logger.info(`Merging ${segments.length} audio files into ${outputFilename}...`)
 
   // insert silence between segments
@@ -160,6 +161,7 @@ export async function joinAudioFiles(
   })
 
   logger.info('Audio file created')
+  return durations
 }
 
 function insertBetween(

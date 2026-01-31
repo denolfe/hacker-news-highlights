@@ -4,7 +4,9 @@
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "module": "NodeNext",
     "moduleResolution": "nodenext",
+    "jsx": "react-jsx",
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noImplicitReturns": true,
@@ -12,5 +14,5 @@
     "paths": {
       "@/*": ["./src/*"]
     }
-  },
+  }
 }
