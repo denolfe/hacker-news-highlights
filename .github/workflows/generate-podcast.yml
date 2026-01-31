@@ -16,6 +16,16 @@ on:
         options:
           - openai
           - elevenlabs
+      skip_publish:
+        description: 'Skip publishing to podcast host'
+        required: false
+        default: 'true'
+        type: boolean
+      video:
+        description: 'Generate YouTube video'
+        required: false
+        default: 'false'
+        type: boolean
 
   schedule:
     - cron: '30 10 * * *' # 6:30am EST daily
@@ -38,6 +48,18 @@ jobs:
       # https://github.com/actions/virtual-environments/issues/1187
       - name: tune linux network
         run: sudo ethtool -K eth0 tx off rx off
+
+      - name: Install Puppeteer dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ca-certificates fonts-liberation libasound2t64 libatk-bridge2.0-0 \
+            libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 \
+            libfontconfig1 libgbm1 libgcc-s1 libglib2.0-0 libgtk-3-0t64 \
+            libnspr4 libnss3 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 \
+            libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 \
+            libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 \
+            libxss1 libxtst6 lsb-release wget xdg-utils
 
       - name: Setup FFmpeg
         # Forked this PR: https://github.com/federicocarboni/setup-ffmpeg/pull/23
@@ -62,8 +84,21 @@ jobs:
           key: ${{ env.COVERED_STORIES_CACHE_KEY }}
 
       - name: Generate podcast
-        run: pnpm start
+        run: |
+          ARGS=""
+          if [ "$SKIP_PUBLISH" = "true" ]; then
+            ARGS="--no-publish"
+          fi
+          if [ "$VIDEO" = "true" ]; then
+            ARGS="$ARGS --video"
+          else
+            ARGS="$ARGS --no-video"
+          fi
+          echo "ARGS: '$ARGS'"
+          pnpm start $ARGS
         env:
+          SKIP_PUBLISH: ${{ github.event.inputs.skip_publish }}
+          VIDEO: ${{ github.event.inputs.video }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ELEVEN_LABS_API_KEY: ${{ secrets.ELEVEN_LABS_API_KEY }}
           DEBUG: ${{ github.event.inputs.debug }}

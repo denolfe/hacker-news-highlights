@@ -26,6 +26,8 @@ puppeteerExtra.use(
 
 /** Browser launch args for enhanced anti-detection */
 const BROWSER_ARGS = [
+  '--no-sandbox', // Required for CI (GitHub Actions disables unprivileged user namespaces)
+  '--disable-setuid-sandbox',
   '--disable-blink-features=AutomationControlled',
   '--disable-features=IsolateOrigins,site-per-process',
   '--disable-infobars',

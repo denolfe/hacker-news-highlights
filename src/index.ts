@@ -51,7 +51,7 @@ async function main() {
     throw new Error('Missing required env OPENAI_API_KEY')
   }
   if (process.env.CI) {
-    if (!process.env.TRANSISTOR_API_KEY) {
+    if (args.publish !== false && !process.env.TRANSISTOR_API_KEY) {
       throw new Error('Missing required env TRANSISTOR_API_KEY')
     }
     if (process.env.VOICE_SERVICE === 'elevenlabs' && !process.env.ELEVEN_LABS_API_KEY) {
@@ -172,7 +172,8 @@ async function main() {
     log.info(`Total character count: ${showNotes.replace(/\s+/g, '').length}`)
 
     // Publish podcast before video generation so it succeeds even if video fails
-    if (process.env.CI || args.publish === true) {
+    const shouldPublish = (process.env.CI || args.publish === true) && args.publish !== false
+    if (shouldPublish) {
       await uploadPodcast({
         audioFilePath: EPISODE_OUTPUT,
         title,
@@ -182,7 +183,8 @@ async function main() {
       log.info('SKIPPING episode publish')
     }
 
-    if (args.video || process.env.CI) {
+    const shouldGenerateVideo = (args.video || process.env.CI) && args.video !== false
+    if (shouldGenerateVideo) {
       const videoChapters = [
         {
           title: intro.title,
