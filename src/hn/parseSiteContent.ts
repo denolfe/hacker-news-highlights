@@ -1,4 +1,5 @@
 import { fetchContentWithBrowser } from '@/browser/fetchContent.js'
+import { shouldUsePuppeteerFirst } from '@/browser/puppeteerDomains.js'
 import { childLogger } from '@/utils/log.js'
 import { Readability } from '@mozilla/readability'
 import { JSDOM, VirtualConsole } from 'jsdom'
@@ -60,21 +61,37 @@ export async function parseSiteContent(
     return { siteName: '', textContent: pdfText, byline: '', excerpt: '' }
   }
 
-  // Get HTML - either passed directly or fetch from URL
-  let html = isUrl ? await fetch(htmlOrUrl).then(res => res.text()) : htmlOrUrl
+  let html: string
+  let parsed: null | ParseReturnType
 
-  // First attempt: parse with Readability
-  let parsed = parseHtmlWithReadability(html)
-
-  // Check if we need to try Puppeteer fallback
-  if (usePuppeteerFallback && isUrl && needsBrowserFetch(html, parsed)) {
-    logger.info(`Content extraction insufficient, trying Puppeteer: ${htmlOrUrl}`)
+  // For known problem domains, skip fetch and use Puppeteer directly
+  if (isUrl && usePuppeteerFallback && shouldUsePuppeteerFirst(htmlOrUrl)) {
+    logger.info(`Known Puppeteer domain, using browser: ${htmlOrUrl}`)
     try {
       html = await fetchContentWithBrowser(htmlOrUrl)
       parsed = parseHtmlWithReadability(html)
       logger.info(`Puppeteer extraction: ${parsed?.textContent?.length ?? 0} chars`)
     } catch (err) {
-      logger.warning(`Puppeteer fallback failed: ${err instanceof Error ? err.message : err}`)
+      logger.warning(
+        `Puppeteer failed, falling back to fetch: ${err instanceof Error ? err.message : err}`,
+      )
+      html = await fetch(htmlOrUrl).then(res => res.text())
+      parsed = parseHtmlWithReadability(html)
+    }
+  } else {
+    // Standard path: try fetch first, fallback to Puppeteer if needed
+    html = isUrl ? await fetch(htmlOrUrl).then(res => res.text()) : htmlOrUrl
+    parsed = parseHtmlWithReadability(html)
+
+    if (usePuppeteerFallback && isUrl && needsBrowserFetch(html, parsed)) {
+      logger.info(`Content extraction insufficient, trying Puppeteer: ${htmlOrUrl}`)
+      try {
+        html = await fetchContentWithBrowser(htmlOrUrl)
+        parsed = parseHtmlWithReadability(html)
+        logger.info(`Puppeteer extraction: ${parsed?.textContent?.length ?? 0} chars`)
+      } catch (err) {
+        logger.warning(`Puppeteer fallback failed: ${err instanceof Error ? err.message : err}`)
+      }
     }
   }
 
