@@ -88,6 +88,24 @@ function truncateText(text: string, maxLength: number): string {
   return text.slice(0, maxLength - 3) + '...'
 }
 
+async function fetchOEmbedHtml(tweetUrl: string): Promise<null | string> {
+  try {
+    const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(tweetUrl)}&theme=dark&dnt=true`
+    const response = await fetch(oembedUrl, {
+      signal: AbortSignal.timeout(10000),
+    })
+
+    if (!response.ok) {
+      return null
+    }
+
+    const data = (await response.json()) as OEmbedResponse
+    return data.html
+  } catch {
+    return null
+  }
+}
+
 export async function handleTwitter(params: DomainHandlerParams): Promise<string> {
   const { url, storyId } = params
   const filename = `screenshot-${storyId}.png`
@@ -100,15 +118,14 @@ export async function handleTwitter(params: DomainHandlerParams): Promise<string
 
   log.info(`[TWITTER] Fetching tweet via oEmbed: ${url}`)
 
-  const tweetData = await fetchTweetFromOEmbed(url)
-  if (!tweetData) {
-    throw new Error(`Could not fetch tweet data for: ${url}`)
+  const embedHtml = await fetchOEmbedHtml(url)
+  if (!embedHtml) {
+    throw new Error(`Could not fetch tweet embed for: ${url}`)
   }
 
-  log.info(`[TWITTER] Generating image for tweet by ${tweetData.username}`)
+  log.info(`[TWITTER] Rendering embed widget`)
 
-  const displayText = escapeHtml(truncateText(tweetData.text, 400))
-
+  // Render the full Twitter embed widget
   const html = `
     <!DOCTYPE html>
     <html>
@@ -116,72 +133,21 @@ export async function handleTwitter(params: DomainHandlerParams): Promise<string
       <style>
         body {
           margin: 0;
-          width: 1920px;
-          height: 1080px;
           background: #000000;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          position: relative;
+          min-height: 100vh;
         }
-        .content {
-          max-width: 1200px;
-          border: 2px solid #71767b;
-          border-radius: 16px;
-          padding: 48px;
-        }
-        .header {
-          display: flex;
-          align-items: center;
-          margin-bottom: 40px;
-        }
-        .avatar {
-          width: 80px;
-          height: 80px;
-          border-radius: 50%;
-          margin-right: 24px;
-          background: #333;
-        }
-        .names {
-          display: flex;
-          flex-direction: column;
-        }
-        .display-name {
-          color: white;
-          font-size: 36px;
-          font-weight: bold;
-        }
-        .username {
-          color: #71767b;
-          font-size: 28px;
-          margin-top: 8px;
-        }
-        .tweet-text {
-          color: white;
-          font-size: 48px;
-          line-height: 1.4;
-          white-space: pre-wrap;
-        }
-        .logo {
-          position: absolute;
-          bottom: 40px;
-          left: 40px;
+        .container {
+          transform-origin: center center;
         }
       </style>
     </head>
     <body>
-      <div class="content">
-        <div class="header">
-          <img class="avatar" src="https://unavatar.io/twitter/${tweetData.username.replace('@', '')}" alt="" />
-          <div class="names">
-            <div class="display-name">${escapeHtml(tweetData.displayName)}</div>
-            <div class="username">${escapeHtml(tweetData.username)}</div>
-          </div>
-        </div>
-        <div class="tweet-text">${displayText}</div>
+      <div class="container">
+        ${embedHtml}
       </div>
-      <div class="logo">${X_LOGO_SVG}</div>
     </body>
     </html>
   `
@@ -189,8 +155,42 @@ export async function handleTwitter(params: DomainHandlerParams): Promise<string
   const browser = await launchBrowser()
   try {
     const page = await browser.newPage()
-    await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 3 })
+    // Start with a tall viewport to measure natural embed size
+    await page.setViewport({ width: 1920, height: 2000, deviceScaleFactor: 3 })
     await page.setContent(html, { waitUntil: 'networkidle0' })
+
+    // Wait for Twitter's widget.js to render the embed
+    try {
+      await page.waitForSelector('twitter-widget, .twitter-tweet-rendered', { timeout: 10000 })
+      // Give extra time for images to load
+      await new Promise(resolve => setTimeout(resolve, 2000))
+    } catch {
+      log.warning('[TWITTER] Widget may not have fully rendered')
+    }
+
+    // Measure the embed size and calculate scale to fit 1920x1080 with padding
+    const scale = await page.evaluate(() => {
+      const container = document.querySelector('.container') as HTMLElement
+      if (!container) {return 2.5}
+      const rect = container.getBoundingClientRect()
+      const maxWidth = 1920 - 100 // padding
+      const maxHeight = 1080 - 100
+      const scaleX = maxWidth / rect.width
+      const scaleY = maxHeight / rect.height
+      return Math.min(scaleX, scaleY, 3) // cap at 3x
+    })
+
+    // Apply calculated scale and set final viewport
+    await page.evaluate((s: number) => {
+      const container = document.querySelector('.container') as HTMLElement
+      if (container) {
+        container.style.transform = `scale(${s})`
+      }
+      document.body.style.width = '1920px'
+      document.body.style.height = '1080px'
+    }, scale)
+
+    await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 3 })
     await page.screenshot({ path: filepath, type: 'png' })
     log.info(`[TWITTER] Saved: ${filename}`)
     return filepath

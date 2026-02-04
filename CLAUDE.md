@@ -43,35 +43,40 @@ pnpm clean:video       # Remove video output files
 
 ## CLI Arguments
 
-The main script accepts several flags via minimist:
+The main script accepts several flags via minimist. **Do not use `--` separator** — pass flags directly to `pnpm start`:
 
 ```bash
 # Generate podcast with custom story count
-pnpm start -- --count 5
+pnpm start --count 5
 
 # Preview stories without generating podcast
-pnpm start -- --preview
+pnpm start --preview
 
 # Skip audio generation
-pnpm start -- --no-audio
+pnpm start --no-audio
 
 # Publish to podcast host (otherwise only publishes in CI)
-pnpm start -- --publish
+pnpm start --publish
 
 # Summarize a specific HN story by ID
-pnpm start -- --storyId 12345
+pnpm start --storyId 12345
 
 # Parse and summarize arbitrary URL
-pnpm start -- --summarizeLink https://example.com
+pnpm start --summarizeLink https://example.com
 
 # Generate audio from arbitrary text
-pnpm start -- --textToAudio "Some text to speak"
+pnpm start --textToAudio "Some text to speak"
 
 # Generate video alongside audio (also runs automatically in CI)
-pnpm start -- --video
+pnpm start --video
 
 # Video generation shorthand
 pnpm start:video
+
+# Benchmark video pipeline with predefined URLs
+pnpm benchmark                    # Uses showcase (default)
+pnpm benchmark:stress-test        # Uses challenging URLs
+pnpm start --benchmark=data/custom.json  # Custom file
 ```
 
 ## Architecture
