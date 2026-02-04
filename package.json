@@ -12,6 +12,7 @@
   "type": "module",
   "scripts": {
     "benchmark": "NODE_OPTIONS=--no-deprecation tsx src/index.ts --benchmark",
+    "benchmark:stress-test": "NODE_OPTIONS=--no-deprecation tsx src/index.ts --benchmark=data/benchmark-stress-test.json",
     "build": "tsc --noEmit",
     "clean:all": "rm -rf cache/* output/*",
     "clean:audio": "rm -rf cache/*.mp3",

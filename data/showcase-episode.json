@@ -1,0 +1,56 @@
+{
+  "description": "Showcase episode with visually appealing screenshots",
+  "chapterDurationSeconds": 10,
+  "stories": [
+    {
+      "url": "https://x.com/mattpocockuk/status/1810229565203112215",
+      "title": "Total TypeScript: Essentials Book Announcement",
+      "source": "X"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "title": "Rick Astley - Never Gonna Give You Up",
+      "source": "YouTube"
+    },
+    {
+      "url": "https://github.com/anthropics/claude-code",
+      "title": "Claude Code: Anthropic's CLI for Claude",
+      "source": "GitHub"
+    },
+    {
+      "url": "https://blog.cloudflare.com/cloudflare-2024-annual-founders-letter/",
+      "title": "Cloudflare 2024 Annual Founders Letter",
+      "source": "Cloudflare"
+    },
+    {
+      "url": "https://openai.com/index/introducing-operator/",
+      "title": "Introducing Operator",
+      "source": "OpenAI"
+    },
+    {
+      "url": "https://newsroom.porsche.com/en/2026/company/porsche-deliveries-2025-41516.html",
+      "title": "Porsche Deliveries 2025",
+      "source": "Porsche"
+    },
+    {
+      "url": "https://stripe.com/blog/payment-api-design",
+      "title": "Stripe's Payments APIs: The First 10 Years",
+      "source": "Stripe"
+    },
+    {
+      "url": "https://linear.app/now/how-we-redesigned-the-linear-ui",
+      "title": "How We Redesigned the Linear UI",
+      "source": "Linear"
+    },
+    {
+      "url": "https://vercel.com/blog/ai-sdk-5",
+      "title": "AI SDK 5",
+      "source": "Vercel"
+    },
+    {
+      "url": "https://tailwindcss.com/blog/tailwindcss-v4",
+      "title": "Tailwind CSS v4.0",
+      "source": "Tailwind CSS"
+    }
+  ]
+}

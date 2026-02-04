@@ -48,8 +48,8 @@ const args = minimist(process.argv.slice(2)) as {
   video?: boolean
   /** Test screenshot capture for a URL */
   testScreenshot?: string
-  /** Run benchmark mode with predefined URLs */
-  benchmark?: boolean
+  /** Run benchmark mode with predefined URLs, optionally specify JSON file path */
+  benchmark?: boolean | string
 }
 
 async function main() {
@@ -120,7 +120,9 @@ async function main() {
   // Benchmark mode: generate video from predefined URLs
   if (args.benchmark) {
     log.info('[BENCHMARK] Starting benchmark video generation...')
-    const benchmarkPath = path.resolve('data/benchmark-episode.json')
+    const benchmarkFile =
+      typeof args.benchmark === 'string' ? args.benchmark : 'data/showcase-episode.json'
+    const benchmarkPath = path.resolve(benchmarkFile)
     const benchmarkData: BenchmarkEpisode = JSON.parse(fs.readFileSync(benchmarkPath, 'utf-8'))
 
     const { chapterDurationSeconds, stories } = benchmarkData
