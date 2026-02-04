@@ -119,6 +119,13 @@ export async function handleTwitter(params: DomainHandlerParams): Promise<string
           align-items: center;
           margin-bottom: 40px;
         }
+        .avatar {
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          margin-right: 24px;
+          background: #333;
+        }
         .names {
           display: flex;
           flex-direction: column;
@@ -148,6 +155,7 @@ export async function handleTwitter(params: DomainHandlerParams): Promise<string
     <body>
       <div class="content">
         <div class="header">
+          <img class="avatar" src="https://unavatar.io/twitter/${tweetData.username.replace('@', '')}" alt="" />
           <div class="names">
             <div class="display-name">${escapeHtml(tweetData.displayName)}</div>
             <div class="username">${escapeHtml(tweetData.username)}</div>
