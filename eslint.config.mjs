@@ -57,4 +57,16 @@ export default [
       },
     },
   },
+  {
+    files: ['scripts/**/*'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
+    files: ['src/video/**/*.tsx'],
+    rules: {
+      '@typescript-eslint/ban-ts-comment': 'off',
+    },
+  },
 ]

@@ -72,9 +72,7 @@ export async function parseSiteContent(
       parsed = parseHtmlWithReadability(html)
       logger.info(`Puppeteer extraction: ${parsed?.textContent?.length ?? 0} chars`)
     } catch (err) {
-      logger.warning(
-        `Puppeteer failed, falling back to fetch: ${err instanceof Error ? err.message : err}`,
-      )
+      logger.warning(`Puppeteer failed, falling back to fetch: ${String(err)}`)
       html = await fetch(htmlOrUrl).then(res => res.text())
       parsed = parseHtmlWithReadability(html)
     }
@@ -90,7 +88,7 @@ export async function parseSiteContent(
         parsed = parseHtmlWithReadability(html)
         logger.info(`Puppeteer extraction: ${parsed?.textContent?.length ?? 0} chars`)
       } catch (err) {
-        logger.warning(`Puppeteer fallback failed: ${err instanceof Error ? err.message : err}`)
+        logger.warning(`Puppeteer fallback failed: ${String(err)}`)
       }
     }
   }

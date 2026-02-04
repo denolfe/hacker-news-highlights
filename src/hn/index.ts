@@ -192,6 +192,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
 
 /** Recursively extracts comment data from HN API response. */
 function extractComment(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   c: any,
 ): Pick<Comment, 'author' | 'children' | 'created_at' | 'id' | 'text'> {
   return {

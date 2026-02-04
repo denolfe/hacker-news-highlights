@@ -67,27 +67,6 @@ export async function fetchTweetFromOEmbed(tweetUrl: string): Promise<null | Twe
   }
 }
 
-const X_LOGO_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
-  <path fill="#fff" d="M36.65 3.81h6.77L28.73 20.4 46 44.19H32.21L21.53 30.47 9.37 44.19H2.6l15.68-17.91L2 3.81h14.14l9.66 12.78L36.65 3.81zM34.3 39.96h3.75L13.86 7.64H9.83L34.3 39.96z"/>
-</svg>
-`
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-}
-
-function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) {
-    return text
-  }
-  return text.slice(0, maxLength - 3) + '...'
-}
-
 async function fetchOEmbedHtml(tweetUrl: string): Promise<null | string> {
   try {
     const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(tweetUrl)}&theme=dark&dnt=true`
@@ -171,7 +150,9 @@ export async function handleTwitter(params: DomainHandlerParams): Promise<string
     // Measure the embed size and calculate scale to fit 1920x1080 with padding
     const scale = await page.evaluate(() => {
       const container = document.querySelector('.container') as HTMLElement
-      if (!container) {return 2.5}
+      if (!container) {
+        return 2.5
+      }
       const rect = container.getBoundingClientRect()
       const maxWidth = 1920 - 100 // padding
       const maxHeight = 1080 - 100
