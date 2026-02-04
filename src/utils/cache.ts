@@ -31,3 +31,8 @@ export async function readFromCache(key: string) {
   }
   return await fs.readFile(location, 'utf-8')
 }
+
+export async function cacheExists(key: string): Promise<boolean> {
+  const location = path.resolve(CACHE_DIR, key)
+  return await directoryOrFileExists(location)
+}

@@ -1,0 +1,116 @@
+import { launchBrowser } from '@/browser/index.js'
+import { CACHE_DIR } from '@/constants.js'
+import { cacheExists } from '@/utils/cache.js'
+import { log } from '@/utils/log.js'
+import path from 'path'
+
+import type { DomainHandlerParams } from './types.js'
+
+export function extractVideoId(url: string): null | string {
+  const patterns = [
+    /youtube\.com\/watch\?v=([^&]+)/,
+    /youtu\.be\/([^?]+)/,
+    /youtube\.com\/embed\/([^?]+)/,
+  ]
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern)
+    if (match) {
+      return match[1]
+    }
+  }
+
+  return null
+}
+
+export async function getBestThumbnailUrl(videoId: string): Promise<string> {
+  const maxresUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`
+
+  try {
+    const response = await fetch(maxresUrl, {
+      method: 'HEAD',
+      signal: AbortSignal.timeout(5000),
+    })
+
+    if (response.ok) {
+      return maxresUrl
+    }
+  } catch {
+    // Network error, fall through to fallback
+  }
+
+  return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+}
+
+const YOUTUBE_LOGO_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <path fill="#FF0000" d="M47.5 14.4s-.5-3.3-1.9-4.8c-1.8-1.9-3.9-1.9-4.8-2C34.1 7 24 7 24 7s-10.1 0-16.8.6c-.9.1-3 .1-4.8 2-1.4 1.5-1.9 4.8-1.9 4.8S0 18.3 0 22.2v3.6c0 3.9.5 7.8.5 7.8s.5 3.3 1.9 4.8c1.8 1.9 4.2 1.8 5.3 2 3.8.4 16.3.5 16.3.5s10.1 0 16.8-.6c.9-.1 3-.1 4.8-2 1.4-1.5 1.9-4.8 1.9-4.8s.5-3.9.5-7.8v-3.6c0-3.9-.5-7.8-.5-7.8z"/>
+  <path fill="#FFF" d="M19 31V17l13 7z"/>
+</svg>
+`
+
+export async function handleYoutube(params: DomainHandlerParams): Promise<string> {
+  const { url, storyId } = params
+  const filename = `screenshot-${storyId}.png`
+  const filepath = path.resolve(CACHE_DIR, filename)
+
+  if (await cacheExists(filename)) {
+    log.info(`[YOUTUBE] Using cached: ${filename}`)
+    return filepath
+  }
+
+  const videoId = extractVideoId(url)
+  if (!videoId) {
+    throw new Error(`Could not extract video ID from URL: ${url}`)
+  }
+
+  log.info(`[YOUTUBE] Generating image for video: ${videoId}`)
+
+  const thumbnailUrl = await getBestThumbnailUrl(videoId)
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body {
+          margin: 0;
+          width: 1920px;
+          height: 1080px;
+          background: #0f0f0f;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        }
+        .thumbnail {
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain;
+        }
+        .logo {
+          position: absolute;
+          bottom: 40px;
+          left: 40px;
+        }
+      </style>
+    </head>
+    <body>
+      <img class="thumbnail" src="${thumbnailUrl}" alt="" />
+      <div class="logo">${YOUTUBE_LOGO_SVG}</div>
+    </body>
+    </html>
+  `
+
+  const browser = await launchBrowser()
+  try {
+    const page = await browser.newPage()
+    await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 3 })
+    await page.setContent(html, { waitUntil: 'networkidle0' })
+    await page.screenshot({ path: filepath, type: 'png' })
+    log.info(`[YOUTUBE] Saved: ${filename}`)
+    return filepath
+  } finally {
+    await browser.close()
+  }
+}

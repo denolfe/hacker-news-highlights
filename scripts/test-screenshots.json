@@ -1,0 +1,70 @@
+{
+  "description": "Test URLs for validating screenshot capture. Run with: pnpm test:screenshots",
+  "urls": [
+    {
+      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "issue": "Domain handler: YouTube",
+      "fix": "Thumbnail + YouTube logo"
+    },
+    {
+      "url": "https://github.com/anthropics/claude-code",
+      "issue": "Domain handler: GitHub",
+      "fix": "og:image + GitHub logo"
+    },
+    {
+      "url": "https://twitter.com/naval/status/1002103360646823936",
+      "issue": "Domain handler: Twitter/X",
+      "fix": "oEmbed API + X logo"
+    },
+    {
+      "url": "https://dbushell.com/2026/01/22/proton-spam/",
+      "issue": "CSP blocks CSS injection",
+      "fix": "try/catch around addStyleTag"
+    },
+    {
+      "url": "https://blog.cloudflare.com/cname-a-record-order-dns-standards/",
+      "issue": "Navigation timeout",
+      "fix": "Retry with domcontentloaded"
+    },
+    {
+      "url": "https://www.androidauthority.com/google-sideloading-android-high-friction-process-3633468/",
+      "issue": "Bot protection",
+      "fix": "Fallback image"
+    },
+    {
+      "url": "https://www.sciencealert.com/scientists-identify-brain-waves-that-define-the-limits-of-you",
+      "issue": "Top ad banner",
+      "fix": "puppeteer-extra-plugin-adblocker"
+    },
+    {
+      "url": "https://www.windowscentral.com/microsoft/windows-11/windows-11-second-emergency-out-of-band-update-kb5078127-released-address-outlook-bugs",
+      "issue": "DFP ads, JS-heavy article",
+      "fix": "CSS selectors + waitForSelector"
+    },
+    {
+      "url": "https://boginjr.com/it/sw/dev/vinyl-boot/",
+      "issue": "CookieYes popup",
+      "fix": "CSS selectors for cky-*"
+    },
+    {
+      "url": "https://newsroom.porsche.com/en/2026/company/porsche-deliveries-2025-41516.html",
+      "issue": "Usercentrics popup (shadow DOM)",
+      "fix": "CSS + JS for uc-* elements"
+    },
+    {
+      "url": "https://www.latimes.com/california/story/2026-01-09/california-has-no-areas-of-dryness-first-time-in-25-years",
+      "issue": "Modality legal popup",
+      "fix": "CSS for modality-custom-element + stealth"
+    },
+    {
+      "url": "https://openai.com/index/unrolling-the-codex-agent-loop/",
+      "issue": "Cloudflare verification",
+      "fix": "puppeteer-extra-plugin-stealth"
+    },
+    {
+      "url": "https://www.reuters.com/legal/transactional/capital-one-buy-fintech-firm-brex-515-billion-deal-2026-01-22/",
+      "issue": "Aggressive bot protection",
+      "fix": "Fallback image"
+    }
+  ]
+}
