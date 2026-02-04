@@ -2,6 +2,21 @@
   "description": "Test URLs for validating screenshot capture. Run with: pnpm test:screenshots",
   "urls": [
     {
+      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "issue": "Domain handler: YouTube",
+      "fix": "Thumbnail + YouTube logo"
+    },
+    {
+      "url": "https://github.com/anthropics/claude-code",
+      "issue": "Domain handler: GitHub",
+      "fix": "og:image + GitHub logo"
+    },
+    {
+      "url": "https://twitter.com/naval/status/1002103360646823936",
+      "issue": "Domain handler: Twitter/X",
+      "fix": "oEmbed API + X logo"
+    },
+    {
       "url": "https://dbushell.com/2026/01/22/proton-spam/",
       "issue": "CSP blocks CSS injection",
       "fix": "try/catch around addStyleTag"

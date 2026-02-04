@@ -10,59 +10,47 @@ export type TweetData = {
   displayName: string
   username: string
   text: string
-  avatarUrl: string
 }
 
-const NITTER_INSTANCES = ['nitter.net', 'nitter.privacydev.net', 'nitter.poast.org']
-
-export function extractTweetPath(url: string): null | string {
-  const match = url.match(/(?:twitter\.com|x\.com)\/([^/]+\/status\/\d+)/)
-  return match ? match[1].split('?')[0] : null
+type OEmbedResponse = {
+  author_name: string
+  author_url: string
+  html: string
 }
 
-export async function parseTweetFromNitter(tweetPath: string): Promise<null | TweetData> {
-  for (const instance of NITTER_INSTANCES) {
-    try {
-      const nitterUrl = `https://${instance}/${tweetPath}`
-      const response = await fetch(nitterUrl, {
-        signal: AbortSignal.timeout(10000),
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; HNHighlights/1.0)',
-        },
-      })
+export async function fetchTweetFromOEmbed(tweetUrl: string): Promise<null | TweetData> {
+  try {
+    const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(tweetUrl)}`
+    const response = await fetch(oembedUrl, {
+      signal: AbortSignal.timeout(10000),
+    })
 
-      if (!response.ok) {
-        continue
-      }
-
-      const html = await response.text()
-
-      const avatarMatch = html.match(/class="avatar[^"]*"[^>]*src="([^"]+)"/)
-      const displayNameMatch = html.match(/class="fullname[^"]*"[^>]*>([^<]+)</)
-      const usernameMatch = html.match(/class="username[^"]*"[^>]*>([^<]+)</)
-      const textMatch = html.match(/class="tweet-content[^"]*"[^>]*>([^<]+)</)
-
-      if (!displayNameMatch || !usernameMatch || !textMatch) {
-        continue
-      }
-
-      const avatarPath = avatarMatch ? avatarMatch[1] : ''
-      const avatarUrl = avatarPath.startsWith('http')
-        ? avatarPath
-        : `https://${instance}${avatarPath}`
-
-      return {
-        displayName: displayNameMatch[1].trim(),
-        username: usernameMatch[1].trim(),
-        text: textMatch[1].trim(),
-        avatarUrl,
-      }
-    } catch {
-      continue
+    if (!response.ok) {
+      return null
     }
-  }
 
-  return null
+    const data = (await response.json()) as OEmbedResponse
+
+    // Extract username from author_url (e.g., "https://twitter.com/naval" -> "@naval")
+    const usernameMatch = data.author_url.match(/twitter\.com\/(\w+)/)
+    const username = usernameMatch ? `@${usernameMatch[1]}` : ''
+
+    // Extract tweet text from HTML blockquote (format: <p>text</p>&mdash; Author)
+    const textMatch = data.html.match(/<p[^>]*>([^<]+)<\/p>/)
+    const text = textMatch ? textMatch[1] : ''
+
+    if (!text) {
+      return null
+    }
+
+    return {
+      displayName: data.author_name,
+      username,
+      text,
+    }
+  } catch {
+    return null
+  }
 }
 
 const X_LOGO_SVG = `
@@ -96,16 +84,11 @@ export async function handleTwitter(params: DomainHandlerParams): Promise<string
     return filepath
   }
 
-  const tweetPath = extractTweetPath(url)
-  if (!tweetPath) {
-    throw new Error(`Could not extract tweet path from URL: ${url}`)
-  }
+  log.info(`[TWITTER] Fetching tweet via oEmbed: ${url}`)
 
-  log.info(`[TWITTER] Fetching tweet via Nitter: ${tweetPath}`)
-
-  const tweetData = await parseTweetFromNitter(tweetPath)
+  const tweetData = await fetchTweetFromOEmbed(url)
   if (!tweetData) {
-    throw new Error(`Could not fetch tweet data for: ${tweetPath}`)
+    throw new Error(`Could not fetch tweet data for: ${url}`)
   }
 
   log.info(`[TWITTER] Generating image for tweet by ${tweetData.username}`)
@@ -135,29 +118,23 @@ export async function handleTwitter(params: DomainHandlerParams): Promise<string
           align-items: center;
           margin-bottom: 40px;
         }
-        .avatar {
-          width: 80px;
-          height: 80px;
-          border-radius: 50%;
-          margin-right: 24px;
-        }
         .names {
           display: flex;
           flex-direction: column;
         }
         .display-name {
           color: white;
-          font-size: 32px;
+          font-size: 36px;
           font-weight: bold;
         }
         .username {
           color: #71767b;
-          font-size: 24px;
-          margin-top: 4px;
+          font-size: 28px;
+          margin-top: 8px;
         }
         .tweet-text {
           color: white;
-          font-size: 42px;
+          font-size: 48px;
           line-height: 1.4;
           max-width: 1600px;
         }
@@ -170,7 +147,6 @@ export async function handleTwitter(params: DomainHandlerParams): Promise<string
     </head>
     <body>
       <div class="header">
-        <img class="avatar" src="${tweetData.avatarUrl}" alt="" />
         <div class="names">
           <div class="display-name">${escapeHtml(tweetData.displayName)}</div>
           <div class="username">${escapeHtml(tweetData.username)}</div>

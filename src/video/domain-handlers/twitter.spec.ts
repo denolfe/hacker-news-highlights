@@ -1,49 +1,55 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { extractTweetPath, parseTweetFromNitter } from './twitter.js'
+import { fetchTweetFromOEmbed } from './twitter.js'
 
-describe('extractTweetPath', () => {
-  test.each([
-    ['https://twitter.com/elonmusk/status/123456789', 'elonmusk/status/123456789'],
-    ['https://x.com/elonmusk/status/123456789', 'elonmusk/status/123456789'],
-    ['https://mobile.twitter.com/user/status/999', 'user/status/999'],
-    ['https://twitter.com/user/status/123?s=20', 'user/status/123'],
-    ['https://example.com/page', null],
-  ])('extracts tweet path from %s', (url, expectedPath) => {
-    expect(extractTweetPath(url)).toBe(expectedPath)
-  })
-})
-
-describe('parseTweetFromNitter', () => {
+describe('fetchTweetFromOEmbed', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
   })
 
-  test('parses tweet data from Nitter HTML', async () => {
-    const html = `
-      <div class="main-tweet">
-        <img class="avatar" src="/pic/abc123" />
-        <a class="fullname">Elon Musk</a>
-        <a class="username">@elonmusk</a>
-        <div class="tweet-content">Hello, world!</div>
-      </div>
-    `
-    vi.spyOn(global, 'fetch').mockResolvedValueOnce(new Response(html, { status: 200 }))
+  test('parses tweet data from oEmbed response', async () => {
+    const oembedResponse = {
+      author_name: 'Naval',
+      author_url: 'https://twitter.com/naval',
+      html: '<blockquote class="twitter-tweet"><p lang="en" dir="ltr">How to Get Rich</p>&mdash; Naval (@naval)</blockquote>',
+    }
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(JSON.stringify(oembedResponse), { status: 200 }),
+    )
 
-    const result = await parseTweetFromNitter('elonmusk/status/123')
+    const result = await fetchTweetFromOEmbed('https://twitter.com/naval/status/123')
     expect(result).toEqual({
-      displayName: 'Elon Musk',
-      username: '@elonmusk',
-      text: 'Hello, world!',
-      avatarUrl: expect.stringContaining('/pic/abc123'),
+      displayName: 'Naval',
+      username: '@naval',
+      text: 'How to Get Rich',
     })
   })
 
-  test('returns null when tweet not found', async () => {
-    const html = `<!DOCTYPE html><html><body>Not found</body></html>`
-    vi.spyOn(global, 'fetch').mockResolvedValueOnce(new Response(html, { status: 200 }))
+  test('returns null on non-200 response', async () => {
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(new Response(null, { status: 404 }))
 
-    const result = await parseTweetFromNitter('user/status/999')
+    const result = await fetchTweetFromOEmbed('https://twitter.com/user/status/999')
+    expect(result).toBeNull()
+  })
+
+  test('returns null on fetch error', async () => {
+    vi.spyOn(global, 'fetch').mockRejectedValueOnce(new Error('Network error'))
+
+    const result = await fetchTweetFromOEmbed('https://twitter.com/user/status/999')
+    expect(result).toBeNull()
+  })
+
+  test('returns null when tweet text cannot be parsed', async () => {
+    const oembedResponse = {
+      author_name: 'User',
+      author_url: 'https://twitter.com/user',
+      html: '<blockquote class="twitter-tweet"></blockquote>',
+    }
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(JSON.stringify(oembedResponse), { status: 200 }),
+    )
+
+    const result = await fetchTweetFromOEmbed('https://twitter.com/user/status/123')
     expect(result).toBeNull()
   })
 })

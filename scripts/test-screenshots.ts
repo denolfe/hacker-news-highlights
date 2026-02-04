@@ -14,6 +14,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
+import { getDomainHandler } from '../src/video/domain-handlers/index.js'
 import { generateFallbackImage } from '../src/video/fallback.js'
 import { captureScreenshot } from '../src/video/screenshots.js'
 
@@ -35,6 +36,7 @@ type Result = {
   url: string
   issue: string
   status: 'failed' | 'fallback' | 'screenshot'
+  handler?: string
   error?: string
 }
 
@@ -72,9 +74,16 @@ async function main() {
     console.log(`  Issue: ${issue}`)
 
     try {
-      await captureScreenshot({ url, storyId: id })
-      console.log(`  ✓ Screenshot captured\n`)
-      results.push({ id, url, issue, status: 'screenshot' })
+      const domainHandler = getDomainHandler(url)
+      if (domainHandler) {
+        await domainHandler.handle({ url, storyId: id, title: domain })
+        console.log(`  ✓ ${domainHandler.type} handler\n`)
+        results.push({ id, url, issue, status: 'screenshot', handler: domainHandler.type })
+      } else {
+        await captureScreenshot({ url, storyId: id })
+        console.log(`  ✓ Screenshot captured\n`)
+        results.push({ id, url, issue, status: 'screenshot' })
+      }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error)
       console.log(`  ✗ Screenshot failed: ${errorMsg}`)
