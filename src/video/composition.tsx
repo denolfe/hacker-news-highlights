@@ -7,6 +7,7 @@ import type { VideoProps } from './types'
 import { Branding } from './components/Branding'
 import { Chapter } from './components/Chapter'
 import { Intro } from './components/Intro'
+import { BACKGROUND_COLOR } from './constants'
 
 export const PodcastVideo: React.FC<VideoProps> = ({ chapters }) => {
   const renderChapter = (chapter: (typeof chapters)[0]) => {
@@ -27,7 +28,7 @@ export const PodcastVideo: React.FC<VideoProps> = ({ chapters }) => {
   }
 
   return (
-    <AbsoluteFill style={{ backgroundColor: '#1a1a1a' }}>
+    <AbsoluteFill style={{ backgroundColor: BACKGROUND_COLOR }}>
       {chapters.map((chapter, index) => (
         <Sequence durationInFrames={chapter.durationFrames} from={chapter.startFrame} key={index}>
           {renderChapter(chapter)}

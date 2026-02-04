@@ -2,6 +2,8 @@
 import React from 'react'
 import { Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from 'remotion'
 
+import { BACKGROUND_COLOR } from '../constants'
+
 type BrandingProps = {
   durationFrames: number
 }
@@ -28,7 +30,7 @@ export const Branding: React.FC<BrandingProps> = ({ durationFrames }) => {
       style={{
         width,
         height,
-        backgroundColor: '#1a1a1a',
+        backgroundColor: BACKGROUND_COLOR,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

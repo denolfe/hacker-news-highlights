@@ -9,9 +9,8 @@ import path from 'path'
 
 import type { ChapterInput, StoryPreview, VideoChapter } from './types.js'
 
+import { FPS } from './constants.js'
 import { captureScreenshots } from './screenshots.js'
-
-const FPS = 60
 const VIDEO_OUTPUT = path.resolve(OUTPUT_DIR, 'output.mp4')
 const VIDEO_NO_AUDIO = path.resolve(OUTPUT_DIR, 'output-no-audio.mp4')
 

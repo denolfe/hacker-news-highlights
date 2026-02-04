@@ -4,6 +4,7 @@ import { cacheExists } from '@/utils/cache.js'
 import { log } from '@/utils/log.js'
 import path from 'path'
 
+import { DEVICE_SCALE_FACTOR, VIEWPORT_HEIGHT, VIEWPORT_WIDTH } from './constants.js'
 import { getDomainHandler } from './domain-handlers/index.js'
 import { generateFallbackImage } from './fallback.js'
 
@@ -127,8 +128,11 @@ export async function captureScreenshot(params: { url: string; storyId: string }
   const browser = await launchBrowser()
   try {
     const page = await browser.newPage()
-    // Higher deviceScaleFactor for crisp screenshots
-    await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 3 })
+    await page.setViewport({
+      width: VIEWPORT_WIDTH,
+      height: VIEWPORT_HEIGHT,
+      deviceScaleFactor: DEVICE_SCALE_FACTOR,
+    })
 
     // Try networkidle0 first, fall back to domcontentloaded on timeout
     try {

@@ -3,6 +3,8 @@ import { CACHE_DIR } from '@/constants.js'
 import { log } from '@/utils/log.js'
 import path from 'path'
 
+import { DEVICE_SCALE_FACTOR, VIEWPORT_HEIGHT, VIEWPORT_WIDTH } from './constants.js'
+
 export async function generateFallbackImage(params: {
   title: string
   source: string
@@ -23,8 +25,8 @@ export async function generateFallbackImage(params: {
       <style>
         body {
           margin: 0;
-          width: 1920px;
-          height: 1080px;
+          width: ${VIEWPORT_WIDTH}px;
+          height: ${VIEWPORT_HEIGHT}px;
           background: #1a1a1a;
           display: flex;
           flex-direction: column;
@@ -65,7 +67,11 @@ export async function generateFallbackImage(params: {
   const browser = await launchBrowser()
   try {
     const page = await browser.newPage()
-    await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 3 })
+    await page.setViewport({
+      width: VIEWPORT_WIDTH,
+      height: VIEWPORT_HEIGHT,
+      deviceScaleFactor: DEVICE_SCALE_FACTOR,
+    })
     await page.setContent(html, { waitUntil: 'networkidle0' })
     await page.screenshot({ path: filepath, type: 'png' })
     return filepath

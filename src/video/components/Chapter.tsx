@@ -6,6 +6,8 @@ import { Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from 'r
 
 import type { VideoChapter } from '../types'
 
+import { BACKGROUND_COLOR } from '../constants'
+
 const { fontFamily: interFont } = loadFont('normal', { subsets: ['latin'], weights: ['700'] })
 const { fontFamily: jetbrainsFont } = loadMonoFont('normal', {
   subsets: ['latin'],
@@ -59,7 +61,7 @@ export const Chapter: React.FC<ChapterProps> = ({ chapter }) => {
       style={{
         width,
         height,
-        backgroundColor: '#1a1a1a',
+        backgroundColor: BACKGROUND_COLOR,
         display: 'flex',
         flexDirection: 'column',
       }}

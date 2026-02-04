@@ -133,6 +133,11 @@ export async function handleTwitter(params: DomainHandlerParams): Promise<string
 
   const browser = await launchBrowser()
   try {
+    /**
+     * WARNING: The code below contains hardcoded values instead of shared constants
+     * because they seem to break the widget rendering properly.
+     */
+
     const page = await browser.newPage()
     // Start with a tall viewport to measure natural embed size
     await page.setViewport({ width: 1920, height: 2000, deviceScaleFactor: 3 })

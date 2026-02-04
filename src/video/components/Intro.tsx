@@ -6,6 +6,8 @@ import { Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from 'r
 
 import type { StoryPreview } from '../types'
 
+import { BACKGROUND_COLOR } from '../constants'
+
 const { fontFamily: interFont } = loadFont('normal', { subsets: ['latin'], weights: ['700'] })
 const { fontFamily: jetbrainsFont } = loadMonoFont('normal', {
   subsets: ['latin'],
@@ -87,7 +89,7 @@ export const Intro: React.FC<IntroProps> = ({ durationFrames, storyPreviews }) =
   const screenshotHeight = cardHeight - textSectionHeight
 
   return (
-    <div style={{ width, height, backgroundColor: '#1a1a1a', position: 'relative' }}>
+    <div style={{ width, height, backgroundColor: BACKGROUND_COLOR, position: 'relative' }}>
       {/* Cover image */}
       <Img
         src={staticFile('cover.png')}

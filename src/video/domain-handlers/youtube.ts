@@ -6,6 +6,8 @@ import path from 'path'
 
 import type { DomainHandlerParams } from './types.js'
 
+import { DEVICE_SCALE_FACTOR, VIEWPORT_HEIGHT, VIEWPORT_WIDTH } from '../constants.js'
+
 export function extractVideoId(url: string): null | string {
   const patterns = [
     /youtube\.com\/watch\?v=([^&]+)/,
@@ -75,8 +77,8 @@ export async function handleYoutube(params: DomainHandlerParams): Promise<string
       <style>
         body {
           margin: 0;
-          width: 1920px;
-          height: 1080px;
+          width: ${VIEWPORT_WIDTH}px;
+          height: ${VIEWPORT_HEIGHT}px;
           background: #0f0f0f;
           display: flex;
           align-items: center;
@@ -105,7 +107,11 @@ export async function handleYoutube(params: DomainHandlerParams): Promise<string
   const browser = await launchBrowser()
   try {
     const page = await browser.newPage()
-    await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 3 })
+    await page.setViewport({
+      width: VIEWPORT_WIDTH,
+      height: VIEWPORT_HEIGHT,
+      deviceScaleFactor: DEVICE_SCALE_FACTOR,
+    })
     await page.setContent(html, { waitUntil: 'networkidle0' })
     await page.screenshot({ path: filepath, type: 'png' })
     log.info(`[YOUTUBE] Saved: ${filename}`)

@@ -5,6 +5,7 @@
 import type { Browser, Page } from 'puppeteer'
 import type { PuppeteerExtra } from 'puppeteer-extra'
 
+import { VIEWPORT_HEIGHT, VIEWPORT_WIDTH } from '@/video/constants.js'
 import { createRequire } from 'module'
 
 // puppeteer-extra has CJS/ESM interop issues - use createRequire for CJS modules
@@ -63,7 +64,7 @@ export async function launchBrowser(): Promise<Browser> {
 
 export async function createPage(browser: Browser): Promise<Page> {
   const page = await browser.newPage()
-  await page.setViewport({ width: 1920, height: 1080 })
+  await page.setViewport({ width: VIEWPORT_WIDTH, height: VIEWPORT_HEIGHT })
   return page
 }
 
