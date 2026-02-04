@@ -36,8 +36,22 @@ export async function fetchTweetFromOEmbed(tweetUrl: string): Promise<null | Twe
     const username = usernameMatch ? `@${usernameMatch[1]}` : ''
 
     // Extract tweet text from HTML blockquote (format: <p>text</p>&mdash; Author)
-    const textMatch = data.html.match(/<p[^>]*>([^<]+)<\/p>/)
-    const text = textMatch ? textMatch[1] : ''
+    // Text may contain <br>, <a>, etc. so we extract everything between <p> and </p>
+    const textMatch = data.html.match(/<p[^>]*>([\s\S]*?)<\/p>/)
+    if (!textMatch) {
+      return null
+    }
+
+    // Strip HTML tags and decode entities
+    const text = textMatch[1]
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .trim()
 
     if (!text) {
       return null
@@ -113,6 +127,9 @@ export async function handleTwitter(params: DomainHandlerParams): Promise<string
         }
         .content {
           max-width: 1200px;
+          border: 2px solid #71767b;
+          border-radius: 16px;
+          padding: 48px;
         }
         .header {
           display: flex;
@@ -144,6 +161,7 @@ export async function handleTwitter(params: DomainHandlerParams): Promise<string
           color: white;
           font-size: 48px;
           line-height: 1.4;
+          white-space: pre-wrap;
         }
         .logo {
           position: absolute;
