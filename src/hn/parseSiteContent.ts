@@ -26,24 +26,6 @@ const SPA_INDICATORS = [
   'captcha-delivery.com',
 ]
 
-function parseHtmlWithReadability(html: string): null | ParseReturnType {
-  const virtualConsole = new VirtualConsole()
-  virtualConsole.on('error', () => {})
-  const dom = new JSDOM(html, { virtualConsole })
-  return new Readability(dom.window.document).parse()
-}
-
-function needsBrowserFetch(html: string, parsed: null | ParseReturnType): boolean {
-  const textLength = parsed?.textContent?.length ?? 0
-
-  // Check for SPA/bot indicators in raw HTML
-  const htmlLower = html.toLowerCase()
-  const hasSpaIndicator = SPA_INDICATORS.some(indicator => htmlLower.includes(indicator))
-
-  // Consider it failed if content is too short or has SPA indicators
-  return textLength < MIN_CONTENT_LENGTH || hasSpaIndicator
-}
-
 /**
  * Parse the HTML content of a site and extract the main text content, byline, excerpt, and site name.
  * Falls back to Puppeteer browser fetch for SPAs and bot-protected pages.
@@ -119,4 +101,22 @@ export async function parseSiteContentWithBrowser(url: string): Promise<ParseRet
       excerpt: '',
     }
   )
+}
+
+function parseHtmlWithReadability(html: string): null | ParseReturnType {
+  const virtualConsole = new VirtualConsole()
+  virtualConsole.on('error', () => {})
+  const dom = new JSDOM(html, { virtualConsole })
+  return new Readability(dom.window.document).parse()
+}
+
+function needsBrowserFetch(html: string, parsed: null | ParseReturnType): boolean {
+  const textLength = parsed?.textContent?.length ?? 0
+
+  // Check for SPA/bot indicators in raw HTML
+  const htmlLower = html.toLowerCase()
+  const hasSpaIndicator = SPA_INDICATORS.some(indicator => htmlLower.includes(indicator))
+
+  // Consider it failed if content is too short or has SPA indicators
+  return textLength < MIN_CONTENT_LENGTH || hasSpaIndicator
 }

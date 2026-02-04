@@ -8,33 +8,34 @@ import { parseSiteContent } from './parseSiteContent.js'
 
 const logger = childLogger('HN')
 
-async function fetchWithTimeoutAndRetry(
-  url: string,
-  timeout: number = 5000,
-  retries: number = 3,
-): Promise<Response> {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    const controller = new AbortController()
-    const id = setTimeout(() => controller.abort(), timeout)
-    try {
-      const response = await fetch(url, { signal: controller.signal })
-      clearTimeout(id)
-      return response
-    } catch (error: unknown) {
-      clearTimeout(id)
-      if (attempt === retries) {
-        logger.error(
-          `Failed to fetch ${url} after ${retries} attempts: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-        )
-        logger.error(error)
-        throw error
-      }
-      logger.warning(
-        `Attempt ${attempt} failed for ${url}. ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-      )
-    }
-  }
-  throw new Error(`Failed to fetch ${url} after ${retries} attempts`)
+type StoryDataByIdResponseChildren = {
+  author: string
+  children: StoryDataByIdResponseChildren[]
+  created_at: string
+  created_at_i: number
+  id: number
+  options: string[]
+  parent_id: number
+  points: null | number
+  story_id: number
+  text: string
+  type: string
+}
+
+type StoryDataByIdResponse = {
+  author: string
+  children: StoryDataByIdResponseChildren[]
+  created_at: string
+  created_at_i: number
+  id: number
+  options: string[]
+  parent_id: null | number
+  points: number
+  story_id: number
+  text: null | string
+  title: string
+  type: string
+  url: null | string
 }
 
 /**
@@ -190,20 +191,6 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   return output
 }
 
-/** Recursively extracts comment data from HN API response. */
-function extractComment(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  c: any,
-): Pick<Comment, 'author' | 'children' | 'created_at' | 'id' | 'text'> {
-  return {
-    id: c.id,
-    created_at: c.created_at,
-    text: c.text,
-    author: c.author,
-    children: c.children.map(extractComment),
-  }
-}
-
 /**
  * Fetches all comments for a given story ID from Hacker News API.
  */
@@ -241,6 +228,49 @@ export async function fetchStoryDataById(storyId: number): Promise<StoryOutput> 
   }
 }
 
+async function fetchWithTimeoutAndRetry(
+  url: string,
+  timeout: number = 5000,
+  retries: number = 3,
+): Promise<Response> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const controller = new AbortController()
+    const id = setTimeout(() => controller.abort(), timeout)
+    try {
+      const response = await fetch(url, { signal: controller.signal })
+      clearTimeout(id)
+      return response
+    } catch (error: unknown) {
+      clearTimeout(id)
+      if (attempt === retries) {
+        logger.error(
+          `Failed to fetch ${url} after ${retries} attempts: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
+        )
+        logger.error(error)
+        throw error
+      }
+      logger.warning(
+        `Attempt ${attempt} failed for ${url}. ${error instanceof Error ? error.message : JSON.stringify(error)}`,
+      )
+    }
+  }
+  throw new Error(`Failed to fetch ${url} after ${retries} attempts`)
+}
+
+/** Recursively extracts comment data from HN API response. */
+function extractComment(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  c: any,
+): Pick<Comment, 'author' | 'children' | 'created_at' | 'id' | 'text'> {
+  return {
+    id: c.id,
+    created_at: c.created_at,
+    text: c.text,
+    author: c.author,
+    children: c.children.map(extractComment),
+  }
+}
+
 /**
  * Retrieves covered stories from cache and filters out stories that are older than 36 hours.
  */
@@ -267,34 +297,4 @@ async function getRecentlyCoveredStories() {
     .filter((story): story is CoveredStory => story !== null)
 
   return coveredStories
-}
-
-type StoryDataByIdResponseChildren = {
-  author: string
-  children: StoryDataByIdResponseChildren[]
-  created_at: string
-  created_at_i: number
-  id: number
-  options: string[]
-  parent_id: number
-  points: null | number
-  story_id: number
-  text: string
-  type: string
-}
-
-type StoryDataByIdResponse = {
-  author: string
-  children: StoryDataByIdResponseChildren[]
-  created_at: string
-  created_at_i: number
-  id: number
-  options: string[]
-  parent_id: null | number
-  points: number
-  story_id: number
-  text: null | string
-  title: string
-  type: string
-  url: null | string
 }
