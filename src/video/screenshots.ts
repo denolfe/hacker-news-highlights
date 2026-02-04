@@ -4,6 +4,7 @@ import { cacheExists } from '@/utils/cache.js'
 import { log } from '@/utils/log.js'
 import path from 'path'
 
+import { getDomainHandler } from './domain-handlers/index.js'
 import { generateFallbackImage } from './fallback.js'
 
 /** CSS to hide UI elements not covered by adblocker (consent popups, modals, ad containers) */
@@ -234,7 +235,23 @@ export async function captureScreenshots(params: {
     if (!chapter.url) {
       continue
     }
+
     try {
+      // Check for domain-specific handler first
+      const domainHandler = getDomainHandler(chapter.url)
+
+      if (domainHandler) {
+        log.info(`[SCREENSHOT] Using ${domainHandler.type} handler for: ${chapter.url}`)
+        const filepath = await domainHandler.handle({
+          url: chapter.url,
+          storyId: chapter.storyId,
+          title: chapter.title,
+        })
+        screenshotMap.set(chapter.storyId, filepath)
+        continue
+      }
+
+      // Fall back to generic Puppeteer screenshot
       const filepath = await captureScreenshot({ url: chapter.url, storyId: chapter.storyId })
       screenshotMap.set(chapter.storyId, filepath)
     } catch (error) {
