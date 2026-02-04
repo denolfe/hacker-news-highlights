@@ -1,5 +1,6 @@
 import type { DomainHandler } from './types.js'
 
+import { handleGithub } from './github.js'
 import { handleYoutube } from './youtube.js'
 
 const YOUTUBE_PATTERN = /^https?:\/\/(?:www\.|m\.)?(?:youtube\.com|youtu\.be)\//
@@ -13,7 +14,7 @@ const youtubeHandler: DomainHandler = {
 
 const githubHandler: DomainHandler = {
   type: 'github',
-  handle: () => Promise.reject(new Error('Not implemented')),
+  handle: handleGithub,
 }
 
 const twitterHandler: DomainHandler = {
