@@ -73,11 +73,22 @@ pnpm start --video
 # Video generation shorthand
 pnpm start:video
 
+# Test intro generation with specific story IDs (requires exactly 3)
+pnpm start --testIntro 123,456,789
+
+# Test screenshot capture for a single URL
+pnpm start --testScreenshot https://example.com
+
 # Benchmark video pipeline with predefined URLs
 pnpm benchmark                    # Uses showcase (default)
 pnpm benchmark:stress-test        # Uses challenging URLs
 pnpm start --benchmark=data/custom.json  # Custom file
 ```
+
+### Benchmark Data Files
+
+- **`data/showcase-episode.json`** - Curated URLs with visually appealing screenshots (YouTube, GitHub, major tech blogs)
+- **`data/benchmark-stress-test.json`** - Challenging URLs that test edge cases (paywalls, bot detection, varied layouts)
 
 ## Architecture
 
@@ -96,7 +107,10 @@ pnpm start --benchmark=data/custom.json  # Custom file
 - **`src/hn/`** - HN API integration, content parsing (Readability + JSDOM), PDF text extraction
 - **`src/ai/`** - OpenAI integration for summarization, intro generation, episode title generation
 - **`src/audio/`** - TTS integration (OpenAI/ElevenLabs), pronunciation adjustments, audio concatenation
+- **`src/browser/`** - Shared Puppeteer browser config with stealth/adblocker plugins for content fetching and screenshots
 - **`src/video/`** - Video generation with Remotion, Puppeteer screenshots, YouTube chapter timestamps
+- **`src/video/domain-handlers/`** - Domain-specific screenshot handlers (YouTube thumbnails, GitHub repo cards, Twitter embeds)
+- **`src/show-notes.ts`** - Generates `show-notes.txt` (episode description with links) and `transcript.txt` for output
 - **`src/services.ts`** - TTS service factory (OpenAI vs ElevenLabs based on `VOICE_SERVICE` env)
 - **`src/podcast.ts`** - Transistor.fm API client for episode upload/publish
 - **`src/utils/cache.ts`** - File-based caching for summaries, audio segments, covered stories
@@ -119,11 +133,14 @@ TypeScript path alias `@/*` maps to `src/*` (configured in tsconfig.json, resolv
 
 ### Testing
 
-Uses Vitest with path alias support. Test files use `.spec.ts` extension. Run single test file:
+Uses Vitest with path alias support. Test files use `.spec.ts` extension.
 
 ```bash
-pnpm test src/audio/adjustPronunciation.spec.ts
+pnpm test src/audio/adjustPronunciation.spec.ts  # Run single test file
+pnpm test:content                                 # Run integration tests (60s timeout)
 ```
+
+Integration tests (`*.integration.spec.ts`) run separately via `vitest.integration.config.ts` with longer timeouts for network requests.
 
 ## Environment Variables
 
@@ -161,6 +178,14 @@ GitHub Actions workflow runs daily at 6:30am EST via cron schedule (`generate-po
 4. Updates covered-stories cache for next run
 5. Uploads artifacts (output + cache) for debugging
 
+### Manual Workflow Dispatch
+
+The workflow can be triggered manually with these options:
+- **debug** - Enable debug mode
+- **voice_service** - Choose `openai` or `elevenlabs` (default: openai for manual, elevenlabs on main)
+- **skip_publish** - Skip publishing to podcast host (default: true for manual runs)
+- **video** - Generate YouTube video (default: false for manual runs)
+
 ## Video Generation
 
 Video output (`--video` flag) generates an MP4 alongside the podcast audio:
@@ -184,6 +209,10 @@ src/video/
 ├── screenshots.ts     # Puppeteer screenshot capture with caching
 ├── fallback.ts        # Fallback image generation for failed screenshots
 ├── types.ts           # VideoChapter, VideoProps, ChapterInput types
+├── domain-handlers/   # Domain-specific screenshot customization
+│   ├── youtube.ts     # Fetches video thumbnail instead of screenshot
+│   ├── github.ts      # Uses OpenGraph image for repo cards
+│   └── twitter.ts     # Renders tweet embed widget
 └── components/
     ├── Chapter.tsx    # Story chapter view (title banner + screenshot)
     └── Branding.tsx   # Intro/outro branding screen
