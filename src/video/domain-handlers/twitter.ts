@@ -106,12 +106,13 @@ export async function handleTwitter(params: DomainHandlerParams): Promise<string
           height: 1080px;
           background: #000000;
           display: flex;
-          flex-direction: column;
+          align-items: center;
           justify-content: center;
-          padding: 80px 120px;
-          box-sizing: border-box;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           position: relative;
+        }
+        .content {
+          max-width: 1200px;
         }
         .header {
           display: flex;
@@ -136,7 +137,6 @@ export async function handleTwitter(params: DomainHandlerParams): Promise<string
           color: white;
           font-size: 48px;
           line-height: 1.4;
-          max-width: 1600px;
         }
         .logo {
           position: absolute;
@@ -146,13 +146,15 @@ export async function handleTwitter(params: DomainHandlerParams): Promise<string
       </style>
     </head>
     <body>
-      <div class="header">
-        <div class="names">
-          <div class="display-name">${escapeHtml(tweetData.displayName)}</div>
-          <div class="username">${escapeHtml(tweetData.username)}</div>
+      <div class="content">
+        <div class="header">
+          <div class="names">
+            <div class="display-name">${escapeHtml(tweetData.displayName)}</div>
+            <div class="username">${escapeHtml(tweetData.username)}</div>
+          </div>
         </div>
+        <div class="tweet-text">${displayText}</div>
       </div>
-      <div class="tweet-text">${displayText}</div>
       <div class="logo">${X_LOGO_SVG}</div>
     </body>
     </html>
