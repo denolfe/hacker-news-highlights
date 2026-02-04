@@ -211,7 +211,7 @@ async function main() {
     log.info(`Total character count: ${showNotes.replace(/\s+/g, '').length}`)
 
     // Publish podcast before video generation so it succeeds even if video fails
-    const shouldPublish = (process.env.CI || args.publish === true) && args.publish !== false
+    const shouldPublish = args.publish ?? Boolean(process.env.CI)
     if (shouldPublish) {
       await uploadPodcast({
         audioFilePath: EPISODE_OUTPUT,
@@ -222,7 +222,7 @@ async function main() {
       log.info('SKIPPING episode publish')
     }
 
-    const shouldGenerateVideo = (args.video || process.env.CI) && args.video !== false
+    const shouldGenerateVideo = args.video ?? Boolean(process.env.CI)
     if (shouldGenerateVideo) {
       const videoChapters = [
         {
