@@ -114,3 +114,13 @@ export type ResponseData = {
 export type TtsService = {
   convert: (text: string) => Promise<Buffer>
 }
+
+export type BenchmarkEpisode = {
+  description: string
+  chapterDurationSeconds: number
+  stories: Array<{
+    url: string
+    title: string
+    source: string
+  }>
+}

@@ -1,3 +1,6 @@
+import type { BenchmarkEpisode } from '@/types.js'
+import type { ChapterInput } from '@/video/types.js'
+
 import {
   generateEpisodeTitle,
   generatePodcastIntro,
@@ -20,6 +23,8 @@ import { writeToFile } from '@/utils/writeToFile.js'
 import { generateVideo, generateYouTubeChapters } from '@/video/index.js'
 import { captureScreenshot } from '@/video/screenshots.js'
 import minimist from 'minimist'
+import fs from 'node:fs'
+import path from 'node:path'
 
 loadEnvIfExists()
 
@@ -43,6 +48,8 @@ const args = minimist(process.argv.slice(2)) as {
   video?: boolean
   /** Test screenshot capture for a URL */
   testScreenshot?: string
+  /** Run benchmark mode with predefined URLs */
+  benchmark?: boolean
 }
 
 async function main() {
@@ -107,6 +114,36 @@ async function main() {
       storyId,
     })
     log.info(`Screenshot saved to: ${filepath}`)
+    return
+  }
+
+  // Benchmark mode: generate video from predefined URLs
+  if (args.benchmark) {
+    log.info('[BENCHMARK] Starting benchmark video generation...')
+    const benchmarkPath = path.resolve('data/benchmark-episode.json')
+    const benchmarkData: BenchmarkEpisode = JSON.parse(fs.readFileSync(benchmarkPath, 'utf-8'))
+
+    const { chapterDurationSeconds, stories } = benchmarkData
+    log.info(`[BENCHMARK] Loaded ${stories.length} stories, ${chapterDurationSeconds}s per chapter`)
+
+    const chapters: ChapterInput[] = stories.map((story, index) => {
+      const hostname = new URL(story.url).hostname.replace(/^www\./, '')
+      const storyId = `benchmark-${hostname}-${index}`
+      const start = index * chapterDurationSeconds
+      const end = start + chapterDurationSeconds
+
+      return {
+        title: story.title,
+        source: story.source,
+        url: story.url,
+        storyId,
+        start,
+        end,
+      }
+    })
+
+    await generateVideo({ chapters, skipAudio: true })
+    log.info('[BENCHMARK] Done!')
     return
   }
 

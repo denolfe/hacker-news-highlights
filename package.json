@@ -11,6 +11,7 @@
   },
   "type": "module",
   "scripts": {
+    "benchmark": "NODE_OPTIONS=--no-deprecation tsx src/index.ts --benchmark",
     "build": "tsc --noEmit",
     "clean:all": "rm -rf cache/* output/*",
     "clean:audio": "rm -rf cache/*.mp3",

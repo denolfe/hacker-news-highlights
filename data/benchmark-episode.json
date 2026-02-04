@@ -1,0 +1,71 @@
+{
+  "description": "Benchmark episode for testing video pipeline. Run with: pnpm benchmark",
+  "chapterDurationSeconds": 10,
+  "stories": [
+    {
+      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "title": "Rick Astley - Never Gonna Give You Up",
+      "source": "YouTube"
+    },
+    {
+      "url": "https://github.com/anthropics/claude-code",
+      "title": "Claude Code: Anthropic's CLI for Claude",
+      "source": "GitHub"
+    },
+    {
+      "url": "https://twitter.com/naval/status/1002103360646823936",
+      "title": "Naval Ravikant on Specific Knowledge",
+      "source": "X"
+    },
+    {
+      "url": "https://dbushell.com/2026/01/22/proton-spam/",
+      "title": "Proton Mail Spam Issues",
+      "source": "dbushell.com"
+    },
+    {
+      "url": "https://blog.cloudflare.com/cname-a-record-order-dns-standards/",
+      "title": "CNAME and A Record Order in DNS Standards",
+      "source": "Cloudflare"
+    },
+    {
+      "url": "https://www.androidauthority.com/google-sideloading-android-high-friction-process-3633468/",
+      "title": "Google's High-Friction Sideloading Process on Android",
+      "source": "Android Authority"
+    },
+    {
+      "url": "https://www.sciencealert.com/scientists-identify-brain-waves-that-define-the-limits-of-you",
+      "title": "Scientists Identify Brain Waves That Define the Limits of You",
+      "source": "ScienceAlert"
+    },
+    {
+      "url": "https://www.windowscentral.com/microsoft/windows-11/windows-11-second-emergency-out-of-band-update-kb5078127-released-address-outlook-bugs",
+      "title": "Windows 11 Emergency Update KB5078127 for Outlook Bugs",
+      "source": "Windows Central"
+    },
+    {
+      "url": "https://boginjr.com/it/sw/dev/vinyl-boot/",
+      "title": "Vinyl Boot: Boot from Vinyl Records",
+      "source": "boginjr.com"
+    },
+    {
+      "url": "https://newsroom.porsche.com/en/2026/company/porsche-deliveries-2025-41516.html",
+      "title": "Porsche Deliveries 2025",
+      "source": "Porsche Newsroom"
+    },
+    {
+      "url": "https://www.latimes.com/california/story/2026-01-09/california-has-no-areas-of-dryness-first-time-in-25-years",
+      "title": "California Has No Areas of Dryness for First Time in 25 Years",
+      "source": "LA Times"
+    },
+    {
+      "url": "https://openai.com/index/unrolling-the-codex-agent-loop/",
+      "title": "Unrolling the Codex Agent Loop",
+      "source": "OpenAI"
+    },
+    {
+      "url": "https://www.reuters.com/legal/transactional/capital-one-buy-fintech-firm-brex-515-billion-deal-2026-01-22/",
+      "title": "Capital One to Buy Fintech Firm Brex in $5.15B Deal",
+      "source": "Reuters"
+    }
+  ]
+}

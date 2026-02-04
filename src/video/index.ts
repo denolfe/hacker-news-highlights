@@ -21,8 +21,11 @@ const __dirname = path.dirname(__filename)
 const COVER_SOURCE = path.resolve(__dirname, '../../cover.png')
 const COVER_DEST = path.resolve(CACHE_DIR, 'cover.png')
 
-export async function generateVideo(params: { chapters: ChapterInput[] }): Promise<void> {
-  const { chapters } = params
+export async function generateVideo(params: {
+  chapters: ChapterInput[]
+  skipAudio?: boolean
+}): Promise<void> {
+  const { chapters, skipAudio = false } = params
 
   log.info('[VIDEO] Starting video generation...')
 
@@ -113,15 +116,18 @@ export async function generateVideo(params: { chapters: ChapterInput[] }): Promi
     },
   })
 
-  log.info('[VIDEO] Adding audio track...')
-  execSync(
-    `ffmpeg -y -i "${VIDEO_NO_AUDIO}" -i "${EPISODE_OUTPUT}" -c:v copy -c:a aac -map 0:v:0 -map 1:a:0 "${VIDEO_OUTPUT}"`,
-    { stdio: 'inherit' },
-  )
-
-  fs.unlinkSync(VIDEO_NO_AUDIO)
-
-  log.info(`[VIDEO] Video saved to: ${VIDEO_OUTPUT}`)
+  if (skipAudio) {
+    fs.renameSync(VIDEO_NO_AUDIO, VIDEO_OUTPUT)
+    log.info(`[VIDEO] Video saved to: ${VIDEO_OUTPUT} (no audio)`)
+  } else {
+    log.info('[VIDEO] Adding audio track...')
+    execSync(
+      `ffmpeg -y -i "${VIDEO_NO_AUDIO}" -i "${EPISODE_OUTPUT}" -c:v copy -c:a aac -map 0:v:0 -map 1:a:0 "${VIDEO_OUTPUT}"`,
+      { stdio: 'inherit' },
+    )
+    fs.unlinkSync(VIDEO_NO_AUDIO)
+    log.info(`[VIDEO] Video saved to: ${VIDEO_OUTPUT}`)
+  }
 }
 
 export function generateYouTubeChapters(params: {
