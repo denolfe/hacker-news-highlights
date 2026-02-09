@@ -118,6 +118,9 @@ export type TtsService = {
 export type BenchmarkEpisode = {
   description: string
   chapterDurationSeconds: number
+  intro?: {
+    title: string
+  }
   stories: Array<{
     url: string
     title: string

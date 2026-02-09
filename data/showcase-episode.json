@@ -1,6 +1,9 @@
 {
   "description": "Showcase episode with visually appealing screenshots",
   "chapterDurationSeconds": 10,
+  "intro": {
+    "title": "Top Tech Headlines"
+  },
   "stories": [
     {
       "url": "https://x.com/mattpocockuk/status/2011092347254182097",

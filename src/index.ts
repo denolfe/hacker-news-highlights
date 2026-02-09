@@ -125,23 +125,38 @@ async function main() {
     const benchmarkPath = path.resolve(benchmarkFile)
     const benchmarkData: BenchmarkEpisode = JSON.parse(fs.readFileSync(benchmarkPath, 'utf-8'))
 
-    const { chapterDurationSeconds, stories } = benchmarkData
+    const { chapterDurationSeconds, intro, stories } = benchmarkData
     log.info(`[BENCHMARK] Loaded ${stories.length} stories, ${chapterDurationSeconds}s per chapter`)
 
-    const chapters: ChapterInput[] = stories.map((story, index) => {
+    const chapters: ChapterInput[] = []
+
+    if (intro) {
+      chapters.push({
+        title: intro.title,
+        source: PODCAST_NAME,
+        url: null,
+        storyId: 'benchmark-intro',
+        start: 0,
+        end: chapterDurationSeconds,
+      })
+    }
+
+    const storyOffset = intro ? 1 : 0
+    stories.forEach((story, index) => {
       const hostname = new URL(story.url).hostname.replace(/^www\./, '')
       const storyId = `benchmark-${hostname}-${index}`
-      const start = index * chapterDurationSeconds
+      const chapterIndex = index + storyOffset
+      const start = chapterIndex * chapterDurationSeconds
       const end = start + chapterDurationSeconds
 
-      return {
+      chapters.push({
         title: story.title,
         source: story.source,
         url: story.url,
         storyId,
         start,
         end,
-      }
+      })
     })
 
     await generateVideo({ chapters, skipAudio: true })
