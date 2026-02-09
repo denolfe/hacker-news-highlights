@@ -44,13 +44,6 @@ export async function getBestThumbnailUrl(videoId: string): Promise<string> {
   return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
 }
 
-const YOUTUBE_LOGO_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
-  <path fill="#FF0000" d="M47.5 14.4s-.5-3.3-1.9-4.8c-1.8-1.9-3.9-1.9-4.8-2C34.1 7 24 7 24 7s-10.1 0-16.8.6c-.9.1-3 .1-4.8 2-1.4 1.5-1.9 4.8-1.9 4.8S0 18.3 0 22.2v3.6c0 3.9.5 7.8.5 7.8s.5 3.3 1.9 4.8c1.8 1.9 4.2 1.8 5.3 2 3.8.4 16.3.5 16.3.5s10.1 0 16.8-.6c.9-.1 3-.1 4.8-2 1.4-1.5 1.9-4.8 1.9-4.8s.5-3.9.5-7.8v-3.6c0-3.9-.5-7.8-.5-7.8z"/>
-  <path fill="#FFF" d="M19 31V17l13 7z"/>
-</svg>
-`
-
 export async function handleYoutube(params: DomainHandlerParams): Promise<string> {
   const { url, storyId } = params
   const filename = `screenshot-${storyId}.png`
@@ -83,23 +76,16 @@ export async function handleYoutube(params: DomainHandlerParams): Promise<string
           display: flex;
           align-items: center;
           justify-content: center;
-          position: relative;
         }
         .thumbnail {
           max-width: 100%;
           max-height: 100%;
           object-fit: contain;
         }
-        .logo {
-          position: absolute;
-          bottom: 40px;
-          left: 40px;
-        }
       </style>
     </head>
     <body>
       <img class="thumbnail" src="${thumbnailUrl}" alt="" />
-      <div class="logo">${YOUTUBE_LOGO_SVG}</div>
     </body>
     </html>
   `
