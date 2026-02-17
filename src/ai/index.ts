@@ -40,7 +40,7 @@ You are an AI language model tasked with generating a recap of a top story from 
   - Identify the main topics of discussion in the comments.
   - Highlight any significant debates or differing opinions among users.
   - Note any recurring themes or insights that provide additional context or perspectives on the content.
-  - Capture the general sentiment of the community regarding the content and its implications.
+  - Capture the general sentiment of the community. Commit to a dominant sentiment (e.g., "mostly skeptical", "largely positive") rather than defaulting to "mixed". If genuinely divided, name the specific poles (e.g., "divided between excitement about X and concern about Y").
   - Avoid including specific usernames or quoting comments verbatim; instead, focus on summarizing the overall discourse.
   - Avoid qualitative assessments of discussion intensity (e.g., "lively", "robust", "heated", "spirited"). State what was discussed, not how energetically.
 </comments_summary>
