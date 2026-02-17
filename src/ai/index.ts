@@ -42,6 +42,7 @@ You are an AI language model tasked with generating a recap of a top story from 
   - Note any recurring themes or insights that provide additional context or perspectives on the content.
   - Capture the general sentiment of the community regarding the content and its implications.
   - Avoid including specific usernames or quoting comments verbatim; instead, focus on summarizing the overall discourse.
+  - Avoid qualitative assessments of discussion intensity (e.g., "lively", "robust", "heated", "spirited"). State what was discussed, not how energetically.
 </comments_summary>
 <example>
   <input>
