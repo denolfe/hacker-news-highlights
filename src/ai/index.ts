@@ -16,6 +16,8 @@ const openai = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
+const MODEL = 'gpt-4.1-nano'
+
 const storySummarizationPrompt = `
 You are an AI language model tasked with generating a recap of a top story from Hacker News (news.ycombinator.com).
 <instructions>
@@ -23,6 +25,16 @@ You are an AI language model tasked with generating a recap of a top story from 
   - Summarize the link's content: Provide a concise summary of the content's main points, capturing the essence of the story.
   - Summarize the conversations in the comments: Analyze the comments section to extract key themes, debates, and insights shared by the community.
 </instructions>
+<writing_style>
+  These rules apply to the ENTIRE output (content summary and comments summary):
+  - Use plain words. Avoid "highlight", "highlights", "highlighting", "implications", "notable", "significant", "broader".
+  - Commit to a dominant sentiment. Avoid hedging with "mixed".
+  - State the dominant view, then note dissent briefly. Avoid "some X, while others Y" parallelisms.
+  - Use direct verbs. Avoid -ing filler like "with many expressing", "reflecting a mix of".
+  - State debates directly: "Users debated X" not "There was a debate about X".
+  - Do NOT use vague quantifiers: "many", "some", "several", "various". Instead of "Many expressed concern", write "Users expressed concern" or "There was concern that". Instead of "some suggested", write "Suggestions included".
+  - State what was discussed, not how. Avoid "lively", "robust", "heated", "spirited".
+</writing_style>
 <pronunciation_adjustments>
   - For any currency amounts, convert them to words and remove the currency symbol. For example, $10.50 should be written as "ten dollars and fifty cents."; $1.4 billion should be written as "one point four billion dollars".
   - For any measurements or distances, convert them to words. For example, 5km should be written as "five kilometers"; 670nm should be written as "six hundred seventy nanometers".
@@ -37,22 +49,13 @@ You are an AI language model tasked with generating a recap of a top story from 
   - Title and Source lines MUST end with a period.
 </content_summary>
 <comments_summary>
+  - Use past tense throughout. Do NOT use present tense (e.g., "users agreed" not "users agree", "there was debate" not "there is debate").
   - Identify the main topics of discussion in the comments.
   - Note any significant debates or differing opinions among users.
   - Note any recurring themes or insights that provide additional context or perspectives on the content.
   - Capture the general sentiment of the community. Commit to a dominant sentiment (e.g., "mostly skeptical", "largely positive") rather than defaulting to "mixed". If genuinely divided, name the specific poles (e.g., "divided between excitement about X and concern about Y").
   - Avoid including specific usernames or quoting comments verbatim; instead, focus on summarizing the overall discourse.
 </comments_summary>
-<writing_style>
-  These rules apply to the ENTIRE output (content summary and comments summary):
-  - Use plain words. Avoid "highlights", "implications", "notable", "significant", "broader".
-  - Commit to a dominant sentiment. Avoid hedging with "mixed".
-  - State the dominant view, then note dissent briefly. Avoid "some X, while others Y" parallelisms.
-  - Use direct verbs. Avoid -ing filler like "with many expressing", "reflecting a mix of".
-  - State debates directly: "Users debated X" not "There was a debate about X".
-  - Be direct about views. Avoid vague attributions like "many users", "some commenters".
-  - State what was discussed, not how. Avoid "lively", "robust", "heated", "spirited".
-</writing_style>
 <example>
   <input>
     <title>[Content Title]</title>
@@ -67,7 +70,7 @@ You are an AI language model tasked with generating a recap of a top story from 
 
     The [article, news story, post, project, tweet, video] [brief description of content's focus]. [Summary of main points and key arguments].
 
-    In the comments, users [dominant reaction or viewpoint]. [Key debate or tension, stated directly]. The sentiment was [dominant sentiment, e.g., "mostly skeptical", "largely supportive"].
+    In the comments, users [dominant reaction or viewpoint, past tense]. [Key debate or tension, stated directly, past tense]. The sentiment was [dominant sentiment, e.g., "mostly skeptical", "largely supportive"].
   </expected_output>
 </example>
 `
@@ -106,7 +109,7 @@ export async function summarizeStory(story: StoryDataAggregate): Promise<StoryDa
   logger.info(`Estimated tokens: ${tokenCount}`)
 
   const { text } = await generateText({
-    model: openai('gpt-4o-mini'),
+    model: openai(MODEL),
     prompt,
   })
   story.summary = text
@@ -141,7 +144,7 @@ Let's ${IMPERATIVE_PHRASES[Math.floor(Math.random() * IMPERATIVE_PHRASES.length)
 `
 
   const { text } = await generateText({
-    model: openai('gpt-4o-mini'),
+    model: openai(MODEL),
     prompt: `
 Given 3 stories from today's Hacker News:
 
@@ -167,10 +170,10 @@ ${stories
     }
     const storyTitleAndContent = `Title: ${story.title}\nContent: ${story.content}\n\n`
     const tokenCount = estimateTokens(storyTitleAndContent)
-    // gpt-4o-mini max is 128k tokens. prompt tokens 237
-    // Remaining tokens of 127,763, divided by 3 stories = ~42,500 tokens per story
+    // gpt-4.1-nano max is 1M tokens. prompt tokens 237
+    // Remaining tokens of ~999,763, divided by 3 stories = ~333,000 tokens per story
     // Only use the title if the content is too long
-    return tokenCount > 42_500 ? `Title: ${story.title}\n\n` : storyTitleAndContent
+    return tokenCount > 333_000 ? `Title: ${story.title}\n\n` : storyTitleAndContent
   })
   .join('\n')}
 `,
@@ -205,7 +208,7 @@ export async function generateEpisodeTitle(stories: StoryOutput[]): Promise<stri
   }
 
   const { text } = await generateText({
-    model: openai('gpt-4o-mini'),
+    model: openai(MODEL),
     prompt: `
 Given 3 story titles from today's Hacker News:
 
