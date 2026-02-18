@@ -95,7 +95,7 @@ pnpm start --benchmark=data/custom.json  # Custom file
 ### Data Flow
 
 1. **Fetch** (`src/hn/index.ts`) - Fetches top stories from HN Algolia API, filters previously covered stories, parses content via Readability
-2. **Summarize** (`src/ai/index.ts`) - Generates summaries using OpenAI GPT-4o-mini with structured prompts for story content + comments
+2. **Summarize** (`src/ai/index.ts`) - Generates summaries using OpenAI GPT-4.1-nano with structured prompts for story content + comments
 3. **Adjust Pronunciation** (`src/audio/adjustPronunciation.ts`) - Pattern-based text transformations for TTS mispronunciations
 4. **Generate Audio** (`src/audio/index.ts`) - Converts text to speech via OpenAI or ElevenLabs, concatenates segments with ffmpeg
 5. **Generate Video** (`src/video/index.ts`) - Optional: Captures screenshots of story URLs, renders video with Remotion, muxes audio with ffmpeg
