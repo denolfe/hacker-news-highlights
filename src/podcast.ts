@@ -53,7 +53,7 @@ export async function uploadPodcast(args: {
     headers: {
       'Content-Type': 'audio/mpeg',
     },
-    body: fileData,
+    body: new Uint8Array(fileData),
   })
 
   log.info({ uploadResOk: uploadRes.ok, uploadResStatus: uploadRes.status })
