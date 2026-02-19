@@ -104,7 +104,7 @@ jobs:
           pnpm start $ARGS
         env:
           SKIP_PUBLISH: ${{ github.event.inputs.skip_publish }}
-          VIDEO: ${{ github.event.inputs.video }}
+          VIDEO: ${{ github.event.inputs.video || 'true' }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ELEVEN_LABS_API_KEY: ${{ secrets.ELEVEN_LABS_API_KEY }}
           DEBUG: ${{ github.event.inputs.debug }}
@@ -119,7 +119,16 @@ jobs:
           path: |
             output
             cache
+            !output/*.mp4
           retention-days: 7
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: video
+          path: output/*.mp4
+          retention-days: 1
+          if-no-files-found: ignore
 
       - name: Delete Previous Cache
         if: ${{ steps.cache-restore.outputs.cache-hit }}
