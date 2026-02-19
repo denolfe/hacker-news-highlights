@@ -113,7 +113,21 @@ export async function generateVideo(params: {
       fps: FPS,
       totalDurationInFrames,
     },
+    onProgress: (() => {
+      const isTTY = process.stdout.isTTY
+      let lastLogged = -1
+      return ({ progress }: { progress: number }) => {
+        const percent = Math.round(progress * 100)
+        if (isTTY) {
+          process.stdout.write(`\r[VIDEO] Rendering: ${percent}%`)
+        } else if (percent >= lastLogged + 10) {
+          log.info(`[VIDEO] Rendering: ${percent}%`)
+          lastLogged = percent
+        }
+      }
+    })(),
   })
+  if (process.stdout.isTTY) {process.stdout.write('\n')}
 
   if (skipAudio) {
     fs.renameSync(VIDEO_NO_AUDIO, VIDEO_OUTPUT)
