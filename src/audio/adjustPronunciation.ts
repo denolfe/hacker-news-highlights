@@ -46,6 +46,9 @@ export function adjustPronunciation(text: string): string {
       .replace(/\bimgur\b/gi, 'imager')
       .replace(/\bmixpanel\b/gi, 'mix-panel')
       .replace(/\bjpeg\b/gi, 'J-peg')
+      .replace(/\bpypy\b/gi, 'pie-pie')
+      .replace(/\bsha\b/gi, 'shah')
+      .replace(/\bmeta\b/gi, 'med-uh')
 
       // Grok
       .replace(/\bgrok\b/gi, 'grock')
