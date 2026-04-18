@@ -19,6 +19,7 @@ const MODEL = 'gpt-4.1-nano'
 
 const storySummarizationPrompt = `
 You are an AI language model tasked with generating a recap of a top story from Hacker News (news.ycombinator.com).
+IMPORTANT: Always respond in English, regardless of the input language.
 <instructions>
   - State the content's title: Clearly announce the title of the content. Follow the <pronunciation_adjustments>
   - Summarize the link's content: Provide a concise summary of the content's main points, capturing the essence of the story.
