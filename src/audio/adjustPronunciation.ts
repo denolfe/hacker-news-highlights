@@ -54,10 +54,6 @@ export function adjustPronunciation(text: string): string {
       .replace(/\bgrok\b/gi, 'grock')
       .replace(/\bgrok(\d)\b/gi, 'grock $1')
 
-      /**
-       * For words with a '.' followed by a comma, ElevenLabs pronounces the word 'comma'.
-       **/
-
       // Common tlds domains - replace ',' with '-dot-'
       .replace(
         // eslint-disable-next-line regexp/no-unused-capturing-group
@@ -91,7 +87,8 @@ export function adjustPronunciation(text: string): string {
         return match.replace(/\./g, '-point-')
       })
 
-      // Replace the '.' with '-'
+      // For words with a '.' followed by a comma, ElevenLabs pronounces the word 'comma'.
+      // Replace all '.' with '-' to prevent this
       .replace(/\b\w[\w|.]+(?=,)\b/g, match => match.replaceAll('.', '-'))
 
       // Remove any special characters that will never be pronounced properly such as "•" or "|"
