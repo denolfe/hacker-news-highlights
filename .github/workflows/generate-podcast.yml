@@ -43,7 +43,7 @@ jobs:
   podcast:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # https://github.com/actions/virtual-environments/issues/1187
       - name: tune linux network
@@ -66,7 +66,7 @@ jobs:
         uses: denolfe/setup-ffmpeg@retries
 
       - name: Cache Puppeteer browser
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/puppeteer
           key: puppeteer-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -84,7 +84,7 @@ jobs:
       # Restore cache from cache/covered-stories
       - name: Restore covered-stories
         id: cache-restore
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ./cache/covered-stories
           key: ${{ env.COVERED_STORIES_CACHE_KEY }}
@@ -112,7 +112,7 @@ jobs:
           VOICE_SERVICE: ${{ github.event.inputs.voice_service || (github.ref == 'refs/heads/main' && 'elevenlabs' || 'openai') }}
           TRANSISTOR_API_KEY: ${{ secrets.TRANSISTOR_API_KEY }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: output-and-cache
@@ -122,7 +122,7 @@ jobs:
             !output/*.mp4
           retention-days: 7
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: video
@@ -141,7 +141,7 @@ jobs:
 
       # Cache cache/covered-stories for next run
       - name: Cache covered-stories
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: ./cache/covered-stories
           key: ${{ env.COVERED_STORIES_CACHE_KEY }}

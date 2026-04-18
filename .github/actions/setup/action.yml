@@ -38,12 +38,12 @@ runs:
       run: sudo ethtool -K eth0 tx off rx off
 
     - name: Setup Node@${{ inputs.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: ${{ inputs.node-version }}
 
     - name: Install pnpm
-      uses: pnpm/action-setup@v4
+      uses: pnpm/action-setup@v5
       with:
         version: ${{ inputs.pnpm-version }}
         run_install: false
@@ -57,7 +57,7 @@ runs:
 
     - name: Restore pnpm install cache
       if: ${{ inputs.pnpm-restore-cache == 'true' }}
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ${{ env.STORE_PATH }}
         key: ${{ inputs.pnpm-install-cache-key }}
