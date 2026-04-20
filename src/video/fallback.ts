@@ -73,6 +73,10 @@ export async function generateFallbackImage(params: {
       deviceScaleFactor: DEVICE_SCALE_FACTOR,
     })
     await page.setContent(html, { waitUntil: 'networkidle0' })
+    await page.waitForFunction(
+      () => document.querySelector<HTMLImageElement>('img.logo')?.complete === true,
+      { timeout: 15000 },
+    )
     await page.screenshot({ path: filepath, type: 'png' })
     return filepath
   } finally {

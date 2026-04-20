@@ -79,6 +79,13 @@ export async function handleGithub(params: DomainHandlerParams): Promise<string>
     const page = await browser.newPage()
     await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 3 })
     await page.setContent(html, { waitUntil: 'networkidle0' })
+    await page.waitForFunction(
+      () => {
+        const img = document.querySelector<HTMLImageElement>('img.og-image')
+        return !!img && img.complete && img.naturalWidth > 0
+      },
+      { timeout: 15000 },
+    )
     await page.screenshot({ path: filepath, type: 'png' })
     log.info(`[GITHUB] Saved: ${filename}`)
     return filepath
