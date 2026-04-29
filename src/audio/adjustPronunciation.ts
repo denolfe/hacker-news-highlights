@@ -10,6 +10,9 @@ export function adjustPronunciation(text: string): string {
             // Prevent pronouncing dashes in URLs
             .replace(/-/g, ' ')
 
+            // news.ycombinator.com -> Hacker News
+            .replace(/\bnews\.ycombinator\.com/gi, 'hacker news')
+
             // Sites with paywalls do not return a siteName/byline.
             .replace(/\bnytimes\.com\b/gi, 'The New York Times')
             .replace(/\bwsj\.com\b/gi, 'The Wall Street Journal')
