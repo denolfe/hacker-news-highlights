@@ -149,9 +149,9 @@ Let's ${IMPERATIVE_PHRASES[Math.floor(Math.random() * IMPERATIVE_PHRASES.length)
 Given 3 stories from today's Hacker News:
 
 - Summarize these 3 stories into a single sentence.
-- Keep each summary a few words long. When content is empty or missing, you MUST derive a summary from the title - never mention that content is missing or absent.
+- Keep each summary UNDER 10 WORDS. Pick the single most interesting aspect — never combine multiple ideas with "and".
+- When content is empty or missing, derive a summary from the title — never mention that content is missing.
 - The order of the summaries should match the order they were presented.
-- Ensure each summary is independent and does not combine multiple ideas.
 - Be sure to change the summaries into the present participle form, using '-ing' verbs to indicate ongoing actions.
 - Focus on the main subject or action of each story.
 - Remove any extra context that isn't crucial for understanding.
