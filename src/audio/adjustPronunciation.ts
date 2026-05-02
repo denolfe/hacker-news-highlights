@@ -49,6 +49,7 @@ export function adjustPronunciation(text: string): string {
       .replace(/\bimgur\b/gi, 'imager')
       .replace(/\bmixpanel\b/gi, 'mix-panel')
       .replace(/\bjpeg\b/gi, 'J-peg')
+      .replace(/\bpypi\b/gi, 'pie-pie')
       .replace(/\bpypy\b/gi, 'pie-pie')
       .replace(/\bsha\b/gi, 'shah')
       .replace(/\bmeta\b/gi, 'med-uh')

@@ -40,6 +40,8 @@ describe('adjustPronunciation', () => {
     ['wysiwyg', 'wizzy-wig'],
     ['ascii', 'askee'],
     ['monorepo', 'mono-ree-poh'],
+    ['pypi', 'pie-pie'],
+    ['pypy', 'pie-pie'],
   ])('replaces %s with %s', (input, expected) => {
     expect(adjustPronunciation(input)).toBe(expected)
     expect(adjustPronunciation(input.toUpperCase())).toBe(expected)
