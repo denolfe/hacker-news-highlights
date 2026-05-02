@@ -23,7 +23,7 @@ export function adjustPronunciation(text: string): string {
       .replace(/\bgui\b/gi, 'gooey')
       .replace(/\bgzip\b/gi, 'jee-zip')
       .replace(/\bpostgresql\b/gi, 'postgressQL')
-      .replace(/\bregex\b/gi, 'rej-X')
+      .replace(/\bregex\b/gi, 'rehj-X')
       .replace(/\browid\b/gi, 'row ID')
       .replace(/\bsql\b/gi, 'sequel')
       .replace(/\bsqlite\b/gi, 'SQ-lite')
