@@ -53,6 +53,7 @@ export function adjustPronunciation(text: string): string {
       .replace(/\bpypy\b/gi, 'pie-pie')
       .replace(/\bsha\b/gi, 'shah')
       .replace(/\bmeta\b/gi, 'med-uh')
+      .replace(/~(\d+)%/g, '~$1 percent')
 
       // Grok
       .replace(/\bgrok\b/gi, 'grock')

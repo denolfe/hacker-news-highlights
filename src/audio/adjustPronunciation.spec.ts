@@ -92,6 +92,13 @@ describe('adjustPronunciation', () => {
   )
 
   test.each([
+    ['~14%', '~14 percent'],
+    ['~100%', '~100 percent'],
+  ])('converts tilde percent to pronouncable: %s', (input, expected) => {
+    expect(adjustPronunciation(input)).toBe(expected)
+  })
+
+  test.each([
     ['OpenAI', 'Open AI'],
     ['FastVLM', 'Fast VLM'],
     ['row ID', 'row ID'], // no change
