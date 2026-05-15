@@ -4,7 +4,16 @@ description: Install FFmpeg with aggressive caching
 inputs:
   version:
     description: FFmpeg version (pin to avoid cache churn)
+    required: false
     default: '7.0.2'
+
+outputs:
+  version:
+    description: Installed FFmpeg version
+    value: ${{ inputs.version }}
+  path:
+    description: Path to FFmpeg binaries
+    value: ~/.ffmpeg
 
 runs:
   using: composite
@@ -14,7 +23,7 @@ runs:
       uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
         path: ~/.ffmpeg
-        key: ffmpeg-linux-amd64-${{ inputs.version }}
+        key: ffmpeg-${{ runner.os }}-${{ runner.arch }}-${{ inputs.version }}
 
     - name: Download FFmpeg
       if: steps.cache.outputs.cache-hit != 'true'
@@ -40,7 +49,7 @@ runs:
       uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
         path: ~/.ffmpeg
-        key: ffmpeg-linux-amd64-${{ inputs.version }}
+        key: ffmpeg-${{ runner.os }}-${{ runner.arch }}-${{ inputs.version }}
 
     - name: Add to PATH
       shell: bash
