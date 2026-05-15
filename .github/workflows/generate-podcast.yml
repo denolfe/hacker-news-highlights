@@ -62,8 +62,7 @@ jobs:
             libxss1 libxtst6 lsb-release wget xdg-utils
 
       - name: Setup FFmpeg
-        # Forked this PR: https://github.com/federicocarboni/setup-ffmpeg/pull/23
-        uses: denolfe/setup-ffmpeg@3143b4f20b9b0e3097d86816e90ea33fef8fccf1 # retries
+        uses: ./.github/actions/setup-ffmpeg
 
       - name: Cache Puppeteer browser
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
