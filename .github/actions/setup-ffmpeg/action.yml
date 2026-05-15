@@ -35,6 +35,13 @@ runs:
         tar -xf /tmp/ffmpeg.tar.xz -C ~/.ffmpeg --strip-components=1
         rm /tmp/ffmpeg.tar.xz
 
+    - name: Save FFmpeg to cache
+      if: steps.cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: ~/.ffmpeg
+        key: ffmpeg-linux-amd64-${{ inputs.version }}
+
     - name: Add to PATH
       shell: bash
       run: echo "$HOME/.ffmpeg" >> $GITHUB_PATH
