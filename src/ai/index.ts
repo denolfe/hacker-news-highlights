@@ -53,7 +53,7 @@ IMPORTANT: Always respond in English, regardless of the input language.
   - Identify the main topics of discussion in the comments.
   - Note any significant debates or differing opinions among users.
   - Note any recurring themes or insights that provide additional context or perspectives on the content.
-  - Show sentiment through word choice in reaction descriptions (e.g., "users largely dismissed", "the community welcomed"). Do NOT end with a standalone sentiment sentence like "The sentiment was X." or "Overall, the sentiment was X."
+  - Capture the general sentiment of the community. Commit to a dominant sentiment (e.g., "mostly skeptical", "largely positive") rather than defaulting to "mixed". If genuinely divided, name the specific poles (e.g., "divided between excitement about X and concern about Y").
   - Avoid including specific usernames or quoting comments verbatim; instead, focus on summarizing the overall discourse.
 </comments_summary>
 <example>
@@ -70,7 +70,7 @@ IMPORTANT: Always respond in English, regardless of the input language.
 
     The [article, news story, post, project, tweet, video] [brief description of content's focus]. [Summary of main points and key arguments].
 
-    In the comments, users [dominant reaction, with sentiment in word choice, past tense]. [Key debate or tension, stated directly, past tense].
+    In the comments, the sentiment was [dominant sentiment, e.g., "mostly skeptical", "largely supportive"], with users [dominant reaction or viewpoint, past tense]. [Key debate or tension, stated directly, past tense].
   </expected_output>
 </example>
 `
