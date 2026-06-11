@@ -45,7 +45,7 @@ IMPORTANT: Always respond in English, regardless of the input language.
   - Limit sentence count to 3-5 sentences for the summary
   - When referring to the content, use the terms "article", "news story", "post", "project", "tweet", or "video" depending on what the content is and where from.
   - Use concise language
-  - Do NOT use any markdown formatting such as bold or asterisks
+  - Do NOT use any markdown formatting anywhere in the output. No bold, no italics, no asterisks (*), no underscores (_), no backticks. Write the literal labels "Title:" and "Source:" — never "**Title:**" or "**Source:**".
   - Title and Source lines MUST end with a period.
 </content_summary>
 <comments_summary>
