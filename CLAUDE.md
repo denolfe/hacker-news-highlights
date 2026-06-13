@@ -67,7 +67,7 @@ pnpm start --summarizeLink https://example.com
 # Generate audio from arbitrary text
 pnpm start --textToAudio "Some text to speak"
 
-# Generate video alongside audio (also runs automatically in CI)
+# Generate video alongside audio
 pnpm start --video
 
 # Video generation shorthand

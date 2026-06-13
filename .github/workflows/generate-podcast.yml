@@ -103,7 +103,7 @@ jobs:
           pnpm start $ARGS
         env:
           SKIP_PUBLISH: ${{ github.event.inputs.skip_publish }}
-          VIDEO: ${{ github.event.inputs.video || 'true' }}
+          VIDEO: ${{ github.event.inputs.video || 'false' }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ELEVEN_LABS_API_KEY: ${{ secrets.ELEVEN_LABS_API_KEY }}
           DEBUG: ${{ github.event.inputs.debug }}
