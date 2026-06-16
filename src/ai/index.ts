@@ -215,7 +215,8 @@ Given 3 story titles from today's Hacker News:
 - Summarize each summary into only a few words
 - Keep any proper nouns
 - The output should be a single sentence
-- The sentence should use commas to separate each story's summary
+- The sentence should use commas to separate each story's summary. 
+- Avoid using any other punctuation besides commas (no em-dashes, colons, quotes, parentheses, etc.), unless it is necessary for clarity.
 
 Here are the titles:
 
