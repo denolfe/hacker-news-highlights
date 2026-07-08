@@ -117,12 +117,16 @@ export async function uploadPodcast(args: {
     }),
   })
 
-  const publishJson = (await publishRes.json()) as {
-    data?: { attributes?: { status?: string } }
-  }
+  const publishJson = (await publishRes.json().catch(() => undefined)) as
+    | { data?: { attributes?: { status?: string } } }
+    | undefined
   const returnedStatus = publishJson?.data?.attributes?.status
 
-  if (!publishRes.ok || returnedStatus !== episodeUpdate.status) {
+  // Transistor publishes immediately if the scheduled time has already passed
+  const isPublishSuccess =
+    publishRes.ok && (returnedStatus === episodeUpdate.status || returnedStatus === 'published')
+
+  if (!isPublishSuccess) {
     throw new Error(
       `Failed to publish episode ${episodeId}: HTTP ${publishRes.status}, returned status: ${returnedStatus}`,
     )

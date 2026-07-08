@@ -94,6 +94,12 @@ describe('uploadPodcast publish behavior', () => {
     await expect(uploadPodcast(uploadArgs)).rejects.toThrow(/Failed to publish/)
   })
 
+  it('accepts immediate publish when the scheduled time has already passed', async () => {
+    mockTransistorApi(() => jsonResponse({ data: { attributes: { status: 'published' } } }))
+    const publishAt = new Date('2026-07-15T10:30:00.000Z')
+    await expect(uploadPodcast({ ...uploadArgs, publishAt })).resolves.toBeUndefined()
+  })
+
   it('throws when the returned status does not match the requested one', async () => {
     mockTransistorApi(() => jsonResponse({ data: { attributes: { status: 'draft' } } }))
     const publishAt = new Date('2026-07-15T10:30:00.000Z')
