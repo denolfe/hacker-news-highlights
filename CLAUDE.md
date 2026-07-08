@@ -171,7 +171,7 @@ Pattern categories handled:
 
 ## CI/CD
 
-GitHub Actions workflow runs daily at 6:30am EST via cron schedule (`generate-podcast.yml`). Workflow:
+GitHub Actions workflow runs daily via cron (`generate-podcast.yml`). The cron fires at 05:47 UTC — intentionally early because GitHub cron delivery is delayed and variable (see issue #13). Scheduled runs set `SCHEDULED_RELEASE=true`, which makes the episode upload use Transistor scheduled publish targeting 6:30am Eastern (DST-aware, computed in `src/utils/publishTime.ts`). Manual runs (workflow_dispatch or `--publish`) publish immediately. Workflow:
 1. Restores `cache/covered-stories` from GitHub Actions cache
 2. Runs `pnpm start` with env vars from secrets
 3. Publishes episode automatically (CI env var triggers publish)

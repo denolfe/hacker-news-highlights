@@ -8,9 +8,11 @@ export async function uploadPodcast(args: {
   audioFilePath: string
   title: string
   showNotes: string
+  /** Release episode at this time via Transistor scheduled publish; omit to publish immediately */
+  publishAt?: Date
 }) {
   log.info('Uploading podcast...')
-  const { audioFilePath, title, showNotes } = args
+  const { audioFilePath, title, showNotes, publishAt } = args
 
   const apiKey = process.env.TRANSISTOR_API_KEY!
   const headers = {
@@ -97,23 +99,40 @@ export async function uploadPodcast(args: {
   }
   log.info(`Created episode with ID: ${episodeId}`)
 
-  // Publish episode
-  log.info(`Publishing episode...`)
-  await fetch(`${baseUrl}/episodes/${episodeId}/publish`, {
+  // Publish or schedule episode
+  const episodeUpdate: { status: string; published_at?: string } = publishAt
+    ? { status: 'scheduled', published_at: publishAt.toISOString() }
+    : { status: 'published' }
+
+  log.info(
+    publishAt ? `Scheduling episode for ${publishAt.toISOString()}...` : 'Publishing episode...',
+  )
+
+  const publishRes = await fetch(`${baseUrl}/episodes/${episodeId}/publish`, {
     method: 'PATCH',
     headers,
     body: JSON.stringify({
       id: episodeId,
-      episode: {
-        status: 'published',
-      },
+      episode: episodeUpdate,
     }),
-  }).then(res => {
-    log.info({ status: res.status })
-    return res.json()
   })
 
-  log.info(`Published episode with ID: ${episodeId}`)
+  const publishJson = (await publishRes.json().catch(() => undefined)) as
+    | { data?: { attributes?: { status?: string } } }
+    | undefined
+  const returnedStatus = publishJson?.data?.attributes?.status
+
+  // Transistor publishes immediately if the scheduled time has already passed
+  const isPublishSuccess =
+    publishRes.ok && (returnedStatus === episodeUpdate.status || returnedStatus === 'published')
+
+  if (!isPublishSuccess) {
+    throw new Error(
+      `Failed to publish episode ${episodeId}: HTTP ${publishRes.status}, returned status: ${returnedStatus}`,
+    )
+  }
+
+  log.info(`Episode ${episodeId} ${returnedStatus}`)
 }
 
 type Episode = {

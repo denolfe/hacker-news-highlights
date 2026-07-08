@@ -19,6 +19,7 @@ import { initCacheDir, writeToCache } from '@/utils/cache.js'
 import { loadEnvIfExists } from '@/utils/env.js'
 import { initOutputDir } from '@/utils/initOutputDir.js'
 import { log } from '@/utils/log.js'
+import { getScheduledPublishTime } from '@/utils/publishTime.js'
 import { writeToFile } from '@/utils/writeToFile.js'
 import { generateVideo, generateYouTubeChapters } from '@/video/index.js'
 import { captureScreenshot } from '@/video/screenshots.js'
@@ -232,6 +233,8 @@ async function main() {
         audioFilePath: EPISODE_OUTPUT,
         title,
         showNotes,
+        // Cron runs release at a consistent 6:30am ET; manual runs publish immediately
+        publishAt: process.env.SCHEDULED_RELEASE === 'true' ? getScheduledPublishTime() : undefined,
       })
     } else {
       log.info('SKIPPING episode publish')
