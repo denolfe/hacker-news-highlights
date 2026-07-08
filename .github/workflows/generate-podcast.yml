@@ -28,7 +28,10 @@ on:
         type: boolean
 
   schedule:
-    - cron: '30 10 * * *' # 6:30am EST daily
+    # Fires early on purpose: GitHub cron is delayed 30min-3.5h (see issue #13).
+    # Episode release time is controlled by Transistor scheduled publish (6:30am ET),
+    # and 05:47 UTC lands the story snapshot in HN's settled overnight window.
+    - cron: '47 5 * * *'
 
 permissions:
   contents: read
@@ -104,6 +107,7 @@ jobs:
         env:
           SKIP_PUBLISH: ${{ github.event.inputs.skip_publish }}
           VIDEO: ${{ github.event.inputs.video || 'false' }}
+          SCHEDULED_RELEASE: ${{ github.event_name == 'schedule' }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ELEVEN_LABS_API_KEY: ${{ secrets.ELEVEN_LABS_API_KEY }}
           DEBUG: ${{ github.event.inputs.debug }}
