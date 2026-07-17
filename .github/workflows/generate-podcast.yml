@@ -156,12 +156,14 @@ jobs:
             # section <heading> <file> [collapsed]
             local heading="$1" file="$2" collapsed="$3"
             [ -f "$file" ] || return 0
+            # awk 1 guarantees a trailing newline so the closing fence is never
+            # glued to the last line (JSON/text files lack a trailing newline).
             if [ "$collapsed" = "collapsed" ]; then
               {
                 echo "<details><summary>${heading}</summary>"
                 echo
                 echo '```'
-                cat "$file"
+                awk 1 "$file"
                 echo '```'
                 echo
                 echo "</details>"
@@ -172,7 +174,7 @@ jobs:
                 echo "## ${heading}"
                 echo
                 echo '```'
-                cat "$file"
+                awk 1 "$file"
                 echo '```'
                 echo
               } >> "$GITHUB_STEP_SUMMARY"
