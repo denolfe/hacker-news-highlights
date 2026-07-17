@@ -149,8 +149,40 @@ jobs:
           path: ./cache/covered-stories
           key: ${{ env.COVERED_STORIES_CACHE_KEY }}
 
-      - name: Log covered-stories, show-notes, transcript
+      - name: Episode report
+        if: always()
         run: |
-          set -ex
-          cat cache/covered-stories
-          cat output/*.txt
+          section() {
+            # section <heading> <file> [collapsed]
+            local heading="$1" file="$2" collapsed="$3"
+            [ -f "$file" ] || return 0
+            if [ "$collapsed" = "collapsed" ]; then
+              {
+                echo "<details><summary>${heading}</summary>"
+                echo
+                echo '```'
+                cat "$file"
+                echo '```'
+                echo
+                echo "</details>"
+                echo
+              } >> "$GITHUB_STEP_SUMMARY"
+            else
+              {
+                echo "## ${heading}"
+                echo
+                echo '```'
+                cat "$file"
+                echo '```'
+                echo
+              } >> "$GITHUB_STEP_SUMMARY"
+            fi
+          }
+
+          echo "# 🎙️ Episode Report" >> "$GITHUB_STEP_SUMMARY"
+          echo >> "$GITHUB_STEP_SUMMARY"
+
+          section "Show notes" output/show-notes.txt
+          section "YouTube chapters" output/youtube-chapters.txt collapsed
+          section "Transcript" output/transcript.txt collapsed
+          section "Covered stories" cache/covered-stories collapsed
