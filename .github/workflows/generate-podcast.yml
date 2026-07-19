@@ -153,18 +153,23 @@ jobs:
         if: always()
         run: |
           section() {
-            # section <heading> <file> [collapsed]
-            local heading="$1" file="$2" collapsed="$3"
+            # section <heading> <file> [collapsed] [fence]
+            local heading="$1" file="$2" collapsed="$3" fence="$4"
             [ -f "$file" ] || return 0
+            local open close
+            if [ "$fence" = "fence" ]; then
+              open='```'
+              close='```'
+            fi
             # awk 1 guarantees a trailing newline so the closing fence is never
             # glued to the last line (JSON/text files lack a trailing newline).
             if [ "$collapsed" = "collapsed" ]; then
               {
                 echo "<details><summary>${heading}</summary>"
                 echo
-                echo '```'
+                [ -n "$open" ] && echo "$open"
                 awk 1 "$file"
-                echo '```'
+                [ -n "$close" ] && echo "$close"
                 echo
                 echo "</details>"
                 echo
@@ -173,9 +178,9 @@ jobs:
               {
                 echo "## ${heading}"
                 echo
-                echo '```'
+                [ -n "$open" ] && echo "$open"
                 awk 1 "$file"
-                echo '```'
+                [ -n "$close" ] && echo "$close"
                 echo
               } >> "$GITHUB_STEP_SUMMARY"
             fi
@@ -185,6 +190,6 @@ jobs:
           echo >> "$GITHUB_STEP_SUMMARY"
 
           section "Show notes" output/show-notes.txt
-          section "YouTube chapters" output/youtube-chapters.txt collapsed
+          section "YouTube chapters" output/youtube-chapters.txt collapsed fence
           section "Transcript" output/transcript.txt collapsed
-          section "Covered stories" cache/covered-stories collapsed
+          section "Covered stories" cache/covered-stories collapsed fence
