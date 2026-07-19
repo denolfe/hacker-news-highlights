@@ -2,6 +2,16 @@
  * TTS has issues with specific terms and patterns. This function replaces them with phonetic alternatives.
  */
 export function adjustPronunciation(text: string): string {
+  // Preserve SSML break tags verbatim. The rules below would corrupt their
+  // decimal time values (e.g. `0.5s` -> `0-point-5s`), which ElevenLabs then
+  // silently drops. Split keeps the captured tags in the array at odd indices.
+  return text
+    .split(/(<break\b[^>]*?\/?>)/i)
+    .map((segment, i) => (i % 2 === 0 ? applyPronunciationRules(segment) : segment))
+    .join('')
+}
+
+function applyPronunciationRules(text: string): string {
   return (
     text
       .replace(/(?<=Source: )\S+\b/g, source => {
