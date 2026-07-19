@@ -36,6 +36,7 @@
     "test": "vitest --run",
     "test:content": "vitest --run --config vitest.integration.config.ts",
     "test:screenshots": "NODE_OPTIONS=--no-deprecation tsx scripts/test-screenshots.ts",
+    "repro:break": "NODE_OPTIONS=--no-deprecation tsx scripts/repro-break-tag.ts",
     "test:watch": "vitest"
   },
   "lint-staged": {
@@ -47,13 +48,13 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.29",
+    "@elevenlabs/elevenlabs-js": "^2.58.0",
     "@mozilla/readability": "^0.6.0",
     "@remotion/bundler": "^4.0.424",
     "@remotion/cli": "^4.0.424",
     "@remotion/google-fonts": "^4.0.424",
     "@remotion/renderer": "^4.0.424",
     "ai": "^6.0.90",
-    "elevenlabs": "^1.59.0",
     "fluent-ffmpeg": "^2.1.3",
     "jsdom": "^26.1.0",
     "minimist": "^1.2.8",

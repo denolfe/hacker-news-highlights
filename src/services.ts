@@ -13,8 +13,8 @@ export const getTtsService: () => TtsService = () => {
           '56AoDkrOh6qfVPDXZ7Pt', // Cassidy
           {
             text,
-            model_id: 'eleven_turbo_v2',
-            output_format: 'mp3_44100_192',
+            modelId: 'eleven_turbo_v2',
+            outputFormat: 'mp3_44100_192',
           },
         )
         return await streamToBuffer(audioStream)
@@ -36,10 +36,13 @@ export const getTtsService: () => TtsService = () => {
   }
 }
 
-async function streamToBuffer(stream: NodeJS.ReadableStream) {
-  const chunks: (Buffer | string)[] = []
-  for await (const chunk of stream) {
-    chunks.push(chunk)
+async function streamToBuffer(stream: ReadableStream<Uint8Array>) {
+  const reader = stream.getReader()
+  const chunks: Uint8Array[] = []
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    chunks.push(value)
   }
-  return Buffer.concat(chunks as Buffer[])
+  return Buffer.concat(chunks)
 }
