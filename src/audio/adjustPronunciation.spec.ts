@@ -117,4 +117,17 @@ describe('adjustPronunciation', () => {
   ])('converts version numbers to use "-point-": %s', (input, expected) => {
     expect(adjustPronunciation(input)).toBe(expected)
   })
+
+  test.each([
+    ['<break time="0.5s" />', '<break time="0.5s" />'],
+    ['<break time="1.5s" />', '<break time="1.5s" />'],
+  ])('preserves SSML break tags verbatim: %s', (input, expected) => {
+    expect(adjustPronunciation(input)).toBe(expected)
+  })
+
+  test('preserves break tag while still adjusting surrounding text', () => {
+    const input = 'Python 3.9 is out. <break time="0.5s" /> Let us dive in.'
+    const expected = 'Python 3-point-9 is out. <break time="0.5s" /> Let us dive in.'
+    expect(adjustPronunciation(input)).toBe(expected)
+  })
 })
