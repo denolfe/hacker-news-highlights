@@ -1,4 +1,4 @@
-import { ElevenLabsClient } from 'elevenlabs'
+import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js'
 import OpenAI from 'openai'
 
 export const getOpenAI = () =>
