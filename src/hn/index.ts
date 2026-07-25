@@ -67,14 +67,25 @@ export async function fetchTopStories(
 
   const stories: StoryOutput[] = []
   for (const [i, story] of selected.entries()) {
-    const comments = await fetchHnCommentsById(story.storyId)
     logger.info(`[${i + 1}/${selected.length}] ${story.storyId} - ${story.title} - ${story.url}`)
-    const cacheKey = 'story-' + story.storyId.toString()
+    const enriched = await enrichStory(story)
+    if (enriched) {
+      stories.push(enriched)
+    }
+  }
 
-    const baseStoryOutput: Pick<
-      StoryOutput,
-      'comments' | 'hnUrl' | 'points' | 'storyId' | 'title'
-    > = {
+  return { stories, newCovered }
+}
+
+/**
+ * Builds a StoryOutput from a slim story: fetches comments and content, then
+ * derives the source. Returns null when the story has no usable content.
+ */
+export async function enrichStory(story: SlimStory): Promise<null | StoryOutput> {
+  const comments = await fetchHnCommentsById(story.storyId)
+
+  const baseStoryOutput: Pick<StoryOutput, 'comments' | 'hnUrl' | 'points' | 'storyId' | 'title'> =
+    {
       title: story.title,
       storyId: story.storyId,
       comments,
@@ -82,78 +93,75 @@ export async function fetchTopStories(
       points: story.points,
     }
 
-    // Ask HN posts don't have a url, but have a story_text
-    if (!story.url && story.story_text) {
-      stories.push({
-        content: story.story_text,
-        source: 'Hacker News',
-        ...baseStoryOutput,
-      })
-      continue
-    }
-
-    if (!story.url) {
-      logger.error(`No url or story text found for story ${story.storyId}`)
-      continue
-    }
-
-    const { url } = story
-    let storyContent: string
-    try {
-      storyContent = await getOrCompute(cacheKey, async () => {
-        let content: null | string
-        if (url.endsWith('.pdf')) {
-          logger.info('Link is a PDF, parsing PDF content...')
-          content = await fetchPdfText(url)
-        } else {
-          content = await fetchWithTimeoutAndRetry(url).then(res => res.text())
-        }
-        if (!content) {
-          throw new EmptyContentError(url)
-        }
-        return content
-      })
-    } catch (error) {
-      if (error instanceof EmptyContentError) {
-        logger.warning(`No content found for ${error.url} - story will be incomplete`)
-      } else {
-        logger.error(
-          `Failed to fetch content for ${url}: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-        )
-      }
-      continue
-    }
-
-    const { textContent, byline, excerpt, siteName } = await parseSiteContent(storyContent)
-
-    // If siteName or byline is same as title, walk down the chain to find something different
-    // split on ' - ' or ' | ' and take the first part
-    let source = (siteName || byline || undefined)?.split(/\s[-\\|<>]/)[0]
-    const readableUrl = new URL(url).hostname.replace('www.', '')
-
-    if (source === story.title) {
-      source = readableUrl
-    }
-
-    logger.info({
-      msg: 'Parsed site content',
-      storyId: story.storyId,
-      byline,
-      excerpt,
-      siteName,
-      readableUrl,
-      source,
-    })
-
-    stories.push({
-      content: textContent || excerpt || '',
-      url,
-      source: source || readableUrl,
+  // Ask HN posts don't have a url, but have a story_text
+  if (!story.url && story.story_text) {
+    return {
+      content: story.story_text,
+      source: 'Hacker News',
       ...baseStoryOutput,
-    })
+    }
   }
 
-  return { stories, newCovered }
+  if (!story.url) {
+    logger.error(`No url or story text found for story ${story.storyId}`)
+    return null
+  }
+
+  const { url } = story
+  const cacheKey = 'story-' + story.storyId.toString()
+  let storyContent: string
+  try {
+    storyContent = await getOrCompute(cacheKey, async () => {
+      let content: null | string
+      if (url.endsWith('.pdf')) {
+        logger.info('Link is a PDF, parsing PDF content...')
+        content = await fetchPdfText(url)
+      } else {
+        content = await fetchWithTimeoutAndRetry(url).then(res => res.text())
+      }
+      if (!content) {
+        throw new EmptyContentError(url)
+      }
+      return content
+    })
+  } catch (error) {
+    if (error instanceof EmptyContentError) {
+      logger.warning(`No content found for ${error.url} - story will be incomplete`)
+    } else {
+      logger.error(
+        `Failed to fetch content for ${url}: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
+      )
+    }
+    return null
+  }
+
+  const { textContent, byline, excerpt, siteName } = await parseSiteContent(storyContent)
+
+  // If siteName or byline is same as title, walk down the chain to find something different
+  // split on ' - ' or ' | ' and take the first part
+  let source = (siteName || byline || undefined)?.split(/\s[-\\|<>]/)[0]
+  const readableUrl = new URL(url).hostname.replace('www.', '')
+
+  if (source === story.title) {
+    source = readableUrl
+  }
+
+  logger.info({
+    msg: 'Parsed site content',
+    storyId: story.storyId,
+    byline,
+    excerpt,
+    siteName,
+    readableUrl,
+    source,
+  })
+
+  return {
+    content: textContent || excerpt || '',
+    url,
+    source: source || readableUrl,
+    ...baseStoryOutput,
+  }
 }
 
 /**

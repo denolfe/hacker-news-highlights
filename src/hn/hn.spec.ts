@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker'
 import { beforeAll, describe, expect, test, vi } from 'vitest'
 import * as cache from '@/utils/cache.js'
 import { disableCache, jsonResponse, textResponse } from '../test-utils.js'
-import { fetchTopStories, selectStories } from './index.js'
+import { enrichStory, fetchTopStories, selectStories } from './index.js'
 
 describe('hn', () => {
   beforeAll(() => {
@@ -212,5 +212,93 @@ describe('selectStories', () => {
     expect(ids).toContain(111)
     expect(ids).toContain(222)
     expect(ids).toContain(333)
+  })
+})
+
+describe('enrichStory', () => {
+  beforeAll(() => {
+    disableCache()
+  })
+
+  const itemsResponse = () =>
+    jsonResponse({
+      children: [
+        {
+          id: 1,
+          created_at: new Date().toISOString(),
+          text: faker.lorem.sentence(),
+          author: faker.person.firstName(),
+          children: [],
+        },
+      ],
+    })
+
+  test('Ask HN story uses story_text and Hacker News source', async () => {
+    global.fetch = vi.fn().mockImplementation(async (url: string) => {
+      if (url.startsWith('https://hn.algolia.com/api/v1/items/')) return itemsResponse()
+      return textResponse('should not be fetched')
+    })
+
+    const result = await enrichStory({
+      title: 'Ask HN: Test',
+      storyId: 123,
+      story_text: 'Hey HN, a question...',
+      points: 10,
+    })
+
+    expect(result).toMatchObject({
+      content: 'Hey HN, a question...',
+      source: 'Hacker News',
+      storyId: 123,
+      comments: expect.any(Array),
+    })
+    expect(result?.url).toBeUndefined()
+  })
+
+  test('link post fetches content and applies source heuristic', async () => {
+    global.fetch = vi.fn().mockImplementation(async (url: string) => {
+      if (url.startsWith('https://hn.algolia.com/api/v1/items/')) return itemsResponse()
+      return textResponse(`<!DOCTYPE html><html><head><title>Test Story</title></head>
+        <body><h1>Test Story</h1><p>${faker.lorem.paragraphs(3)}</p></body></html>`)
+    })
+
+    const result = await enrichStory({
+      title: 'A linked article',
+      storyId: 456,
+      url: 'https://example.com/post',
+      points: 42,
+    })
+
+    expect(result).toMatchObject({
+      storyId: 456,
+      url: 'https://example.com/post',
+      comments: expect.any(Array),
+    })
+    expect(result?.content).toEqual(expect.any(String))
+    expect(result?.source).toEqual(expect.any(String))
+  })
+
+  test('returns null when there is no url and no story_text', async () => {
+    global.fetch = vi.fn().mockImplementation(async () => itemsResponse())
+
+    const result = await enrichStory({ title: 'No content', storyId: 789, points: 1 })
+
+    expect(result).toBeNull()
+  })
+
+  test('returns null when content is empty', async () => {
+    global.fetch = vi.fn().mockImplementation(async (url: string) => {
+      if (url.startsWith('https://hn.algolia.com/api/v1/items/')) return itemsResponse()
+      return textResponse('')
+    })
+
+    const result = await enrichStory({
+      title: 'Empty page',
+      storyId: 999,
+      url: 'https://example.com/empty',
+      points: 5,
+    })
+
+    expect(result).toBeNull()
   })
 })
