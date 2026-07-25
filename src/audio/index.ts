@@ -7,9 +7,10 @@ import {
   podcastOutro,
   podcastOutroWithGitHub,
 } from '@/constants.js'
-import { readFromCache, writeToCache } from '@/utils/cache.js'
+import { getOrComputeFile, writeToCache } from '@/utils/cache.js'
 import { childLogger } from '@/utils/log.js'
 import ffmpeg from 'fluent-ffmpeg'
+import fs from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import path from 'path'
 
@@ -48,24 +49,15 @@ export async function generateAudioFromText(
   for (const [i, story] of storyData.entries()) {
     const filename = `segment-${story.storyId}.mp3`
 
-    const cached = await readFromCache(filename)
-    if (cached) {
-      logger.info(`[${i + 1}/${storyData.length}] Using cached audio for ${filename}`)
-      segments.push({
-        audioFilename: path.resolve(CACHE_DIR, filename),
-        title: story.title,
-        summary: story.summary as string,
-      })
-      continue
-    }
-
-    logger.info(`[${i + 1}/${storyData.length}] Generating audio: ${story.storyId}...`)
     try {
-      const buffer = await ttsService.convert(story.summary as string)
-      logger.info(`Audio file generated: ${filename}`)
-      await writeToCache(filename, buffer)
+      const audioFilename = await getOrComputeFile(filename, async filepath => {
+        logger.info(`[${i + 1}/${storyData.length}] Generating audio: ${story.storyId}...`)
+        const buffer = await ttsService.convert(story.summary as string)
+        logger.info(`Audio file generated: ${filename}`)
+        await fs.writeFile(filepath, buffer)
+      })
       segments.push({
-        audioFilename: path.resolve(CACHE_DIR, filename),
+        audioFilename,
         title: story.title,
         summary: story.summary as string,
       })

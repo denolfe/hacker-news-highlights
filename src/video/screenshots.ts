@@ -1,8 +1,6 @@
 import { launchBrowser } from '@/browser/index.js'
-import { CACHE_DIR } from '@/constants.js'
-import { cacheExists } from '@/utils/cache.js'
+import { getOrComputeFile } from '@/utils/cache.js'
 import { log } from '@/utils/log.js'
-import path from 'path'
 
 import { DEVICE_SCALE_FACTOR, VIEWPORT_HEIGHT, VIEWPORT_WIDTH } from './constants.js'
 import { getDomainHandler } from './domain-handlers/index.js'
@@ -116,117 +114,112 @@ const HIDE_ELEMENTS_CSS = `
 export async function captureScreenshot(params: { url: string; storyId: string }): Promise<string> {
   const { url, storyId } = params
   const filename = `screenshot-${storyId}.png`
-  const filepath = path.resolve(CACHE_DIR, filename)
 
-  if (await cacheExists(filename)) {
-    log.info(`[SCREENSHOT] Using cached: ${filename}`)
-    return filepath
-  }
+  return getOrComputeFile(filename, async filepath => {
+    log.info(`[SCREENSHOT] Capturing: ${url}`)
 
-  log.info(`[SCREENSHOT] Capturing: ${url}`)
-
-  const browser = await launchBrowser()
-  try {
-    const page = await browser.newPage()
-    await page.setViewport({
-      width: VIEWPORT_WIDTH,
-      height: VIEWPORT_HEIGHT,
-      deviceScaleFactor: DEVICE_SCALE_FACTOR,
-    })
-
-    // Try networkidle0 first, fall back to domcontentloaded on timeout
+    const browser = await launchBrowser()
     try {
-      await page.goto(url, { waitUntil: 'networkidle0', timeout: 15000 })
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('timeout')) {
-        log.warning(`[SCREENSHOT] networkidle0 timeout, retrying with domcontentloaded`)
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
-      } else {
-        throw error
+      const page = await browser.newPage()
+      await page.setViewport({
+        width: VIEWPORT_WIDTH,
+        height: VIEWPORT_HEIGHT,
+        deviceScaleFactor: DEVICE_SCALE_FACTOR,
+      })
+
+      // Try networkidle0 first, fall back to domcontentloaded on timeout
+      try {
+        await page.goto(url, { waitUntil: 'networkidle0', timeout: 15000 })
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('timeout')) {
+          log.warning(`[SCREENSHOT] networkidle0 timeout, retrying with domcontentloaded`)
+          await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
+        } else {
+          throw error
+        }
       }
-    }
 
-    // Wait for article to render (JS-heavy sites)
-    try {
-      await page.waitForSelector('article', { timeout: 5000 })
-    } catch {
-      // No article element, continue anyway
-    }
+      // Wait for article to render (JS-heavy sites)
+      try {
+        await page.waitForSelector('article', { timeout: 5000 })
+      } catch {
+        // No article element, continue anyway
+      }
 
-    // Detect bot protection pages (very little content or challenge keywords)
-    const isBotProtected = await page.evaluate(() => {
-      const text = document.body?.innerText?.toLowerCase() || ''
-      const hasLittleContent = text.length < 200
-      const challengeKeywords = [
-        'verifying',
-        'validation required',
-        'access denied',
-        'please wait',
-        'checking your browser',
-        'just a moment',
-        'enable javascript',
-        'ray id',
-      ]
-      const hasChallenge = challengeKeywords.some(kw => text.includes(kw))
-      return hasLittleContent || hasChallenge
-    })
+      // Detect bot protection pages (very little content or challenge keywords)
+      const isBotProtected = await page.evaluate(() => {
+        const text = document.body?.innerText?.toLowerCase() || ''
+        const hasLittleContent = text.length < 200
+        const challengeKeywords = [
+          'verifying',
+          'validation required',
+          'access denied',
+          'please wait',
+          'checking your browser',
+          'just a moment',
+          'enable javascript',
+          'ray id',
+        ]
+        const hasChallenge = challengeKeywords.some(kw => text.includes(kw))
+        return hasLittleContent || hasChallenge
+      })
 
-    if (isBotProtected) {
-      throw new Error('Bot protection detected - page has no content or shows challenge')
-    }
+      if (isBotProtected) {
+        throw new Error('Bot protection detected - page has no content or shows challenge')
+      }
 
-    // Try to inject CSS to hide popups/ads, continue without if CSP blocks it
-    try {
-      await page.addStyleTag({ content: HIDE_ELEMENTS_CSS })
-    } catch {
-      log.warning(`[SCREENSHOT] Could not inject CSS (CSP?), continuing without`)
-    }
+      // Try to inject CSS to hide popups/ads, continue without if CSP blocks it
+      try {
+        await page.addStyleTag({ content: HIDE_ELEMENTS_CSS })
+      } catch {
+        log.warning(`[SCREENSHOT] Could not inject CSS (CSP?), continuing without`)
+      }
 
-    // Collapse empty ad placeholder containers (have min-height but no content)
-    // Also hide Usercentrics custom elements (uc-* tags with shadow DOM)
-    // And remove gradient overlays used by paywalls
-    await page.evaluate(() => {
-      for (const el of document.querySelectorAll('*')) {
-        const tagName = el.tagName.toLowerCase()
-        // Hide Usercentrics custom elements (uc-layer, uc-layer2, etc.)
-        if (tagName.startsWith('uc-')) {
-          ;(el as HTMLElement).style.display = 'none'
-          continue
-        }
+      // Collapse empty ad placeholder containers (have min-height but no content)
+      // Also hide Usercentrics custom elements (uc-* tags with shadow DOM)
+      // And remove gradient overlays used by paywalls
+      await page.evaluate(() => {
+        for (const el of document.querySelectorAll('*')) {
+          const tagName = el.tagName.toLowerCase()
+          // Hide Usercentrics custom elements (uc-layer, uc-layer2, etc.)
+          if (tagName.startsWith('uc-')) {
+            ;(el as HTMLElement).style.display = 'none'
+            continue
+          }
 
-        const style = window.getComputedStyle(el)
+          const style = window.getComputedStyle(el)
 
-        // Hide overlay-positioned elements with gradient backgrounds (paywall fade overlays)
-        // Only target fixed/absolute positioned elements to avoid hiding legitimate gradients
-        const bg = style.backgroundImage || ''
-        const position = style.position
-        const isOverlay = position === 'fixed' || position === 'absolute'
-        if (bg.includes('linear-gradient') && isOverlay) {
-          ;(el as HTMLElement).style.display = 'none'
-          continue
-        }
+          // Hide overlay-positioned elements with gradient backgrounds (paywall fade overlays)
+          // Only target fixed/absolute positioned elements to avoid hiding legitimate gradients
+          const bg = style.backgroundImage || ''
+          const position = style.position
+          const isOverlay = position === 'fixed' || position === 'absolute'
+          if (bg.includes('linear-gradient') && isOverlay) {
+            ;(el as HTMLElement).style.display = 'none'
+            continue
+          }
 
-        // Collapse empty divs with min-height (ad placeholders)
-        if (tagName === 'div') {
-          const minH = parseInt(style.minHeight) || 0
-          const text = el.textContent?.trim() || ''
-          if (minH > 100 && text.length < 50) {
-            ;(el as HTMLElement).style.minHeight = '0'
-            ;(el as HTMLElement).style.height = 'auto'
+          // Collapse empty divs with min-height (ad placeholders)
+          if (tagName === 'div') {
+            const minH = parseInt(style.minHeight) || 0
+            const text = el.textContent?.trim() || ''
+            if (minH > 100 && text.length < 50) {
+              ;(el as HTMLElement).style.minHeight = '0'
+              ;(el as HTMLElement).style.height = 'auto'
+            }
           }
         }
-      }
-    })
+      })
 
-    await page.screenshot({ path: filepath, type: 'png' })
-    log.info(`[SCREENSHOT] Saved: ${filename}`)
-    return filepath
-  } catch (error) {
-    log.error(`[SCREENSHOT] Failed for ${url}:`, error)
-    throw error
-  } finally {
-    await browser.close()
-  }
+      await page.screenshot({ path: filepath, type: 'png' })
+      log.info(`[SCREENSHOT] Saved: ${filename}`)
+    } catch (error) {
+      log.error(`[SCREENSHOT] Failed for ${url}:`, error)
+      throw error
+    } finally {
+      await browser.close()
+    }
+  })
 }
 
 export async function captureScreenshots(params: {
