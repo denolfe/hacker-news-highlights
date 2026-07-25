@@ -1,12 +1,19 @@
 import type { Comment, CoveredStory, ResponseData, SlimComment, StoryOutput } from '@/types.js'
 
-import { readFromCache, writeToCache } from '@/utils/cache.js'
+import { getOrCompute, readFromCache, writeToCache } from '@/utils/cache.js'
 import { childLogger } from '@/utils/log.js'
 
 import { fetchPdfText } from './fetchPdfText.js'
 import { parseSiteContent } from './parseSiteContent.js'
 
 const logger = childLogger('HN')
+
+/** Thrown when a story URL fetch succeeds but yields no usable content. */
+class EmptyContentError extends Error {
+  constructor(public readonly url: string) {
+    super(`No content found for ${url}`)
+  }
+}
 
 type StoryDataByIdResponseChildren = {
   author: string
@@ -109,8 +116,6 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
     logger.info(`[${i + 1}/${filtered.length}] ${story.storyId} - ${story.title} - ${story.url}`)
     const cacheKey = 'story-' + story.storyId.toString()
 
-    let cachedStoryContent = await readFromCache(cacheKey)
-
     const baseStoryOutput: Pick<
       StoryOutput,
       'comments' | 'hnUrl' | 'points' | 'storyId' | 'title'
@@ -137,29 +142,34 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
       continue
     }
 
-    if (!cachedStoryContent) {
-      try {
-        if (story.url.endsWith('.pdf')) {
+    const { url } = story
+    let storyContent: string
+    try {
+      storyContent = await getOrCompute(cacheKey, async () => {
+        let content: null | string
+        if (url.endsWith('.pdf')) {
           logger.info('Link is a PDF, parsing PDF content...')
-          cachedStoryContent = await fetchPdfText(story.url)
+          content = await fetchPdfText(url)
         } else {
-          cachedStoryContent = await fetchWithTimeoutAndRetry(story.url).then(res => res.text())
+          content = await fetchWithTimeoutAndRetry(url).then(res => res.text())
         }
-
-        if (!cachedStoryContent) {
-          logger.warning(`No content found for ${story.url} - story will be incomplete`)
-          continue
+        if (!content) {
+          throw new EmptyContentError(url)
         }
-        await writeToCache(cacheKey, cachedStoryContent)
-      } catch (error) {
+        return content
+      })
+    } catch (error) {
+      if (error instanceof EmptyContentError) {
+        logger.warning(`No content found for ${error.url} - story will be incomplete`)
+      } else {
         logger.error(
-          `Failed to fetch content for ${story.url}: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
+          `Failed to fetch content for ${url}: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
         )
-        continue
       }
+      continue
     }
 
-    const { textContent, byline, excerpt, siteName } = await parseSiteContent(cachedStoryContent)
+    const { textContent, byline, excerpt, siteName } = await parseSiteContent(storyContent)
 
     // If siteName or byline is same as title, walk down the chain to find something different
     // split on ' - ' or ' | ' and take the first part

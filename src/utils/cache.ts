@@ -36,3 +36,37 @@ export async function cacheExists(key: string): Promise<boolean> {
   const location = path.resolve(CACHE_DIR, key)
   return await directoryOrFileExists(location)
 }
+
+/**
+ * Disk-memoize a text/JSON value: return the cached string on a hit, otherwise
+ * run the producer, persist its result, and return it. The producer only runs
+ * on a miss and nothing is written when it throws.
+ */
+export async function getOrCompute(key: string, produce: () => Promise<string>): Promise<string> {
+  const cached = await readFromCache(key)
+  if (cached !== null) {
+    log.info(`[CACHE] Using cached: ${key}`)
+    return cached
+  }
+  const value = await produce()
+  await writeToCache(key, value)
+  return value
+}
+
+/**
+ * Disk-memoize a file: return the resolved cache filepath on a hit, otherwise
+ * hand the producer that filepath to write to and return it. Owns the
+ * `CACHE_DIR` path so callers never build it themselves.
+ */
+export async function getOrComputeFile(
+  key: string,
+  produce: (filepath: string) => Promise<void>,
+): Promise<string> {
+  const filepath = path.resolve(CACHE_DIR, key)
+  if (await cacheExists(key)) {
+    log.info(`[CACHE] Using cached: ${key}`)
+    return filepath
+  }
+  await produce(filepath)
+  return filepath
+}

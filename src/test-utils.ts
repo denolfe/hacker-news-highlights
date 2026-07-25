@@ -20,6 +20,9 @@ export const textResponse = (text: string) =>
 export const disableCache = () => {
   vi.spyOn(cache, 'readFromCache').mockResolvedValue(null)
   vi.spyOn(cache, 'writeToCache').mockResolvedValue()
+  vi.spyOn(cache, 'getOrCompute').mockImplementation(
+    (_key: string, produce: () => Promise<string>) => produce(),
+  )
 }
 
 export const disableCacheRead = () => {

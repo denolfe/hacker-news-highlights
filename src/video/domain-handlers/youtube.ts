@@ -1,8 +1,6 @@
 import { launchBrowser } from '@/browser/index.js'
-import { CACHE_DIR } from '@/constants.js'
-import { cacheExists } from '@/utils/cache.js'
+import { getOrComputeFile } from '@/utils/cache.js'
 import { log } from '@/utils/log.js'
-import path from 'path'
 
 import type { DomainHandlerParams } from './types.js'
 
@@ -47,23 +45,18 @@ export async function getBestThumbnailUrl(videoId: string): Promise<string> {
 export async function handleYoutube(params: DomainHandlerParams): Promise<string> {
   const { url, storyId } = params
   const filename = `screenshot-${storyId}.png`
-  const filepath = path.resolve(CACHE_DIR, filename)
 
-  if (await cacheExists(filename)) {
-    log.info(`[YOUTUBE] Using cached: ${filename}`)
-    return filepath
-  }
+  return getOrComputeFile(filename, async filepath => {
+    const videoId = extractVideoId(url)
+    if (!videoId) {
+      throw new Error(`Could not extract video ID from URL: ${url}`)
+    }
 
-  const videoId = extractVideoId(url)
-  if (!videoId) {
-    throw new Error(`Could not extract video ID from URL: ${url}`)
-  }
+    log.info(`[YOUTUBE] Generating image for video: ${videoId}`)
 
-  log.info(`[YOUTUBE] Generating image for video: ${videoId}`)
+    const thumbnailUrl = await getBestThumbnailUrl(videoId)
 
-  const thumbnailUrl = await getBestThumbnailUrl(videoId)
-
-  const html = `
+    const html = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -90,19 +83,19 @@ export async function handleYoutube(params: DomainHandlerParams): Promise<string
     </html>
   `
 
-  const browser = await launchBrowser()
-  try {
-    const page = await browser.newPage()
-    await page.setViewport({
-      width: VIEWPORT_WIDTH,
-      height: VIEWPORT_HEIGHT,
-      deviceScaleFactor: DEVICE_SCALE_FACTOR,
-    })
-    await page.setContent(html, { waitUntil: 'networkidle0' })
-    await page.screenshot({ path: filepath, type: 'png' })
-    log.info(`[YOUTUBE] Saved: ${filename}`)
-    return filepath
-  } finally {
-    await browser.close()
-  }
+    const browser = await launchBrowser()
+    try {
+      const page = await browser.newPage()
+      await page.setViewport({
+        width: VIEWPORT_WIDTH,
+        height: VIEWPORT_HEIGHT,
+        deviceScaleFactor: DEVICE_SCALE_FACTOR,
+      })
+      await page.setContent(html, { waitUntil: 'networkidle0' })
+      await page.screenshot({ path: filepath, type: 'png' })
+      log.info(`[YOUTUBE] Saved: ${filename}`)
+    } finally {
+      await browser.close()
+    }
+  })
 }

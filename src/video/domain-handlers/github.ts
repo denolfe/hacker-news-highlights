@@ -1,8 +1,6 @@
 import { launchBrowser } from '@/browser/index.js'
-import { CACHE_DIR } from '@/constants.js'
-import { cacheExists } from '@/utils/cache.js'
+import { getOrComputeFile } from '@/utils/cache.js'
 import { log } from '@/utils/log.js'
-import path from 'path'
 
 import type { DomainHandlerParams } from './types.js'
 
@@ -31,23 +29,18 @@ export async function extractOgImage(url: string): Promise<null | string> {
 export async function handleGithub(params: DomainHandlerParams): Promise<string> {
   const { url, storyId } = params
   const filename = `screenshot-${storyId}.png`
-  const filepath = path.resolve(CACHE_DIR, filename)
 
-  if (await cacheExists(filename)) {
-    log.info(`[GITHUB] Using cached: ${filename}`)
-    return filepath
-  }
+  return getOrComputeFile(filename, async filepath => {
+    log.info(`[GITHUB] Fetching og:image for: ${url}`)
 
-  log.info(`[GITHUB] Fetching og:image for: ${url}`)
+    const ogImageUrl = await extractOgImage(url)
+    if (!ogImageUrl) {
+      throw new Error(`Could not extract og:image from URL: ${url}`)
+    }
 
-  const ogImageUrl = await extractOgImage(url)
-  if (!ogImageUrl) {
-    throw new Error(`Could not extract og:image from URL: ${url}`)
-  }
+    log.info(`[GITHUB] Generating image with og:image: ${ogImageUrl}`)
 
-  log.info(`[GITHUB] Generating image with og:image: ${ogImageUrl}`)
-
-  const html = `
+    const html = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -74,22 +67,22 @@ export async function handleGithub(params: DomainHandlerParams): Promise<string>
     </html>
   `
 
-  const browser = await launchBrowser()
-  try {
-    const page = await browser.newPage()
-    await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 3 })
-    await page.setContent(html, { waitUntil: 'networkidle0' })
-    await page.waitForFunction(
-      () => {
-        const img = document.querySelector<HTMLImageElement>('img.og-image')
-        return !!img && img.complete && img.naturalWidth > 0
-      },
-      { timeout: 15000 },
-    )
-    await page.screenshot({ path: filepath, type: 'png' })
-    log.info(`[GITHUB] Saved: ${filename}`)
-    return filepath
-  } finally {
-    await browser.close()
-  }
+    const browser = await launchBrowser()
+    try {
+      const page = await browser.newPage()
+      await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 3 })
+      await page.setContent(html, { waitUntil: 'networkidle0' })
+      await page.waitForFunction(
+        () => {
+          const img = document.querySelector<HTMLImageElement>('img.og-image')
+          return !!img && img.complete && img.naturalWidth > 0
+        },
+        { timeout: 15000 },
+      )
+      await page.screenshot({ path: filepath, type: 'png' })
+      log.info(`[GITHUB] Saved: ${filename}`)
+    } finally {
+      await browser.close()
+    }
+  })
 }

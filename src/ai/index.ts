@@ -5,7 +5,7 @@ import { createHash } from 'crypto'
 import type { SlimComment, StoryDataAggregate, StoryOutput } from '../types.js'
 
 import { IMPERATIVE_PHRASES, PODCAST_NAME } from '../constants.js'
-import { readFromCache, writeToCache } from '../utils/cache.js'
+import { getOrCompute } from '../utils/cache.js'
 import { childLogger, log } from '../utils/log.js'
 import { estimateTokens } from './estimateTokens.js'
 
@@ -92,28 +92,23 @@ export async function summarize(stories: StoryDataAggregate[]): Promise<StoryDat
 
 export async function summarizeStory(story: StoryDataAggregate): Promise<StoryDataAggregate> {
   const cacheKey = 'summary-' + story.storyId.toString()
-  const cached = await readFromCache(cacheKey)
-  if (cached) {
-    story.summary = cached
-    return story
-  }
+  story.summary = await getOrCompute(cacheKey, async () => {
+    const prompt =
+      storySummarizationPrompt +
+      `<title>${story.title}</title>\n` +
+      `<source>${story.source}</source>\n` +
+      `<content>${story.content}\n</content>\n` +
+      `<comments_data>${generateCommentTree(story.comments)}\n</comments_data>`
 
-  const prompt =
-    storySummarizationPrompt +
-    `<title>${story.title}</title>\n` +
-    `<source>${story.source}</source>\n` +
-    `<content>${story.content}\n</content>\n` +
-    `<comments_data>${generateCommentTree(story.comments)}\n</comments_data>`
+    const tokenCount = estimateTokens(prompt)
+    logger.info(`Estimated tokens: ${tokenCount}`)
 
-  const tokenCount = estimateTokens(prompt)
-  logger.info(`Estimated tokens: ${tokenCount}`)
-
-  const { text } = await generateText({
-    model: openai(MODEL),
-    prompt,
+    const { text } = await generateText({
+      model: openai(MODEL),
+      prompt,
+    })
+    return text
   })
-  story.summary = text
-  await writeToCache(cacheKey, text)
   return story
 }
 
@@ -127,11 +122,6 @@ export async function generatePodcastIntro(
     .slice(0, 6)
 
   const cacheKey = `intro-${hash}`
-  const cached = await readFromCache(cacheKey)
-  if (cached) {
-    logger.info(`Using cached intro: ${cacheKey}`)
-    return { cacheKey, text: cached, title: 'Intro' }
-  }
 
   const introTemplate = (summary: string) => `
 Welcome to the ${PODCAST_NAME}, where we explore the top 10 posts on Hacker News every day.
@@ -143,9 +133,10 @@ ${process.env.VOICE_SERVICE === 'elevenlabs' ? `<break time="0.5s" />` : ''}
 Let's ${IMPERATIVE_PHRASES[Math.floor(Math.random() * IMPERATIVE_PHRASES.length)]}.
 `
 
-  const { text } = await generateText({
-    model: openai(MODEL),
-    prompt: `
+  const intro = await getOrCompute(cacheKey, async () => {
+    const { text } = await generateText({
+      model: openai(MODEL),
+      prompt: `
 Given 3 stories from today's Hacker News:
 
 - Summarize these 3 stories into a single sentence.
@@ -177,11 +168,12 @@ ${stories
   })
   .join('\n')}
 `,
-  })
+    })
 
-  const intro = introTemplate(text)
-  log.info(`Intro: ${intro}`)
-  await writeToCache(cacheKey, intro)
+    const intro = introTemplate(text)
+    log.info(`Intro: ${intro}`)
+    return intro
+  })
   return { cacheKey, text: intro, title: 'Intro' }
 }
 
@@ -201,15 +193,10 @@ export async function generateEpisodeTitle(stories: StoryOutput[]): Promise<stri
     .slice(0, 6)
 
   const cacheKey = `title-${hash}`
-  const cached = await readFromCache(cacheKey)
-  if (cached) {
-    logger.info(`Using cached title: ${cached}`)
-    return cached
-  }
-
-  const { text } = await generateText({
-    model: openai(MODEL),
-    prompt: `
+  return await getOrCompute(cacheKey, async () => {
+    const { text } = await generateText({
+      model: openai(MODEL),
+      prompt: `
 Given 3 story titles from today's Hacker News:
 
 - Summarize each summary into only a few words
@@ -222,22 +209,22 @@ Here are the titles:
 
 ${top3Stories.map(story => `- ${story.title}\n`).join('')}
 `,
-  })
-
-  const todaysDate = new Date()
-    .toLocaleDateString('en-US', {
-      month: 'numeric',
-      day: 'numeric',
-      year: '2-digit',
-      timeZone: 'America/New_York',
     })
-    .split('/')
-    .join('.')
 
-  const title = `${todaysDate} | ${text.replace(/\.$/, '')}`
-  logger.info(`Title: ${title}`)
-  await writeToCache(cacheKey, title)
-  return title
+    const todaysDate = new Date()
+      .toLocaleDateString('en-US', {
+        month: 'numeric',
+        day: 'numeric',
+        year: '2-digit',
+        timeZone: 'America/New_York',
+      })
+      .split('/')
+      .join('.')
+
+    const title = `${todaysDate} | ${text.replace(/\.$/, '')}`
+    logger.info(`Title: ${title}`)
+    return title
+  })
 }
 
 /**
