@@ -4,6 +4,7 @@ import { createHash } from 'crypto'
 
 import type { SlimComment, StoryDataAggregate, StoryOutput } from '../types.js'
 
+import { loadConfig } from '../config.js'
 import { IMPERATIVE_PHRASES, PODCAST_NAME } from '../constants.js'
 import { getOrCompute } from '../utils/cache.js'
 import { childLogger, log } from '../utils/log.js'
@@ -11,11 +12,15 @@ import { estimateTokens } from './estimateTokens.js'
 
 const logger = childLogger('AI')
 
-const openai = createOpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
-
 const MODEL = 'gpt-4.1-nano'
+
+let provider: ReturnType<typeof createOpenAI> | undefined
+
+// Build the client lazily so importing this module never reads env at load time.
+function getModel() {
+  provider ??= createOpenAI({ apiKey: loadConfig().openaiApiKey })
+  return provider(MODEL)
+}
 
 const storySummarizationPrompt = `
 You are an AI language model tasked with generating a recap of a top story from Hacker News (news.ycombinator.com).
@@ -104,7 +109,7 @@ export async function summarizeStory(story: StoryDataAggregate): Promise<StoryDa
     logger.info(`Estimated tokens: ${tokenCount}`)
 
     const { text } = await generateText({
-      model: openai(MODEL),
+      model: getModel(),
       prompt,
     })
     return text
@@ -128,14 +133,14 @@ Welcome to the ${PODCAST_NAME}, where we explore the top 10 posts on Hacker News
 
 ${summary}
 
-${process.env.VOICE_SERVICE === 'elevenlabs' ? `<break time="0.5s" />` : ''}
+${loadConfig().voiceService === 'elevenlabs' ? `<break time="0.5s" />` : ''}
 
 Let's ${IMPERATIVE_PHRASES[Math.floor(Math.random() * IMPERATIVE_PHRASES.length)]}.
 `
 
   const intro = await getOrCompute(cacheKey, async () => {
     const { text } = await generateText({
-      model: openai(MODEL),
+      model: getModel(),
       prompt: `
 Given 3 stories from today's Hacker News:
 
@@ -195,7 +200,7 @@ export async function generateEpisodeTitle(stories: StoryOutput[]): Promise<stri
   const cacheKey = `title-${hash}`
   return await getOrCompute(cacheKey, async () => {
     const { text } = await generateText({
-      model: openai(MODEL),
+      model: getModel(),
       prompt: `
 Given 3 story titles from today's Hacker News:
 

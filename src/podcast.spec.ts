@@ -59,12 +59,12 @@ const uploadArgs = {
   audioFilePath: '/tmp/output.mp3',
   title: 'Test Episode',
   showNotes: 'Notes',
+  apiKey: 'test-key',
 }
 
 describe('uploadPodcast publish behavior', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    process.env.TRANSISTOR_API_KEY = 'test-key'
   })
 
   it('publishes immediately when publishAt is absent', async () => {

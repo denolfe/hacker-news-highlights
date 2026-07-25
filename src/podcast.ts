@@ -8,13 +8,14 @@ export async function uploadPodcast(args: {
   audioFilePath: string
   title: string
   showNotes: string
+  /** Transistor API key */
+  apiKey: string
   /** Release episode at this time via Transistor scheduled publish; omit to publish immediately */
   publishAt?: Date
 }) {
   log.info('Uploading podcast...')
-  const { audioFilePath, title, showNotes, publishAt } = args
+  const { audioFilePath, title, showNotes, apiKey, publishAt } = args
 
-  const apiKey = process.env.TRANSISTOR_API_KEY!
   const headers = {
     'Content-Type': 'application/json',
     'x-api-key': apiKey,
