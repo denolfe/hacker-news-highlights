@@ -15,6 +15,15 @@ class EmptyContentError extends Error {
   }
 }
 
+/** Slimmed story metadata used to build a StoryOutput. */
+type SlimStory = {
+  title: string
+  url?: null | string
+  storyId: number
+  story_text?: null | string
+  points: number
+}
+
 type StoryDataByIdResponseChildren = {
   author: string
   children: StoryDataByIdResponseChildren[]
@@ -49,71 +58,17 @@ type StoryDataByIdResponse = {
  * Fetches top stories from Hacker News, filters out recently covered stories,
  * and enriches with content and comments.
  */
-export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]> {
+export async function fetchTopStories(
+  count: number = 10,
+): Promise<{ stories: StoryOutput[]; newCovered: CoveredStory[] }> {
   logger.info(`Fetching top ${count} stories...`)
 
-  // Fetch additional stories to account for stories covered in previous episodes
-  const response = await fetchWithTimeoutAndRetry(
-    `https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=${count + 10}`,
-  )
-  const data = (await response.json()) as ResponseData
+  const { stories: selected, newCovered } = await selectStories(count)
 
-  // Extract only the data we need
-  const slim = data.hits.map(s => {
-    return {
-      title: s.title,
-      url: s.url,
-      storyId: s.story_id,
-      story_text: s.story_text,
-      points: s.points,
-    }
-  })
-
-  const recentStories = await getRecentlyCoveredStories()
-  logger.info(`Found ${recentStories.length} recently covered stories`, {
-    coveredStories: recentStories,
-  })
-
-  // Filter out stories we have already covered
-  const filtered = slim
-    .filter(s => {
-      const wasCovered = recentStories.some(c => c.id === s.storyId)
-      if (wasCovered) {
-        logger.warning(`Story ${s.storyId} was covered recently. Removing from list.`)
-      }
-      return !wasCovered
-    })
-    // filter out `Who is hiring` posts
-    .filter(s => {
-      const pattern = /who is hiring/i
-      return !pattern.test(s.title)
-    })
-    .slice(0, count)
-
-  logger.debug({ filtered })
-
-  if (filtered.length < count) {
-    const msg = `Not enough stories to cover. Found ${filtered.length}, expected ${count}`
-    logger.error(msg)
-    throw new Error(msg)
-  }
-
-  const newCovered: CoveredStory[] = [
-    ...recentStories,
-    ...filtered.map(s => ({ id: s.storyId, coveredAt: new Date() })),
-  ]
-  logger.debug({ newCovered })
-
-  // Save the covered stories, but only in CI to prevent dupes between daily runs
-  if (process.env.CI) {
-    await writeToCache('covered-stories', JSON.stringify(newCovered))
-  }
-
-  // Fetch the content and comments for each story
-  const output: StoryOutput[] = []
-  for (const [i, story] of filtered.entries()) {
+  const stories: StoryOutput[] = []
+  for (const [i, story] of selected.entries()) {
     const comments = await fetchHnCommentsById(story.storyId)
-    logger.info(`[${i + 1}/${filtered.length}] ${story.storyId} - ${story.title} - ${story.url}`)
+    logger.info(`[${i + 1}/${selected.length}] ${story.storyId} - ${story.title} - ${story.url}`)
     const cacheKey = 'story-' + story.storyId.toString()
 
     const baseStoryOutput: Pick<
@@ -129,7 +84,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
 
     // Ask HN posts don't have a url, but have a story_text
     if (!story.url && story.story_text) {
-      output.push({
+      stories.push({
         content: story.story_text,
         source: 'Hacker News',
         ...baseStoryOutput,
@@ -174,7 +129,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
     // If siteName or byline is same as title, walk down the chain to find something different
     // split on ' - ' or ' | ' and take the first part
     let source = (siteName || byline || undefined)?.split(/\s[-\\|<>]/)[0]
-    const readableUrl = new URL(story.url).hostname.replace('www.', '')
+    const readableUrl = new URL(url).hostname.replace('www.', '')
 
     if (source === story.title) {
       source = readableUrl
@@ -190,15 +145,74 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
       source,
     })
 
-    output.push({
+    stories.push({
       content: textContent || excerpt || '',
-      url: story.url,
+      url,
       source: source || readableUrl,
       ...baseStoryOutput,
     })
   }
 
-  return output
+  return { stories, newCovered }
+}
+
+/**
+ * Fetches front-page stories and filters out recently covered and who-is-hiring
+ * posts. Returns the selected slim stories plus the covered-stories list to persist.
+ */
+export async function selectStories(
+  count: number,
+): Promise<{ stories: SlimStory[]; newCovered: CoveredStory[] }> {
+  // Over-fetch to account for stories covered in previous episodes
+  const response = await fetchWithTimeoutAndRetry(
+    `https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=${count + 10}`,
+  )
+  const data = (await response.json()) as ResponseData
+
+  const slim: SlimStory[] = data.hits.map(s => ({
+    title: s.title,
+    url: s.url,
+    storyId: s.story_id,
+    story_text: s.story_text,
+    points: s.points,
+  }))
+
+  const recentStories = await getRecentlyCoveredStories()
+  logger.info(`Found ${recentStories.length} recently covered stories`, {
+    coveredStories: recentStories,
+  })
+
+  const stories = slim
+    .filter(s => {
+      const wasCovered = recentStories.some(c => c.id === s.storyId)
+      if (wasCovered) {
+        logger.warning(`Story ${s.storyId} was covered recently. Removing from list.`)
+      }
+      return !wasCovered
+    })
+    .filter(s => !/who is hiring/i.test(s.title))
+    .slice(0, count)
+
+  logger.debug({ stories })
+
+  if (stories.length < count) {
+    const msg = `Not enough stories to cover. Found ${stories.length}, expected ${count}`
+    logger.error(msg)
+    throw new Error(msg)
+  }
+
+  const newCovered: CoveredStory[] = [
+    ...recentStories,
+    ...stories.map(s => ({ id: s.storyId, coveredAt: new Date() })),
+  ]
+  logger.debug({ newCovered })
+
+  return { stories, newCovered }
+}
+
+/** Persists the covered-stories cache. The caller decides when (CI gate). */
+export async function saveCoveredStories(newCovered: CoveredStory[]): Promise<void> {
+  await writeToCache('covered-stories', JSON.stringify(newCovered))
 }
 
 /**

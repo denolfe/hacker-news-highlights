@@ -10,7 +10,7 @@ import {
 import { adjustPronunciation } from '@/audio/adjustPronunciation.js'
 import { generateAudioFromText } from '@/audio/index.js'
 import { EPISODE_OUTPUT, PODCAST_NAME, YOUTUBE_CHAPTERS_OUTPUT } from '@/constants.js'
-import { fetchStoryDataById, fetchTopStories } from '@/hn/index.js'
+import { fetchStoryDataById, fetchTopStories, saveCoveredStories } from '@/hn/index.js'
 import { parseSiteContent } from '@/hn/parseSiteContent.js'
 import { uploadPodcast } from '@/podcast.js'
 import { getTtsService } from '@/services.js'
@@ -182,7 +182,11 @@ async function main() {
     return
   }
 
-  const storyData = await fetchTopStories(args.count ?? 10)
+  const { stories: storyData, newCovered } = await fetchTopStories(args.count ?? 10)
+  // Persist covered stories only in CI to prevent dupes between daily runs
+  if (process.env.CI) {
+    await saveCoveredStories(newCovered)
+  }
 
   if (args.preview) {
     log.info(

@@ -1,7 +1,8 @@
 import { faker } from '@faker-js/faker'
 import { beforeAll, describe, expect, test, vi } from 'vitest'
+import * as cache from '@/utils/cache.js'
 import { disableCache, jsonResponse, textResponse } from '../test-utils.js'
-import { fetchTopStories } from './index.js'
+import { fetchTopStories, selectStories } from './index.js'
 
 describe('hn', () => {
   beforeAll(() => {
@@ -18,7 +19,7 @@ describe('hn', () => {
       }
     })
 
-    const topStories = await fetchTopStories(1)
+    const { stories: topStories } = await fetchTopStories(1)
 
     expect(topStories).toHaveLength(1)
     expect(topStories[0]).toMatchObject({
@@ -49,7 +50,7 @@ describe('hn', () => {
       }
     })
 
-    const topStories = await fetchTopStories(1)
+    const { stories: topStories } = await fetchTopStories(1)
 
     expect(topStories).toHaveLength(1)
     expect(topStories?.[0]?.url).toBeUndefined()
@@ -144,3 +145,72 @@ function makeStoryHtml() {
   </body>
 </html>`
 }
+
+describe('selectStories', () => {
+  beforeAll(() => {
+    disableCache()
+  })
+
+  const makeHit = (overrides: Record<string, unknown> = {}) => ({
+    title: faker.lorem.words(5),
+    url: faker.internet.url(),
+    story_id: faker.number.int({ min: 10_000_000, max: 99_999_999 }),
+    points: faker.number.int({ min: 1, max: 500 }),
+    ...overrides,
+  })
+
+  test('filters out who-is-hiring posts', async () => {
+    const hits = [makeHit({ title: 'Ask HN: Who is Hiring? (July 2026)' }), makeHit(), makeHit()]
+    global.fetch = vi.fn().mockResolvedValue(await jsonResponse({ hits }))
+
+    const { stories } = await selectStories(2)
+
+    expect(stories).toHaveLength(2)
+    expect(stories.some(s => /who is hiring/i.test(s.title))).toBe(false)
+  })
+
+  test('filters out recently covered stories', async () => {
+    const covered = makeHit()
+    const hits = [covered, makeHit(), makeHit()]
+    global.fetch = vi.fn().mockResolvedValue(await jsonResponse({ hits }))
+    vi.spyOn(cache, 'readFromCache').mockResolvedValue(
+      JSON.stringify([{ id: covered.story_id, coveredAt: new Date().toISOString() }]),
+    )
+
+    const { stories } = await selectStories(2)
+
+    expect(stories.some(s => s.storyId === covered.story_id)).toBe(false)
+  })
+
+  test('slices to count after over-fetching', async () => {
+    const hits = Array.from({ length: 13 }, () => makeHit())
+    global.fetch = vi.fn().mockResolvedValue(await jsonResponse({ hits }))
+    vi.spyOn(cache, 'readFromCache').mockResolvedValue(null)
+
+    const { stories } = await selectStories(3)
+
+    expect(stories).toHaveLength(3)
+  })
+
+  test('throws when fewer than count remain', async () => {
+    const hits = [makeHit()]
+    global.fetch = vi.fn().mockResolvedValue(await jsonResponse({ hits }))
+    vi.spyOn(cache, 'readFromCache').mockResolvedValue(null)
+
+    await expect(selectStories(5)).rejects.toThrow(/Not enough stories/)
+  })
+
+  test('newCovered combines prior covered and newly selected', async () => {
+    const prior = { id: 111, coveredAt: new Date().toISOString() }
+    const hits = [makeHit({ story_id: 222 }), makeHit({ story_id: 333 })]
+    global.fetch = vi.fn().mockResolvedValue(await jsonResponse({ hits }))
+    vi.spyOn(cache, 'readFromCache').mockResolvedValue(JSON.stringify([prior]))
+
+    const { newCovered } = await selectStories(2)
+
+    const ids = newCovered.map(c => c.id)
+    expect(ids).toContain(111)
+    expect(ids).toContain(222)
+    expect(ids).toContain(333)
+  })
+})
