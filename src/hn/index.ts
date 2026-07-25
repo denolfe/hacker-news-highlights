@@ -24,34 +24,13 @@ type SlimStory = {
   points: number
 }
 
-type StoryDataByIdResponseChildren = {
-  author: string
-  children: StoryDataByIdResponseChildren[]
-  created_at: string
-  created_at_i: number
-  id: number
-  options: string[]
-  parent_id: number
-  points: null | number
-  story_id: number
-  text: string
-  type: string
-}
-
-type StoryDataByIdResponse = {
-  author: string
-  children: StoryDataByIdResponseChildren[]
-  created_at: string
-  created_at_i: number
-  id: number
-  options: string[]
-  parent_id: null | number
-  points: number
+/** Subset of the HN /items/{id} response used to build a SlimStory. */
+type StoryItemResponse = {
+  title: string
+  url: null | string
   story_id: number
   text: null | string
-  title: string
-  type: string
-  url: null | string
+  points: number
 }
 
 /**
@@ -233,31 +212,25 @@ export async function fetchHnCommentsById(storyId: number): Promise<SlimComment[
 }
 
 /**
- * Fetches complete story data including metadata, content, and comments by story ID.
+ * Fetches a single story by ID and builds it through the shared enrich path.
  */
 export async function fetchStoryDataById(storyId: number): Promise<StoryOutput> {
   const response = await fetchWithTimeoutAndRetry(`https://hn.algolia.com/api/v1/items/${storyId}`)
-  const data = (await response.json()) as StoryDataByIdResponse
-  const comments = data.children.map(extractComment)
+  const data = (await response.json()) as StoryItemResponse
 
-  const baseStoryOutput: { text: null | string } & Pick<
-    StoryOutput,
-    'comments' | 'hnUrl' | 'points' | 'storyId' | 'title'
-  > = {
+  const enriched = await enrichStory({
     title: data.title,
+    url: data.url,
     storyId: data.story_id,
-    text: data.text,
+    story_text: data.text,
     points: data.points,
-    comments,
-    hnUrl: `https://news.ycombinator.com/item?id=${data.story_id}`,
+  })
+
+  if (!enriched) {
+    throw new Error(`No content found for story ${storyId}`)
   }
 
-  return {
-    ...baseStoryOutput,
-    content: data.text,
-    url: data.url,
-    source: data.author,
-  }
+  return enriched
 }
 
 async function fetchWithTimeoutAndRetry(

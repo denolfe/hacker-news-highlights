@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker'
 import { beforeAll, describe, expect, test, vi } from 'vitest'
 import * as cache from '@/utils/cache.js'
 import { disableCache, jsonResponse, textResponse } from '../test-utils.js'
-import { enrichStory, fetchTopStories, selectStories } from './index.js'
+import { enrichStory, fetchStoryDataById, fetchTopStories, selectStories } from './index.js'
 
 describe('hn', () => {
   beforeAll(() => {
@@ -300,5 +300,67 @@ describe('enrichStory', () => {
     })
 
     expect(result).toBeNull()
+  })
+})
+
+describe('fetchStoryDataById', () => {
+  beforeAll(() => {
+    disableCache()
+  })
+
+  test('builds slim from /items and returns enriched story', async () => {
+    const storyId = 12_345
+    global.fetch = vi.fn().mockImplementation(async (url: string) => {
+      if (url.startsWith('https://hn.algolia.com/api/v1/items/')) {
+        return jsonResponse({
+          title: 'A linked article',
+          url: 'https://example.com/post',
+          story_id: storyId,
+          text: null,
+          points: 99,
+          children: [
+            {
+              id: 1,
+              created_at: new Date().toISOString(),
+              text: faker.lorem.sentence(),
+              author: faker.person.firstName(),
+              children: [],
+            },
+          ],
+        })
+      }
+      return textResponse(`<!DOCTYPE html><html><head><title>Test Story</title></head>
+        <body><h1>Test Story</h1><p>${faker.lorem.paragraphs(3)}</p></body></html>`)
+    })
+
+    const result = await fetchStoryDataById(storyId)
+
+    expect(result).toMatchObject({
+      storyId,
+      url: 'https://example.com/post',
+      title: 'A linked article',
+      points: 99,
+      comments: expect.any(Array),
+    })
+    expect(result.content).toEqual(expect.any(String))
+  })
+
+  test('throws when enrichment yields no content', async () => {
+    const storyId = 67_890
+    global.fetch = vi.fn().mockImplementation(async (url: string) => {
+      if (url.startsWith('https://hn.algolia.com/api/v1/items/')) {
+        return jsonResponse({
+          title: 'Ask HN with no body',
+          url: null,
+          story_id: storyId,
+          text: null,
+          points: 3,
+          children: [],
+        })
+      }
+      return textResponse('')
+    })
+
+    await expect(fetchStoryDataById(storyId)).rejects.toThrow(/No content found for story/)
   })
 })
