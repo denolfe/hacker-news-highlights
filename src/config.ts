@@ -1,16 +1,18 @@
 import { z } from 'zod'
 
 /**
- * Parsed, validated application config. The single source of truth for every
- * environment variable the pipeline reads.
+ * Parsed, validated config for the credentials and run-mode flags the pipeline
+ * needs. `DEBUG` is deliberately excluded: logging must work before, and
+ * independently of, config validation (see `isDebug` in `utils/log.ts`).
  */
 const configSchema = z
   .object({
     OPENAI_API_KEY: z
       .string({ required_error: 'Missing required env OPENAI_API_KEY' })
       .min(1, 'Missing required env OPENAI_API_KEY'),
-    ELEVEN_LABS_API_KEY: z.string().min(1).optional(),
-    TRANSISTOR_API_KEY: z.string().min(1).optional(),
+    // An unset secret expands to an empty string in CI, so treat '' as absent
+    ELEVEN_LABS_API_KEY: z.string().min(1, 'Missing required env ELEVEN_LABS_API_KEY').optional(),
+    TRANSISTOR_API_KEY: z.string().min(1, 'Missing required env TRANSISTOR_API_KEY').optional(),
     VOICE_SERVICE: z.string().optional(),
     CI: z.string().optional(),
     SCHEDULED_RELEASE: z.string().optional(),
@@ -20,7 +22,8 @@ const configSchema = z
     elevenLabsApiKey: raw.ELEVEN_LABS_API_KEY,
     transistorApiKey: raw.TRANSISTOR_API_KEY,
     // Only an explicit 'elevenlabs' selects ElevenLabs; anything else is OpenAI.
-    voiceService: raw.VOICE_SERVICE === 'elevenlabs' ? ('elevenlabs' as const) : ('openai' as const),
+    voiceService:
+      raw.VOICE_SERVICE === 'elevenlabs' ? ('elevenlabs' as const) : ('openai' as const),
     isCi: Boolean(raw.CI),
     isScheduledRelease: raw.SCHEDULED_RELEASE === 'true',
   }))
@@ -37,12 +40,12 @@ export type Config = z.infer<typeof configSchema>
 
 /**
  * Parse and validate config from a raw environment. Pure: pass an env object in,
- * get typed config out, or throw on the first validation failure.
+ * get typed config out, or throw listing every validation failure at once.
  */
 export function parseConfig(env: NodeJS.ProcessEnv): Config {
   const result = configSchema.safeParse(env)
   if (!result.success) {
-    throw new Error(result.error.issues[0].message)
+    throw new Error(result.error.issues.map(issue => issue.message).join('\n'))
   }
   return result.data
 }

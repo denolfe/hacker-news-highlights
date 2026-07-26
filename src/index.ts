@@ -176,7 +176,9 @@ async function main() {
     return
   }
 
-  const storyData = await fetchTopStories(args.count ?? 10)
+  const storyData = await fetchTopStories(args.count ?? 10, {
+    shouldPersistCoveredStories: config.isCi,
+  })
 
   if (args.preview) {
     log.info(

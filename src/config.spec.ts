@@ -51,9 +51,9 @@ describe('parseConfig', () => {
   })
 
   it('requires the ElevenLabs key when selecting elevenlabs in CI', () => {
-    expect(() =>
-      parseConfig({ ...baseEnv, CI: 'true', VOICE_SERVICE: 'elevenlabs' }),
-    ).toThrow('Missing required env ELEVEN_LABS_API_KEY')
+    expect(() => parseConfig({ ...baseEnv, CI: 'true', VOICE_SERVICE: 'elevenlabs' })).toThrow(
+      'Missing required env ELEVEN_LABS_API_KEY',
+    )
   })
 
   it('allows elevenlabs without the key outside CI', () => {
@@ -61,6 +61,24 @@ describe('parseConfig', () => {
 
     expect(config.voiceService).toBe('elevenlabs')
     expect(config.elevenLabsApiKey).toBeUndefined()
+  })
+
+  it('treats an empty ElevenLabs key as missing', () => {
+    expect(() =>
+      parseConfig({ ...baseEnv, CI: 'true', VOICE_SERVICE: 'elevenlabs', ELEVEN_LABS_API_KEY: '' }),
+    ).toThrow('Missing required env ELEVEN_LABS_API_KEY')
+  })
+
+  it('treats an empty Transistor key as missing', () => {
+    expect(() => parseConfig({ ...baseEnv, TRANSISTOR_API_KEY: '' })).toThrow(
+      'Missing required env TRANSISTOR_API_KEY',
+    )
+  })
+
+  it('reports every validation failure at once', () => {
+    expect(() => parseConfig({ TRANSISTOR_API_KEY: '' })).toThrow(
+      /Missing required env OPENAI_API_KEY[\s\S]*Missing required env TRANSISTOR_API_KEY/,
+    )
   })
 
   it('accepts the ElevenLabs key when provided in CI', () => {

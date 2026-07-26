@@ -49,7 +49,10 @@ type StoryDataByIdResponse = {
  * Fetches top stories from Hacker News, filters out recently covered stories,
  * and enriches with content and comments.
  */
-export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]> {
+export async function fetchTopStories(
+  count: number = 10,
+  options: { shouldPersistCoveredStories?: boolean } = {},
+): Promise<StoryOutput[]> {
   logger.info(`Fetching top ${count} stories...`)
 
   // Fetch additional stories to account for stories covered in previous episodes
@@ -105,7 +108,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   logger.debug({ newCovered })
 
   // Save the covered stories, but only in CI to prevent dupes between daily runs
-  if (process.env.CI) {
+  if (options.shouldPersistCoveredStories) {
     await writeToCache('covered-stories', JSON.stringify(newCovered))
   }
 
