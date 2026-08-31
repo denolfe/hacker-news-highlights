@@ -1,3 +1,4 @@
+import { EPISODE_TITLE_SEPARATOR, getEpisodeDatePrefix } from '@/utils/episodeDate.js'
 import { log } from '@/utils/log.js'
 import fs from 'fs/promises'
 
@@ -18,6 +19,18 @@ export async function uploadPodcast(args: {
   const headers = {
     'Content-Type': 'application/json',
     'x-api-key': apiKey,
+  }
+
+  // One episode per Eastern calendar day. Any episode already carrying today's
+  // date key means an earlier run got this far, so stop before uploading rather
+  // than creating a duplicate.
+  const datePrefix = getEpisodeDatePrefix()
+  const existing = await findEpisodeForDate({ datePrefix, headers })
+
+  if (existing) {
+    throw new Error(
+      `Episode already exists for ${datePrefix}: id ${existing.id}, status ${existing.attributes?.status}. Refusing to create a duplicate.`,
+    )
   }
 
   const filename = audioFilePath.split('/').pop()
@@ -99,14 +112,15 @@ export async function uploadPodcast(args: {
   }
   log.info(`Created episode with ID: ${episodeId}`)
 
-  // Publish or schedule episode
-  const episodeUpdate: { status: string; published_at?: string } = publishAt
-    ? { status: 'scheduled', published_at: publishAt.toISOString() }
-    : { status: 'published' }
+  const episodeUpdate = resolveEpisodeRelease(publishAt)
 
-  log.info(
-    publishAt ? `Scheduling episode for ${publishAt.toISOString()}...` : 'Publishing episode...',
-  )
+  if (episodeUpdate.status === 'scheduled') {
+    log.info(`Scheduling episode for ${episodeUpdate.published_at}...`)
+  } else if (episodeUpdate.published_at) {
+    log.info(`Target ${episodeUpdate.published_at} already passed, publishing immediately`)
+  } else {
+    log.info('Publishing episode...')
+  }
 
   const publishRes = await fetch(`${baseUrl}/episodes/${episodeId}/publish`, {
     method: 'PATCH',
@@ -117,22 +131,88 @@ export async function uploadPodcast(args: {
     }),
   })
 
-  const publishJson = (await publishRes.json().catch(() => undefined)) as
+  // Read as text so a non-JSON error body still reaches the logs
+  const publishBody = await publishRes.text().catch(() => '')
+  const publishJson = safeJsonParse(publishBody) as
     | { data?: { attributes?: { status?: string } } }
     | undefined
   const returnedStatus = publishJson?.data?.attributes?.status
 
-  // Transistor publishes immediately if the scheduled time has already passed
   const isPublishSuccess =
     publishRes.ok && (returnedStatus === episodeUpdate.status || returnedStatus === 'published')
 
   if (!isPublishSuccess) {
     throw new Error(
-      `Failed to publish episode ${episodeId}: HTTP ${publishRes.status}, returned status: ${returnedStatus}`,
+      `Failed to publish episode ${episodeId}: HTTP ${publishRes.status}, returned status: ${returnedStatus}, body: ${publishBody || '<empty>'}`,
     )
   }
 
   log.info(`Episode ${episodeId} ${returnedStatus}`)
+}
+
+/**
+ * Release instruction for a target time, or immediate release when there is none.
+ *
+ * Transistor rejects `scheduled` with a published_at in the past (HTTP 400),
+ * which delayed cron delivery causes. Publishing with a past published_at is
+ * supported, so a missed target releases now while keeping the intended
+ * timestamp for a consistent release time in the feed.
+ */
+export function resolveEpisodeRelease(publishAt?: Date, now: Date = new Date()): EpisodeRelease {
+  if (!publishAt) {
+    return { status: 'published' }
+  }
+
+  const isTargetInFuture = publishAt.getTime() > now.getTime()
+
+  return {
+    status: isTargetInFuture ? 'scheduled' : 'published',
+    published_at: publishAt.toISOString(),
+  }
+}
+
+function safeJsonParse(body: string): unknown {
+  try {
+    return JSON.parse(body)
+  } catch {
+    return undefined
+  }
+}
+
+/** Newest episode whose title carries `datePrefix`, in any status, if one exists. */
+async function findEpisodeForDate(args: {
+  datePrefix: string
+  headers: Record<string, string>
+}): Promise<EpisodeListEntry | undefined> {
+  const { datePrefix, headers } = args
+  const url = `${baseUrl}/episodes?show_id=${showId}&order=desc&pagination%5Bper%5D=10`
+
+  const res = await fetch(url, { method: 'GET', headers })
+
+  if (!res.ok) {
+    throw new Error(`Failed to list episodes: HTTP ${res.status}`)
+  }
+
+  const json = (await res.json().catch(() => undefined)) as
+    | { data?: EpisodeListEntry[] }
+    | undefined
+
+  return json?.data?.find(entry =>
+    entry.attributes?.title?.startsWith(`${datePrefix}${EPISODE_TITLE_SEPARATOR}`),
+  )
+}
+
+type EpisodeRelease = {
+  status: 'published' | 'scheduled'
+  published_at?: string
+}
+
+type EpisodeListEntry = {
+  id?: string
+  attributes?: {
+    title?: string
+    status?: string
+  }
 }
 
 type Episode = {

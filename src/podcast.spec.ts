@@ -2,7 +2,8 @@ import type { Mock } from 'vitest'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { uploadPodcast } from '@/podcast.js'
+import { resolveEpisodeRelease, uploadPodcast } from '@/podcast.js'
+import { getEpisodeDatePrefix } from '@/utils/episodeDate.js'
 
 vi.mock('fs/promises', () => ({
   default: { readFile: vi.fn().mockResolvedValue(Buffer.from('fake-audio')) },
@@ -13,11 +14,21 @@ const jsonResponse = (body: unknown, ok = true, status = 200) => ({
   status,
   statusText: ok ? 'OK' : 'Unprocessable Entity',
   json: async () => body,
+  text: async () => JSON.stringify(body),
 })
 
-/** Mocks authorize/upload/create; publish PATCH resolves via `publishResult`. */
-function mockTransistorApi(publishResult: (init: RequestInit) => unknown): Mock {
+/**
+ * Mocks lookup/authorize/upload/create; publish PATCH resolves via `publishResult`.
+ * `existingEpisodes` seeds the one-per-day duplicate lookup.
+ */
+function mockTransistorApi(
+  publishResult: (init: RequestInit) => unknown,
+  existingEpisodes: unknown[] = [],
+): Mock {
   const fetchMock = vi.fn().mockImplementation((url: string, init: RequestInit) => {
+    if (url.includes('/episodes?show_id=')) {
+      return Promise.resolve(jsonResponse({ data: existingEpisodes }))
+    }
     if (url.includes('authorize_upload')) {
       return Promise.resolve(
         jsonResponse({
@@ -76,33 +87,108 @@ describe('uploadPodcast publish behavior', () => {
     expect(body.episode).toEqual({ status: 'published' })
   })
 
-  it('schedules with ISO published_at when publishAt is set', async () => {
+  it('schedules with ISO published_at when publishAt is in the future', async () => {
     const fetchMock = mockTransistorApi(() =>
       jsonResponse({ data: { attributes: { status: 'scheduled' } } }),
     )
-    const publishAt = new Date('2026-07-15T10:30:00.000Z')
+    const publishAt = new Date(Date.now() + 60 * 60 * 1000)
     await uploadPodcast({ ...uploadArgs, publishAt })
     const body = publishPatchBody(fetchMock)
     expect(body.episode).toEqual({
       status: 'scheduled',
-      published_at: '2026-07-15T10:30:00.000Z',
+      published_at: publishAt.toISOString(),
     })
   })
 
-  it('throws when the publish PATCH returns non-OK', async () => {
-    mockTransistorApi(() => jsonResponse({ errors: ['bad'] }, false, 422))
-    await expect(uploadPodcast(uploadArgs)).rejects.toThrow(/Failed to publish/)
+  it('publishes immediately but keeps the intended timestamp when publishAt is in the past', async () => {
+    const fetchMock = mockTransistorApi(() =>
+      jsonResponse({ data: { attributes: { status: 'published' } } }),
+    )
+    const publishAt = new Date(Date.now() - 60 * 60 * 1000)
+    await uploadPodcast({ ...uploadArgs, publishAt })
+    const body = publishPatchBody(fetchMock)
+    expect(body.episode).toEqual({
+      status: 'published',
+      published_at: publishAt.toISOString(),
+    })
   })
 
-  it('accepts immediate publish when the scheduled time has already passed', async () => {
-    mockTransistorApi(() => jsonResponse({ data: { attributes: { status: 'published' } } }))
-    const publishAt = new Date('2026-07-15T10:30:00.000Z')
-    await expect(uploadPodcast({ ...uploadArgs, publishAt })).resolves.toBeUndefined()
+  it('throws when the publish PATCH returns non-OK, including the response body', async () => {
+    mockTransistorApi(() => jsonResponse({ errors: ['bad'] }, false, 422))
+    await expect(uploadPodcast(uploadArgs)).rejects.toThrow(/Failed to publish.*bad/s)
+  })
+
+  it('refuses to create a duplicate when an episode already exists for today', async () => {
+    const fetchMock = mockTransistorApi(
+      () => jsonResponse({ data: { attributes: { status: 'published' } } }),
+      [
+        {
+          id: '99',
+          attributes: {
+            title: `${getEpisodeDatePrefix()} | Existing episode`,
+            status: 'published',
+          },
+        },
+      ],
+    )
+    await expect(uploadPodcast(uploadArgs)).rejects.toThrow(/Episode already exists/)
+    expect(fetchMock.mock.calls.some(([url]) => (url as string).includes('authorize_upload'))).toBe(
+      false,
+    )
+  })
+
+  it('blocks on a leftover draft for today', async () => {
+    mockTransistorApi(
+      () => jsonResponse({ data: { attributes: { status: 'published' } } }),
+      [
+        {
+          id: '98',
+          attributes: { title: `${getEpisodeDatePrefix()} | Stale draft`, status: 'draft' },
+        },
+      ],
+    )
+    await expect(uploadPodcast(uploadArgs)).rejects.toThrow(/status draft/)
+  })
+
+  it('proceeds when existing episodes are from other days', async () => {
+    mockTransistorApi(
+      () => jsonResponse({ data: { attributes: { status: 'published' } } }),
+      [{ id: '97', attributes: { title: '1.1.99 | Some other day', status: 'published' } }],
+    )
+    await expect(uploadPodcast(uploadArgs)).resolves.toBeUndefined()
   })
 
   it('throws when the returned status does not match the requested one', async () => {
     mockTransistorApi(() => jsonResponse({ data: { attributes: { status: 'draft' } } }))
-    const publishAt = new Date('2026-07-15T10:30:00.000Z')
+    const publishAt = new Date(Date.now() + 60 * 60 * 1000)
     await expect(uploadPodcast({ ...uploadArgs, publishAt })).rejects.toThrow(/Failed to publish/)
+  })
+})
+
+describe('resolveEpisodeRelease', () => {
+  const now = new Date('2026-08-30T12:00:00.000Z')
+
+  it('publishes immediately when there is no target', () => {
+    expect(resolveEpisodeRelease(undefined, now)).toEqual({ status: 'published' })
+  })
+
+  it('schedules a future target at its timestamp', () => {
+    const publishAt = new Date('2026-08-31T10:30:00.000Z')
+    expect(resolveEpisodeRelease(publishAt, now)).toEqual({
+      status: 'scheduled',
+      published_at: '2026-08-31T10:30:00.000Z',
+    })
+  })
+
+  it('publishes a past target, keeping the intended timestamp', () => {
+    const publishAt = new Date('2026-08-30T10:30:00.000Z')
+    expect(resolveEpisodeRelease(publishAt, now)).toEqual({
+      status: 'published',
+      published_at: '2026-08-30T10:30:00.000Z',
+    })
+  })
+
+  it('treats a target equal to now as passed', () => {
+    expect(resolveEpisodeRelease(new Date(now), now).status).toBe('published')
   })
 })
