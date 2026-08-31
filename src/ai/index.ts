@@ -6,6 +6,7 @@ import type { SlimComment, StoryDataAggregate, StoryOutput } from '../types.js'
 
 import { IMPERATIVE_PHRASES, PODCAST_NAME } from '../constants.js'
 import { getOrCompute } from '../utils/cache.js'
+import { EPISODE_TITLE_SEPARATOR, getEpisodeDatePrefix } from '../utils/episodeDate.js'
 import { childLogger, log } from '../utils/log.js'
 import { estimateTokens } from './estimateTokens.js'
 
@@ -211,17 +212,7 @@ ${top3Stories.map(story => `- ${story.title}\n`).join('')}
 `,
     })
 
-    const todaysDate = new Date()
-      .toLocaleDateString('en-US', {
-        month: 'numeric',
-        day: 'numeric',
-        year: '2-digit',
-        timeZone: 'America/New_York',
-      })
-      .split('/')
-      .join('.')
-
-    const title = `${todaysDate} | ${text.replace(/\.$/, '')}`
+    const title = `${getEpisodeDatePrefix()}${EPISODE_TITLE_SEPARATOR}${text.replace(/\.$/, '')}`
     logger.info(`Title: ${title}`)
     return title
   })

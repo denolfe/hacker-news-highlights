@@ -1,3 +1,4 @@
+import { EPISODE_TITLE_SEPARATOR, getEpisodeDatePrefix } from '@/utils/episodeDate.js'
 import { log } from '@/utils/log.js'
 import fs from 'fs/promises'
 
@@ -18,6 +19,18 @@ export async function uploadPodcast(args: {
   const headers = {
     'Content-Type': 'application/json',
     'x-api-key': apiKey,
+  }
+
+  // One episode per Eastern calendar day. Any episode already carrying today's
+  // date key means an earlier run got this far, so stop before uploading rather
+  // than creating a duplicate.
+  const datePrefix = getEpisodeDatePrefix()
+  const existing = await findEpisodeForDate({ datePrefix, headers })
+
+  if (existing) {
+    throw new Error(
+      `Episode already exists for ${datePrefix}: id ${existing.id}, status ${existing.attributes?.status}. Refusing to create a duplicate.`,
+    )
   }
 
   const filename = audioFilePath.split('/').pop()
@@ -99,13 +112,22 @@ export async function uploadPodcast(args: {
   }
   log.info(`Created episode with ID: ${episodeId}`)
 
-  // Publish or schedule episode
+  // Transistor rejects `scheduled` with a published_at in the past (HTTP 400),
+  // which delayed cron delivery causes. Publishing with a past published_at is
+  // supported, so release immediately while keeping the intended timestamp for
+  // a consistent release time in the feed.
+  const isScheduled = Boolean(publishAt && publishAt.getTime() > Date.now())
+
+  if (publishAt && !isScheduled) {
+    log.info(`Scheduled time ${publishAt.toISOString()} already passed, publishing immediately`)
+  }
+
   const episodeUpdate: { status: string; published_at?: string } = publishAt
-    ? { status: 'scheduled', published_at: publishAt.toISOString() }
+    ? { status: isScheduled ? 'scheduled' : 'published', published_at: publishAt.toISOString() }
     : { status: 'published' }
 
   log.info(
-    publishAt ? `Scheduling episode for ${publishAt.toISOString()}...` : 'Publishing episode...',
+    isScheduled ? `Scheduling episode for ${publishAt?.toISOString()}...` : 'Publishing episode...',
   )
 
   const publishRes = await fetch(`${baseUrl}/episodes/${episodeId}/publish`, {
@@ -117,22 +139,65 @@ export async function uploadPodcast(args: {
     }),
   })
 
-  const publishJson = (await publishRes.json().catch(() => undefined)) as
+  // Read as text so a non-JSON error body still reaches the logs
+  const publishBody = await publishRes.text().catch(() => '')
+  const publishJson = safeJsonParse(publishBody) as
     | { data?: { attributes?: { status?: string } } }
     | undefined
   const returnedStatus = publishJson?.data?.attributes?.status
 
-  // Transistor publishes immediately if the scheduled time has already passed
   const isPublishSuccess =
     publishRes.ok && (returnedStatus === episodeUpdate.status || returnedStatus === 'published')
 
   if (!isPublishSuccess) {
     throw new Error(
-      `Failed to publish episode ${episodeId}: HTTP ${publishRes.status}, returned status: ${returnedStatus}`,
+      `Failed to publish episode ${episodeId}: HTTP ${publishRes.status}, returned status: ${returnedStatus}, body: ${publishBody || '<empty>'}`,
     )
   }
 
   log.info(`Episode ${episodeId} ${returnedStatus}`)
+}
+
+function safeJsonParse(body: string): unknown {
+  try {
+    return JSON.parse(body)
+  } catch {
+    return undefined
+  }
+}
+
+/** Ample for a daily show; the newest page always covers recent days. */
+const EPISODE_LOOKUP_PAGE_SIZE = 50
+
+/** Newest episode whose title carries `datePrefix`, in any status, if one exists. */
+async function findEpisodeForDate(args: {
+  datePrefix: string
+  headers: Record<string, string>
+}): Promise<EpisodeListEntry | undefined> {
+  const { datePrefix, headers } = args
+  const url = `${baseUrl}/episodes?show_id=${showId}&order=desc&pagination%5Bper%5D=${EPISODE_LOOKUP_PAGE_SIZE}`
+
+  const res = await fetch(url, { method: 'GET', headers })
+
+  if (!res.ok) {
+    throw new Error(`Failed to list episodes: HTTP ${res.status}`)
+  }
+
+  const json = (await res.json().catch(() => undefined)) as
+    | { data?: EpisodeListEntry[] }
+    | undefined
+
+  return json?.data?.find(entry =>
+    entry.attributes?.title?.startsWith(`${datePrefix}${EPISODE_TITLE_SEPARATOR}`),
+  )
+}
+
+type EpisodeListEntry = {
+  id?: string
+  attributes?: {
+    title?: string
+    status?: string
+  }
 }
 
 type Episode = {
