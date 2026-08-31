@@ -112,23 +112,15 @@ export async function uploadPodcast(args: {
   }
   log.info(`Created episode with ID: ${episodeId}`)
 
-  // Transistor rejects `scheduled` with a published_at in the past (HTTP 400),
-  // which delayed cron delivery causes. Publishing with a past published_at is
-  // supported, so release immediately while keeping the intended timestamp for
-  // a consistent release time in the feed.
-  const isScheduled = Boolean(publishAt && publishAt.getTime() > Date.now())
+  const episodeUpdate = resolveEpisodeRelease(publishAt)
 
-  if (publishAt && !isScheduled) {
-    log.info(`Scheduled time ${publishAt.toISOString()} already passed, publishing immediately`)
+  if (episodeUpdate.status === 'scheduled') {
+    log.info(`Scheduling episode for ${episodeUpdate.published_at}...`)
+  } else if (episodeUpdate.published_at) {
+    log.info(`Target ${episodeUpdate.published_at} already passed, publishing immediately`)
+  } else {
+    log.info('Publishing episode...')
   }
-
-  const episodeUpdate: { status: string; published_at?: string } = publishAt
-    ? { status: isScheduled ? 'scheduled' : 'published', published_at: publishAt.toISOString() }
-    : { status: 'published' }
-
-  log.info(
-    isScheduled ? `Scheduling episode for ${publishAt?.toISOString()}...` : 'Publishing episode...',
-  )
 
   const publishRes = await fetch(`${baseUrl}/episodes/${episodeId}/publish`, {
     method: 'PATCH',
@@ -158,6 +150,27 @@ export async function uploadPodcast(args: {
   log.info(`Episode ${episodeId} ${returnedStatus}`)
 }
 
+/**
+ * Release instruction for a target time, or immediate release when there is none.
+ *
+ * Transistor rejects `scheduled` with a published_at in the past (HTTP 400),
+ * which delayed cron delivery causes. Publishing with a past published_at is
+ * supported, so a missed target releases now while keeping the intended
+ * timestamp for a consistent release time in the feed.
+ */
+export function resolveEpisodeRelease(publishAt?: Date, now: Date = new Date()): EpisodeRelease {
+  if (!publishAt) {
+    return { status: 'published' }
+  }
+
+  const isTargetInFuture = publishAt.getTime() > now.getTime()
+
+  return {
+    status: isTargetInFuture ? 'scheduled' : 'published',
+    published_at: publishAt.toISOString(),
+  }
+}
+
 function safeJsonParse(body: string): unknown {
   try {
     return JSON.parse(body)
@@ -166,16 +179,13 @@ function safeJsonParse(body: string): unknown {
   }
 }
 
-/** Ample for a daily show; the newest page always covers recent days. */
-const EPISODE_LOOKUP_PAGE_SIZE = 50
-
 /** Newest episode whose title carries `datePrefix`, in any status, if one exists. */
 async function findEpisodeForDate(args: {
   datePrefix: string
   headers: Record<string, string>
 }): Promise<EpisodeListEntry | undefined> {
   const { datePrefix, headers } = args
-  const url = `${baseUrl}/episodes?show_id=${showId}&order=desc&pagination%5Bper%5D=${EPISODE_LOOKUP_PAGE_SIZE}`
+  const url = `${baseUrl}/episodes?show_id=${showId}&order=desc&pagination%5Bper%5D=10`
 
   const res = await fetch(url, { method: 'GET', headers })
 
@@ -190,6 +200,11 @@ async function findEpisodeForDate(args: {
   return json?.data?.find(entry =>
     entry.attributes?.title?.startsWith(`${datePrefix}${EPISODE_TITLE_SEPARATOR}`),
   )
+}
+
+type EpisodeRelease = {
+  status: 'published' | 'scheduled'
+  published_at?: string
 }
 
 type EpisodeListEntry = {

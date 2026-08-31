@@ -2,7 +2,7 @@ import type { Mock } from 'vitest'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { uploadPodcast } from '@/podcast.js'
+import { resolveEpisodeRelease, uploadPodcast } from '@/podcast.js'
 import { getEpisodeDatePrefix } from '@/utils/episodeDate.js'
 
 vi.mock('fs/promises', () => ({
@@ -162,5 +162,33 @@ describe('uploadPodcast publish behavior', () => {
     mockTransistorApi(() => jsonResponse({ data: { attributes: { status: 'draft' } } }))
     const publishAt = new Date(Date.now() + 60 * 60 * 1000)
     await expect(uploadPodcast({ ...uploadArgs, publishAt })).rejects.toThrow(/Failed to publish/)
+  })
+})
+
+describe('resolveEpisodeRelease', () => {
+  const now = new Date('2026-08-30T12:00:00.000Z')
+
+  it('publishes immediately when there is no target', () => {
+    expect(resolveEpisodeRelease(undefined, now)).toEqual({ status: 'published' })
+  })
+
+  it('schedules a future target at its timestamp', () => {
+    const publishAt = new Date('2026-08-31T10:30:00.000Z')
+    expect(resolveEpisodeRelease(publishAt, now)).toEqual({
+      status: 'scheduled',
+      published_at: '2026-08-31T10:30:00.000Z',
+    })
+  })
+
+  it('publishes a past target, keeping the intended timestamp', () => {
+    const publishAt = new Date('2026-08-30T10:30:00.000Z')
+    expect(resolveEpisodeRelease(publishAt, now)).toEqual({
+      status: 'published',
+      published_at: '2026-08-30T10:30:00.000Z',
+    })
+  })
+
+  it('treats a target equal to now as passed', () => {
+    expect(resolveEpisodeRelease(new Date(now), now).status).toBe('published')
   })
 })
