@@ -30,7 +30,8 @@ function applyPronunciationRules(text: string): string {
       })
 
       // Add any pronunciation replacements here
-      .replace(/\bgui\b/gi, 'gooey')
+      .replace(/\bgui(s)?\b/gi, (_, s) => 'gooey' + (s ? 's' : ''))
+      .replace(/\btui(s)?\b/gi, (_, s) => 'tooey' + (s ? 's' : ''))
       .replace(/\bgzip\b/gi, 'jee-zip')
       .replace(/\bpostgresql\b/gi, 'postgressQL')
       .replace(/\bregex\b/gi, 'rehj-X')

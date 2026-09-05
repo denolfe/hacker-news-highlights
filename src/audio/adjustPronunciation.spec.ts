@@ -17,6 +17,9 @@ describe('adjustPronunciation', () => {
   // Simple word replacements
   test.each([
     ['gui', 'gooey'],
+    ['guis', 'gooeys'],
+    ['tui', 'tooey'],
+    ['tuis', 'tooeys'],
     ['gzip', 'jee-zip'],
     ['postgresql', 'postgress QL'],
     ['rowid', 'row ID'],
