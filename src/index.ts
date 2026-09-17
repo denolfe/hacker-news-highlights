@@ -9,6 +9,7 @@ import {
 } from '@/ai/index.js'
 import { adjustPronunciation } from '@/audio/adjustPronunciation.js'
 import { generateAudioFromText } from '@/audio/index.js'
+import { loadConfig } from '@/config.js'
 import { EPISODE_OUTPUT, PODCAST_NAME, YOUTUBE_CHAPTERS_OUTPUT } from '@/constants.js'
 import { fetchStoryDataById, fetchTopStories } from '@/hn/index.js'
 import { parseSiteContent } from '@/hn/parseSiteContent.js'
@@ -54,17 +55,10 @@ const args = minimist(process.argv.slice(2)) as {
 }
 
 async function main() {
-  // TODO: Use zod
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('Missing required env OPENAI_API_KEY')
-  }
-  if (process.env.CI) {
-    if (args.publish !== false && !process.env.TRANSISTOR_API_KEY) {
-      throw new Error('Missing required env TRANSISTOR_API_KEY')
-    }
-    if (process.env.VOICE_SERVICE === 'elevenlabs' && !process.env.ELEVEN_LABS_API_KEY) {
-      throw new Error('Missing required env ELEVEN_LABS_API_KEY')
-    }
+  const config = loadConfig()
+  // Fail fast before running the pipeline if publishing in CI has no key.
+  if (config.isCi && args.publish !== false && !config.transistorApiKey) {
+    throw new Error('Missing required env TRANSISTOR_API_KEY')
   }
 
   await initOutputDir()
@@ -182,7 +176,9 @@ async function main() {
     return
   }
 
-  const storyData = await fetchTopStories(args.count ?? 10)
+  const storyData = await fetchTopStories(args.count ?? 10, {
+    shouldPersistCoveredStories: config.isCi,
+  })
 
   if (args.preview) {
     log.info(
@@ -227,20 +223,24 @@ async function main() {
     log.info(`Total character count: ${showNotes.replace(/\s+/g, '').length}`)
 
     // Publish podcast before video generation so it succeeds even if video fails
-    const shouldPublish = args.publish ?? Boolean(process.env.CI)
+    const shouldPublish = args.publish ?? config.isCi
     if (shouldPublish) {
+      if (!config.transistorApiKey) {
+        throw new Error('Missing required env TRANSISTOR_API_KEY')
+      }
       await uploadPodcast({
         audioFilePath: EPISODE_OUTPUT,
         title,
         showNotes,
+        apiKey: config.transistorApiKey,
         // Cron runs release at a consistent 6:30am ET; manual runs publish immediately
-        publishAt: process.env.SCHEDULED_RELEASE === 'true' ? getScheduledPublishTime() : undefined,
+        publishAt: config.isScheduledRelease ? getScheduledPublishTime() : undefined,
       })
     } else {
       log.info('SKIPPING episode publish')
     }
 
-    const shouldGenerateVideo = args.video ?? Boolean(process.env.CI)
+    const shouldGenerateVideo = args.video ?? config.isCi
     if (shouldGenerateVideo) {
       const videoChapters = [
         {

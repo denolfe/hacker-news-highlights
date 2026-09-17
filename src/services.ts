@@ -1,12 +1,15 @@
 import type { TtsService } from '@/types.js'
 
-import { getElevenLabsClient, getOpenAI } from '@/clients.js'
+import { loadConfig } from '@/config.js'
 import { log } from '@/utils/log.js'
+import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js'
+import OpenAI from 'openai'
 
 export const getTtsService: () => TtsService = () => {
-  log.info(`Using voice service: ${process.env.VOICE_SERVICE || 'openai'}`)
-  if (process.env.VOICE_SERVICE === 'elevenlabs') {
-    const client = getElevenLabsClient()
+  const config = loadConfig()
+  log.info(`Using voice service: ${config.voiceService}`)
+  if (config.voiceService === 'elevenlabs') {
+    const client = new ElevenLabsClient({ apiKey: config.elevenLabsApiKey })
     return {
       convert: async (text: string) => {
         const audioStream = await client.textToSpeech.convert(
@@ -21,7 +24,7 @@ export const getTtsService: () => TtsService = () => {
       },
     }
   } else {
-    const client = getOpenAI()
+    const client = new OpenAI({ apiKey: config.openaiApiKey })
     return {
       convert: async (text: string) => {
         const mp3 = await client.audio.speech.create({
