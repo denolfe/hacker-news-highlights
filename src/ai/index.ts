@@ -22,7 +22,7 @@ const storySummarizationPrompt = `
 You are an AI language model tasked with generating a recap of a top story from Hacker News (news.ycombinator.com).
 IMPORTANT: Always respond in English, regardless of the input language.
 <instructions>
-  - State the content's title: Clearly announce the title of the content. Keep the original title wording, changing only what the <pronunciation_adjustments> require.
+  - State the content's title: Clearly announce the title of the content. Follow the <pronunciation_adjustments>
   - Summarize the link's content: Provide a concise summary of the content's main points, capturing the essence of the story.
   - Summarize the conversations in the comments: Analyze the comments section to extract key themes, debates, and insights shared by the community.
 </instructions>
@@ -39,14 +39,6 @@ IMPORTANT: Always respond in English, regardless of the input language.
 <pronunciation_adjustments>
   - For any currency amounts, convert them to words and remove the currency symbol. For example, $10.50 should be written as "ten dollars and fifty cents."; $1.4 billion should be written as "one point four billion dollars".
   - For any measurements or distances, convert them to words. For example, 5km should be written as "five kilometers"; 670nm should be written as "six hundred seventy nanometers".
-  - For numbers with a K, M, B, or T suffix, or a rate like T/s, decide if it is part of a name:
-    - Part of a name: it is a model's parameter size, such as "27B" next to a model name. Keep the number and suffix as written. Do not round.
-    - Not part of a name: it counts people, money, tokens, users, or other things. Convert it to words.
-  - Apply this to the title too. Examples:
-    - "Startup Leaks 2.3M User Records" becomes "Startup Leaks two point three million User Records"
-    - "Mistral 24B runs at 40T/s on a laptop" becomes "Mistral 24B runs at forty tokens per second on a laptop"
-    - "Training a 70B model on 15T tokens" becomes "Training a 70B model on fifteen trillion tokens"
-    - "Gemma 9B vs. Phi 14B" stays "Gemma 9B vs. Phi 14B"
   - For any usage of the ~ symbol, convert it to "approximately", "around", or "about" - depending on the context. For example, ~500 should be written as "about five hundred" or "approximately five hundred"; ~200ms should be written as "around two hundred milliseconds" or "approximately two hundred milliseconds".
   - For any version numbers, replace the '.' with the word "point". For example, v2.0 should be written as "version two point oh"; 3.0 should be written as "three point oh"; 3.11 should be written as "three point eleven".
 </pronunciation_adjustments>
@@ -157,7 +149,6 @@ Given 3 stories from today's Hacker News:
 - Remove any extra context that isn't crucial for understanding.
 - For any currency amounts, convert them to words and remove the currency symbol. For example, $10.50 should be written as "ten dollars and fifty cents."; $1.4 billion should be written as "one point four billion dollars".
 - For any measurements or distances, convert them to words. For example, 5km should be written as "five kilometers"; 670nm should be written as "six hundred seventy nanometers".
-- For numbers with a K, M, B, or T suffix, or a rate like T/s, decide if it is part of a name. If it is a model's parameter size (such as "Qwen 27B" or "a 501B model"), keep the number and suffix as written. If it counts people, money, tokens, users, or other things, convert it to words. For example, 8.8M people should be written as "eight point eight million people"; 100T/s should be written as "one hundred tokens per second".
 
 Output in the format: "Today, we dive into [summary 1]... [summary 2]... and [summary 3]."
 
