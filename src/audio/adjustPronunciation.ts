@@ -97,6 +97,9 @@ function applyPronunciationRules(text: string): string {
         return p1 + ' ' + p2
       })
 
+      // Token generation rates (e.g., "100T/s" -> "100 tokens per second")
+      .replace(/(\d)\s?(?:t|tok)\/s\b/gi, '$1 tokens per second')
+
       // Convert version numbers (e.g., "GPT-5.2" -> "GPT-5-point-2", "4.0.0" -> "4-point-0-point-0")
       .replace(/\b[a-z0-9-]+(?:\.\d+)+/gi, match => {
         // Replace all dots with "-point-"

@@ -122,6 +122,16 @@ describe('adjustPronunciation', () => {
   })
 
   test.each([
+    ['at 100T/s.', 'at 100 tokens per second.'],
+    ['at 100 T/s', 'at 100 tokens per second'],
+    ['at 40t/s', 'at 40 tokens per second'],
+    ['at 55 tok/s', 'at 55 tokens per second'],
+    ['at 1.5T/s', 'at 1-point-5 tokens per second'],
+  ])('expands token rates: %s', (input, expected) => {
+    expect(adjustPronunciation(input)).toBe(expected)
+  })
+
+  test.each([
     ['<break time="0.5s" />', '<break time="0.5s" />'],
     ['<break time="1.5s" />', '<break time="1.5s" />'],
   ])('preserves SSML break tags verbatim: %s', (input, expected) => {
