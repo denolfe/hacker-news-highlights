@@ -23,6 +23,7 @@
     "clean:stories": "rm -rf cache/story-*",
     "clean:summaries": "rm -rf cache/summary-* cache/intro-*",
     "clean:video": "rm -rf output/*.mp4",
+    "eval:models": "NODE_OPTIONS=--no-deprecation tsx scripts/model-eval/run.ts",
     "format": "prettier --write .",
     "postinstall": "puppeteer browsers install chrome",
     "lint": "eslint .",

@@ -170,15 +170,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
     }
 
     const { textContent, byline, excerpt, siteName } = await parseSiteContent(storyContent)
-
-    // If siteName or byline is same as title, walk down the chain to find something different
-    // split on ' - ' or ' | ' and take the first part
-    let source = (siteName || byline || undefined)?.split(/\s[-\\|<>]/)[0]
-    const readableUrl = new URL(story.url).hostname.replace('www.', '')
-
-    if (source === story.title) {
-      source = readableUrl
-    }
+    const source = resolveStorySource({ byline, siteName, title: story.title, url: story.url })
 
     logger.info({
       msg: 'Parsed site content',
@@ -186,14 +178,13 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
       byline,
       excerpt,
       siteName,
-      readableUrl,
       source,
     })
 
     output.push({
       content: textContent || excerpt || '',
       url: story.url,
-      source: source || readableUrl,
+      source,
       ...baseStoryOutput,
     })
   }
@@ -236,6 +227,24 @@ export async function fetchStoryDataById(storyId: number): Promise<StoryOutput> 
     url: data.url,
     source: data.author,
   }
+}
+
+/**
+ * Picks the spoken source for a story: site name, then byline, cut at the first ' - ' or ' | '.
+ * Falls back to the readable hostname when that is missing or repeats the title.
+ */
+export function resolveStorySource(params: {
+  byline?: null | string
+  siteName?: null | string
+  title: string
+  url: string
+}): string {
+  const { byline, siteName, title, url } = params
+  const source = (siteName || byline || undefined)?.split(/\s[-\\|<>]/)[0]
+  if (!source || source === title) {
+    return new URL(url).hostname.replace('www.', '')
+  }
+  return source
 }
 
 async function fetchWithTimeoutAndRetry(
