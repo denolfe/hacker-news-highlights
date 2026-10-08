@@ -12,11 +12,15 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import type { StoryOutput } from '../../src/types.js'
-import type { ArtifactStory } from './artifacts.js'
-import type { Generation, GenerationColumn } from './generate.js'
-import type { EvaluatedStory, ReportColumn, SkippedStory } from './report.js'
+import type { ArtifactStory, EpisodeArtifact } from './artifacts.js'
+import type { Generation, GenerationColumn, TokenUsage } from './generate.js'
+import type { EvaluatedEpisode, EvaluatedStory, ReportColumn, SkippedStory } from './report.js'
 
-import { buildStorySummaryPrompt } from '../../src/ai/index.js'
+import {
+  buildEpisodeTitlePrompt,
+  buildIntroPrompt,
+  buildStorySummaryPrompt,
+} from '../../src/ai/index.js'
 import { fetchStoryDataById, resolveStorySource } from '../../src/hn/index.js'
 import { parseSiteContent } from '../../src/hn/parseSiteContent.js'
 import { loadEnvIfExists } from '../../src/utils/env.js'
@@ -121,14 +125,18 @@ async function main() {
     throw new Error('No story has output from every column; see errors above')
   }
 
-  const toReportColumn = (column: GenerationColumn): ReportColumn => {
-    const usage = sumUsage((usedGenerations.get(column.id) ?? []).map(g => g.usage))
-    return { ...column, usage, costUsd: priceUsage({ pricing: column.pricing, usage }) }
-  }
+  const toReportColumn = (column: GenerationColumn): ReportColumn =>
+    withUsage({ column, usages: (usedGenerations.get(column.id) ?? []).map(g => g.usage) })
+  const introTitle = await evaluateIntrosAndTitles({
+    columns: generationColumns,
+    episodes,
+    openai,
+  })
   const report = renderReport({
     baseline: toReportColumn(NANO_COLUMN),
     candidates: LUNA_COLUMNS.map(toReportColumn),
     ci: CI_COLUMN,
+    introTitle,
     skipped,
     stories: evaluated,
     wpm,
@@ -136,6 +144,92 @@ async function main() {
   await fs.writeFile(REPORT_PATH, report)
   logger.info(`Evaluated ${evaluated.length} stories, skipped ${skipped.length}`)
   logger.info(`Report: ${REPORT_PATH}`)
+}
+
+/**
+ * Generates the raw intro sentence and episode title per episode and column from the top 3
+ * stories in show-notes order, matching what production sends before templating.
+ */
+async function evaluateIntrosAndTitles(params: {
+  columns: GenerationColumn[]
+  episodes: EpisodeArtifact[]
+  openai: OpenAIProvider
+}): Promise<{ columns: ReportColumn[]; episodes: EvaluatedEpisode[] }> {
+  const { columns, episodes, openai } = params
+  const usages = new Map<string, TokenUsage[]>(columns.map(column => [column.id, []]))
+  const evaluated: EvaluatedEpisode[] = []
+
+  for (const episode of episodes) {
+    const topStories = episode.stories.slice(0, 3)
+    const introInputs = await Promise.all(
+      topStories.map(async story => {
+        const rebuilt = await rebuildStoryCached(story)
+        // Production falls back to title only when content is missing; the prompt handles it
+        return { title: story.title, content: 'input' in rebuilt ? rebuilt.input.content : '' }
+      }),
+    )
+    const cacheSuffix = topStories.map(story => story.storyId).join('-')
+    const intros: Record<string, string> = {}
+    const titles: Record<string, string> = {}
+    if (episode.ciIntro) {
+      intros[CI_COLUMN.id] = episode.ciIntro
+    } else {
+      logger.warning(`No CI intro in artifact ${episode.artifactId}`)
+    }
+    if (episode.ciTitle) {
+      titles[CI_COLUMN.id] = episode.ciTitle
+    } else {
+      logger.warning(`No CI title in artifact ${episode.artifactId}`)
+    }
+
+    const kinds = [
+      {
+        kind: 'intro',
+        prompt: buildIntroPrompt(introInputs),
+        texts: intros,
+        normalize: (text: string) => text.trim(),
+      },
+      {
+        kind: 'title',
+        prompt: buildEpisodeTitlePrompt(topStories),
+        texts: titles,
+        // Production strips the trailing period before adding the date prefix
+        normalize: (text: string) => text.trim().replace(/\.$/, ''),
+      },
+    ]
+    const tasks = columns.flatMap(column =>
+      kinds.map(({ kind, normalize, prompt, texts }) => async () => {
+        try {
+          const generation = await generateCached({
+            cacheKey: `${kind}-${cacheSuffix}`,
+            column,
+            openai,
+            prompt,
+          })
+          texts[column.id] = normalize(generation.text)
+          usages.get(column.id)?.push(generation.usage)
+        } catch (error) {
+          logger.error(`${column.label} ${kind} failed for artifact ${episode.artifactId}:`, error)
+        }
+      }),
+    )
+    await runWithConcurrency({ limit: GENERATION_CONCURRENCY, tasks })
+    evaluated.push({ date: episode.date, intros, titles })
+  }
+
+  return {
+    columns: [
+      CI_COLUMN,
+      ...columns.map(column => withUsage({ column, usages: usages.get(column.id) ?? [] })),
+    ],
+    episodes: evaluated,
+  }
+}
+
+function withUsage(params: { column: GenerationColumn; usages: TokenUsage[] }): ReportColumn {
+  const { column, usages } = params
+  const usage = sumUsage(usages)
+  return { ...column, usage, costUsd: priceUsage({ pricing: column.pricing, usage }) }
 }
 
 /** Caches the rebuilt input so every column and every rerun sees the same comments. */

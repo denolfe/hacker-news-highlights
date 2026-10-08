@@ -3,6 +3,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { promisify } from 'node:util'
 
+import { EPISODE_TITLE_SEPARATOR } from '../../src/utils/episodeDate.js'
 import { childLogger } from '../../src/utils/log.js'
 import { readOptionalFile } from './cache.js'
 
@@ -27,6 +28,10 @@ export type EpisodeArtifact = {
   artifactId: number
   /** Artifact creation date, YYYY-MM-DD */
   date: string
+  /** Published intro LLM sentence, template stripped */
+  ciIntro?: string
+  /** Published episode title LLM text, date prefix stripped */
+  ciTitle?: string
   /** Stories in show-notes order */
   stories: ArtifactStory[]
 }
@@ -37,9 +42,13 @@ const EXTRACTED_FILES = [
   'cache/chapters.txt',
   'cache/summary-*',
   'cache/story-*',
+  'cache/intro-*',
+  'cache/title-*',
 ]
 /** unzip exit code when a pattern matches nothing (e.g. an episode without cached HTML) */
 const UNZIP_NO_MATCH = 11
+const CI_INTRO_FILE = /^intro-[0-9a-f]+$/
+const CI_TITLE_FILE = /^title-[0-9a-f]+$/
 
 /** Downloads the newest unexpired CI artifacts (skipping ones already on disk) and loads their episodes. */
 export async function downloadNewestArtifacts(params: {
@@ -63,7 +72,15 @@ export async function downloadNewestArtifacts(params: {
     const date = artifact.created_at.slice(0, 10)
     const dir = path.resolve(destDir, `${date}-${artifact.id}`)
     await ensureArtifactExtracted({ artifactId: artifact.id, dir })
-    episodes.push({ artifactId: artifact.id, date, stories: await loadArtifactStories(dir) })
+    const intro = await readSingleCacheFile({ dir, pattern: CI_INTRO_FILE })
+    const title = await readSingleCacheFile({ dir, pattern: CI_TITLE_FILE })
+    episodes.push({
+      artifactId: artifact.id,
+      date,
+      ciIntro: intro === undefined ? undefined : extractIntroSentence(intro),
+      ciTitle: title === undefined ? undefined : stripTitleDatePrefix(title),
+      stories: await loadArtifactStories(dir),
+    })
   }
   return episodes
 }
@@ -102,11 +119,34 @@ export function parseChapterDurations(metadata: string): ChapterDuration[] {
     })
 }
 
+/** Strips the production intro template (welcome line, break tag, "Let's ..." line), leaving the LLM sentence. */
+export function extractIntroSentence(intro: string): string {
+  return intro
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line && !INTRO_TEMPLATE_LINE.test(line))
+    .join(' ')
+}
+
+/** Drops the `M.D.YY` date key production prepends to the LLM episode title. */
+export function stripTitleDatePrefix(title: string): string {
+  const separatorIndex = title.indexOf(EPISODE_TITLE_SEPARATOR)
+  if (separatorIndex === -1) {
+    return title.trim()
+  }
+  return title.slice(separatorIndex + EPISODE_TITLE_SEPARATOR.length).trim()
+}
+
+const INTRO_TEMPLATE_LINE = /^(?:Welcome to the |<break |Let's )/
 const HN_ITEM_LINK = /news\.ycombinator\.com\/item\?id=(\d+)/
+/** Records which patterns a dir was extracted with, so adding a pattern re-extracts old dirs */
+const EXTRACTION_MARKER = 'extracted.json'
 
 async function ensureArtifactExtracted(params: { artifactId: number; dir: string }): Promise<void> {
   const { artifactId, dir } = params
-  if ((await readOptionalFile(path.resolve(dir, 'output/show-notes.txt'))) !== undefined) {
+  const markerPath = path.resolve(dir, EXTRACTION_MARKER)
+  const expectedMarker = JSON.stringify(EXTRACTED_FILES)
+  if ((await readOptionalFile(markerPath)) === expectedMarker) {
     logger.info(`[CACHE] Using cached: artifact ${artifactId}`)
     return
   }
@@ -128,6 +168,21 @@ async function ensureArtifactExtracted(params: { artifactId: number; dir: string
     }
   }
   await fs.rm(zipPath)
+  await fs.writeFile(markerPath, expectedMarker)
+}
+
+/** Reads the single cache file whose name matches; undefined when absent or ambiguous. */
+async function readSingleCacheFile(params: {
+  dir: string
+  pattern: RegExp
+}): Promise<string | undefined> {
+  const { dir, pattern } = params
+  const cacheDir = path.resolve(dir, 'cache')
+  const matches = (await fs.readdir(cacheDir)).filter(name => pattern.test(name))
+  if (matches.length !== 1 || !matches[0]) {
+    return undefined
+  }
+  return await fs.readFile(path.resolve(cacheDir, matches[0]), 'utf-8')
 }
 
 async function loadArtifactStories(dir: string): Promise<ArtifactStory[]> {

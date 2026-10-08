@@ -89,6 +89,47 @@ export function checkSummaryFormat(summary: string): FormatFailure[] {
   return failures
 }
 
+export type IntroFormatFailure =
+  | 'intro-missing-opener'
+  | 'intro-no-period'
+  | 'intro-segment-count'
+  | 'intro-segment-too-long'
+
+/** Checks the intro prompt's rules: "Today, we dive into a... b... and c." with each summary under 10 words. */
+export function checkIntroFormat(intro: string): IntroFormatFailure[] {
+  const trimmed = intro.trim()
+  const hasOpener = trimmed.startsWith(INTRO_OPENER)
+  const body = hasOpener ? trimmed.slice(INTRO_OPENER.length) : trimmed
+  const segments = body.split('...').map(segment => segment.trim().replace(/^and\s+/, ''))
+  const failures: IntroFormatFailure[] = []
+
+  if (!hasOpener) {
+    failures.push('intro-missing-opener')
+  }
+  if (segments.length !== 3) {
+    failures.push('intro-segment-count')
+  }
+  if (segments.some(segment => countWords(segment) >= MAX_INTRO_SEGMENT_WORDS)) {
+    failures.push('intro-segment-too-long')
+  }
+  if (!trimmed.endsWith('.')) {
+    failures.push('intro-no-period')
+  }
+  return failures
+}
+
+const INTRO_OPENER = 'Today, we dive into'
+const MAX_INTRO_SEGMENT_WORDS = 10
+
+export type TitleFormatFailure = 'title-extra-punctuation'
+
+/** Checks the title prompt's rule: commas only, no dashes, colons, quotes, parentheses, etc. */
+export function checkTitleFormat(title: string): TitleFormatFailure[] {
+  return TITLE_BANNED_PUNCTUATION.test(title) ? ['title-extra-punctuation'] : []
+}
+
+const TITLE_BANNED_PUNCTUATION = /[—–:;!?"“”()[\]]|\s-\s/
+
 export type MarkdownKind = 'asterisk' | 'backtick' | 'heading' | 'link' | 'list' | 'underscore'
 
 /** Any asterisk, underscore, or backtick counts because the prompt bans those characters outright. */

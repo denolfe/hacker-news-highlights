@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  checkIntroFormat,
   checkSummaryFormat,
+  checkTitleFormat,
   countBannedWords,
   countSentencesPerParagraph,
   countWords,
@@ -189,5 +191,38 @@ describe('estimateAudioSeconds', () => {
   it('converts word count to seconds at the given rate', () => {
     // 300 words at 150 wpm -> 2 minutes
     expect(estimateAudioSeconds(words(300), 150)).toBe(120)
+  })
+})
+
+describe('checkIntroFormat', () => {
+  it('passes the "Today, we dive into a... b... and c." shape with short segments', () => {
+    expect(
+      checkIntroFormat(
+        'Today, we dive into Mistral Large 4 pushing open AI... releasing EmbeddingGemma 2... and sharing math progress.',
+      ),
+    ).toEqual([])
+  })
+
+  it('flags a missing opener, wrong segment count, long segment, and missing period', () => {
+    expect(
+      checkIntroFormat('We look at one two three four five six seven eight nine ten... and eleven'),
+    ).toEqual([
+      'intro-missing-opener',
+      'intro-segment-count',
+      'intro-segment-too-long',
+      'intro-no-period',
+    ])
+  })
+})
+
+describe('checkTitleFormat', () => {
+  it('passes a single comma-separated sentence, allowing hyphens, apostrophes, and version dots', () => {
+    expect(checkTitleFormat("Mistral Large 4.1, open-weight AI, GitHub's takedowns")).toEqual([])
+  })
+
+  it('flags punctuation the title prompt bans', () => {
+    expect(checkTitleFormat('Mistral Large 4: open AI — "fast" (beta)')).toEqual([
+      'title-extra-punctuation',
+    ])
   })
 })

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { parseChapterDurations, parseShowNotes } from './artifacts.js'
+import {
+  extractIntroSentence,
+  parseChapterDurations,
+  parseShowNotes,
+  stripTitleDatePrefix,
+} from './artifacts.js'
 
 describe('parseShowNotes', () => {
   it('returns stories in show-notes order, with or without an article link', () => {
@@ -56,5 +61,30 @@ title=a=b; c
       { title: 'Mistral Large 4', durationSeconds: 81.11 },
       { title: 'a=b; c', durationSeconds: 83.122 },
     ])
+  })
+})
+
+describe('extractIntroSentence', () => {
+  it('returns only the LLM sentence, without the welcome line, break tag, or imperative line', () => {
+    const intro = `
+Welcome to the Hacker News Highlights, where we explore the top 10 posts on Hacker News every day.
+
+Today, we dive into Mistral Large 4 pushing open-weight AI performance... releasing EmbeddingGemma 2... and sharing progress in mathematics.
+
+<break time="0.5s" />
+
+Let's get into it.
+`
+    expect(extractIntroSentence(intro)).toBe(
+      'Today, we dive into Mistral Large 4 pushing open-weight AI performance... releasing EmbeddingGemma 2... and sharing progress in mathematics.',
+    )
+  })
+})
+
+describe('stripTitleDatePrefix', () => {
+  it('drops the date key and separator, keeping later separators in the LLM text', () => {
+    expect(stripTitleDatePrefix('10.7.26 | Mistral Large 4, AI | math, EmbeddingGemma 2')).toBe(
+      'Mistral Large 4, AI | math, EmbeddingGemma 2',
+    )
   })
 })

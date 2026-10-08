@@ -1,7 +1,9 @@
 import type { TokenUsage } from './generate.js'
 
 import {
+  checkIntroFormat,
   checkSummaryFormat,
+  checkTitleFormat,
   countBannedWords,
   countSentencesPerParagraph,
   countWords,
@@ -29,6 +31,15 @@ export type EvaluatedStory = {
   texts: Record<string, string>
 }
 
+export type EvaluatedEpisode = {
+  /** Episode date, YYYY-MM-DD */
+  date: string
+  /** Intro LLM sentence keyed by column id; absent when that column has no output */
+  intros: Record<string, string>
+  /** Episode title LLM text keyed by column id; absent when that column has no output */
+  titles: Record<string, string>
+}
+
 export type SkippedStory = {
   date: string
   storyId: number
@@ -50,12 +61,14 @@ export function renderReport(params: {
   baseline: ReportColumn
   candidates: ReportColumn[]
   ci: ReportColumn
+  /** Intro and title outputs; columns carry intro and title token usage, CI first */
+  introTitle: { columns: ReportColumn[]; episodes: EvaluatedEpisode[] }
   skipped: SkippedStory[]
   stories: EvaluatedStory[]
   /** Words per minute derived from CI summaries and real chapter durations */
   wpm: number
 }): string {
-  const { baseline, candidates, ci, skipped, stories, wpm } = params
+  const { baseline, candidates, ci, introTitle, skipped, stories, wpm } = params
   const columns = [ci, baseline, ...candidates]
   const aggregates = new Map(
     columns.map(column => [column.id, aggregateColumn({ columnId: column.id, stories, wpm })]),
@@ -89,8 +102,20 @@ export function renderReport(params: {
       renderFrequencyDiff({ baseline, candidate, stories }),
       '',
     ]),
+    '## Intro and title aggregate',
+    '',
+    `${introTitle.episodes.length} episodes. Compared text is the raw LLM output: no intro template or title date prefix.`,
+    '',
+    renderIntroTitleAggregateTable(introTitle),
+    '',
     renderSkipped(skipped),
     '',
+    '## Intros and titles',
+    '',
+    ...introTitle.episodes.flatMap(episode => [
+      renderEpisodeIntroTitle({ columns: introTitle.columns, episode }),
+      '',
+    ]),
     '## Stories',
     '',
     ...stories.flatMap(story => [renderStory({ columns: sideBySide, story, wpm }), '']),
@@ -318,6 +343,79 @@ function renderStory(params: {
       ],
       rows: metricRows,
     }),
+  ].join('\n')
+}
+
+function renderIntroTitleAggregateTable(params: {
+  columns: ReportColumn[]
+  episodes: EvaluatedEpisode[]
+}): string {
+  const { columns, episodes } = params
+  const rows = columns.map(column => {
+    const intros = episodes.flatMap(episode => episode.intros[column.id] ?? [])
+    const titles = episodes.flatMap(episode => episode.titles[column.id] ?? [])
+    const { usage } = column
+    return [
+      column.label,
+      String(median(intros.map(countWords))),
+      String(sum(intros.map(text => checkIntroFormat(text).length))),
+      String(median(titles.map(countWords))),
+      String(sum(titles.map(text => checkTitleFormat(text).length))),
+      String([...intros, ...titles].filter(text => detectMarkdown(text).length > 0).length),
+      String(episodes.length - Math.min(intros.length, titles.length)),
+      usage ? `${usage.inputTokens} (${usage.cachedInputTokens})` : 'n/a',
+      usage ? String(usage.outputTokens) : 'n/a',
+      usage ? String(usage.reasoningTokens) : 'n/a',
+      column.costUsd === undefined ? 'n/a' : `$${column.costUsd.toFixed(4)}`,
+    ]
+  })
+  return renderTable({
+    header: [
+      'Column',
+      'Median intro words',
+      'Intro format failures',
+      'Median title words',
+      'Title format failures',
+      'Markdown leaks',
+      'Missing',
+      'Input tok (cached)',
+      'Output tok',
+      'Reasoning tok',
+      'Cost',
+    ],
+    rows,
+  })
+}
+
+function renderEpisodeIntroTitle(params: {
+  columns: ReportColumn[]
+  episode: EvaluatedEpisode
+}): string {
+  const { columns, episode } = params
+  const rows = (
+    texts: Record<string, string>,
+    checkFormat: (text: string) => string[],
+  ): string[][] =>
+    columns.map(column => {
+      const text = texts[column.id]
+      if (text === undefined) {
+        return [column.label, '(missing)', '', '', '']
+      }
+      return [
+        column.label,
+        text.trim().replace(/\n/g, ' '),
+        String(countWords(text)),
+        checkFormat(text).join(', ') || 'none',
+        detectMarkdown(text).join(', ') || 'none',
+      ]
+    })
+  const header = (kind: string) => ['Column', kind, 'Words', 'Format', 'Markdown']
+  return [
+    `### ${episode.date}`,
+    '',
+    renderTable({ header: header('Intro'), rows: rows(episode.intros, checkIntroFormat) }),
+    '',
+    renderTable({ header: header('Title'), rows: rows(episode.titles, checkTitleFormat) }),
   ].join('\n')
 }
 
