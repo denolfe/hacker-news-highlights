@@ -21,6 +21,8 @@ export type ReportColumn = {
 }
 
 export type EvaluatedStory = {
+  /** Identifies the episode; one day can have more than one artifact */
+  artifactId: number
   /** Episode date, YYYY-MM-DD */
   date: string
   /** 1-based position in the episode */
@@ -63,12 +65,14 @@ export function renderReport(params: {
   ci: ReportColumn
   /** Intro and title outputs; columns carry intro and title token usage, CI first */
   introTitle: { columns: ReportColumn[]; episodes: EvaluatedEpisode[] }
+  /** True when no CI story had a usable duration, so `wpm` is a default rather than derived */
+  isDefaultWpm: boolean
   skipped: SkippedStory[]
   stories: EvaluatedStory[]
   /** Words per minute derived from CI summaries and real chapter durations */
   wpm: number
 }): string {
-  const { baseline, candidates, ci, introTitle, skipped, stories, wpm } = params
+  const { baseline, candidates, ci, introTitle, isDefaultWpm, skipped, stories, wpm } = params
   const columns = [ci, baseline, ...candidates]
   const aggregates = new Map(
     columns.map(column => [column.id, aggregateColumn({ columnId: column.id, stories, wpm })]),
@@ -81,12 +85,15 @@ export function renderReport(params: {
   })
   const winnerColumn = getOrThrow(new Map(candidates.map(c => [c.id, c])), winner.columnId)
   const sideBySide = [ci, baseline, winnerColumn]
-  const episodeCount = new Set(stories.map(story => story.date)).size
+  const episodeCount = new Set(stories.map(story => story.artifactId)).size
+  const wpmSource = isDefaultWpm
+    ? 'a default rate: no CI summary had a matched chapter duration'
+    : 'derived from CI summaries against real chapter durations'
 
   return [
     '# Summary Model Eval',
     '',
-    `${stories.length} stories across ${episodeCount} episodes. Baseline: ${baseline.label}. Audio estimates use ${wpm.toFixed(1)} WPM, derived from CI summaries against real chapter durations.`,
+    `${stories.length} stories across ${episodeCount} episodes. Baseline: ${baseline.label}. Audio estimates use ${wpm.toFixed(1)} WPM, ${wpmSource}.`,
     '',
     '## Aggregate',
     '',
@@ -159,10 +166,10 @@ function aggregateColumn(params: {
 }): ColumnAggregate {
   const { columnId, stories, wpm } = params
   const texts = stories.map(story => story.texts[columnId] ?? '')
-  const secondsByEpisode = new Map<string, number>()
+  const secondsByEpisode = new Map<number, number>()
   for (const story of stories) {
     const seconds = estimateAudioSeconds(story.texts[columnId] ?? '', wpm)
-    secondsByEpisode.set(story.date, (secondsByEpisode.get(story.date) ?? 0) + seconds)
+    secondsByEpisode.set(story.artifactId, (secondsByEpisode.get(story.artifactId) ?? 0) + seconds)
   }
   return {
     columnId,
@@ -362,7 +369,12 @@ function renderIntroTitleAggregateTable(params: {
       String(median(titles.map(countWords))),
       String(sum(titles.map(text => checkTitleFormat(text).length))),
       String([...intros, ...titles].filter(text => detectMarkdown(text).length > 0).length),
-      String(episodes.length - Math.min(intros.length, titles.length)),
+      String(
+        episodes.filter(
+          episode =>
+            episode.intros[column.id] === undefined || episode.titles[column.id] === undefined,
+        ).length,
+      ),
       usage ? `${usage.inputTokens} (${usage.cachedInputTokens})` : 'n/a',
       usage ? String(usage.outputTokens) : 'n/a',
       usage ? String(usage.reasoningTokens) : 'n/a',

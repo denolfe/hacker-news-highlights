@@ -37,8 +37,15 @@ export type EpisodeArtifact = {
 }
 
 const ARTIFACT_NAME = 'output-and-cache'
+/**
+ * Successful scheduled runs on main: the only runs that publish an episode. The workflow uploads
+ * artifacts even on failed, manual, and branch runs. 100 runs covers the 7-day artifact retention.
+ */
+const PUBLISHED_RUNS_PATH =
+  'repos/{owner}/{repo}/actions/workflows/generate-podcast.yml/runs?event=schedule&branch=main&status=success&per_page=100'
+const SHOW_NOTES_FILE = 'output/show-notes.txt'
 const EXTRACTED_FILES = [
-  'output/show-notes.txt',
+  SHOW_NOTES_FILE,
   'cache/chapters.txt',
   'cache/summary-*',
   'cache/story-*',
@@ -50,22 +57,27 @@ const UNZIP_NO_MATCH = 11
 const CI_INTRO_FILE = /^intro-[0-9a-f]+$/
 const CI_TITLE_FILE = /^title-[0-9a-f]+$/
 
-/** Downloads the newest unexpired CI artifacts (skipping ones already on disk) and loads their episodes. */
+/** Downloads the newest published CI artifacts (skipping ones already on disk) and loads their episodes. */
 export async function downloadNewestArtifacts(params: {
   count: number
   destDir: string
 }): Promise<EpisodeArtifact[]> {
   const { count, destDir } = params
-  const { stdout } = await execFileAsync('gh', [
-    'api',
-    `repos/{owner}/{repo}/actions/artifacts?name=${ARTIFACT_NAME}&per_page=100`,
+  const [artifactsResponse, runsResponse] = await Promise.all([
+    execFileAsync('gh', [
+      'api',
+      `repos/{owner}/{repo}/actions/artifacts?name=${ARTIFACT_NAME}&per_page=100`,
+    ]),
+    // Full run objects are ~10KB each; only ids are needed
+    execFileAsync('gh', ['api', PUBLISHED_RUNS_PATH, '--jq', '[.workflow_runs[].id]']),
   ])
-  const list: { artifacts: Array<{ created_at: string; expired: boolean; id: number }> } =
-    JSON.parse(stdout)
-  const newest = list.artifacts
-    .filter(artifact => !artifact.expired)
-    .sort((a, b) => b.created_at.localeCompare(a.created_at))
-    .slice(0, count)
+  const list: { artifacts: ArtifactListing[] } = JSON.parse(artifactsResponse.stdout)
+  const publishedRunIds: number[] = JSON.parse(runsResponse.stdout)
+  const newest = selectPublishedArtifacts({
+    artifacts: list.artifacts,
+    count,
+    publishedRunIds: new Set(publishedRunIds),
+  })
 
   const episodes: EpisodeArtifact[] = []
   for (const artifact of newest) {
@@ -83,6 +95,26 @@ export async function downloadNewestArtifacts(params: {
     })
   }
   return episodes
+}
+
+export type ArtifactListing = {
+  created_at: string
+  expired: boolean
+  id: number
+  workflow_run: { id: number }
+}
+
+/** Keeps the newest unexpired artifacts whose workflow run published an episode. */
+export function selectPublishedArtifacts<T extends ArtifactListing>(params: {
+  artifacts: T[]
+  count: number
+  publishedRunIds: Set<number>
+}): T[] {
+  const { artifacts, count, publishedRunIds } = params
+  return artifacts
+    .filter(artifact => !artifact.expired && publishedRunIds.has(artifact.workflow_run.id))
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .slice(0, count)
 }
 
 /** Reads story order from show notes: each story block starts with its title and ends with its HN link. */
@@ -168,6 +200,10 @@ async function ensureArtifactExtracted(params: { artifactId: number; dir: string
     }
   }
   await fs.rm(zipPath)
+  // No marker without show notes, so a rerun downloads again instead of trusting a partial dir
+  if ((await readOptionalFile(path.resolve(dir, SHOW_NOTES_FILE))) === undefined) {
+    throw new Error(`Artifact ${artifactId} has no ${SHOW_NOTES_FILE}`)
+  }
   await fs.writeFile(markerPath, expectedMarker)
 }
 
@@ -186,7 +222,7 @@ async function readSingleCacheFile(params: {
 }
 
 async function loadArtifactStories(dir: string): Promise<ArtifactStory[]> {
-  const showNotes = await fs.readFile(path.resolve(dir, 'output/show-notes.txt'), 'utf-8')
+  const showNotes = await fs.readFile(path.resolve(dir, SHOW_NOTES_FILE), 'utf-8')
   const chapters = parseChapterDurations(
     (await readOptionalFile(path.resolve(dir, 'cache/chapters.txt'))) ?? '',
   )

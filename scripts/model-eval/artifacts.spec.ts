@@ -4,6 +4,7 @@ import {
   extractIntroSentence,
   parseChapterDurations,
   parseShowNotes,
+  selectPublishedArtifacts,
   stripTitleDatePrefix,
 } from './artifacts.js'
 
@@ -86,5 +87,29 @@ describe('stripTitleDatePrefix', () => {
     expect(stripTitleDatePrefix('10.7.26 | Mistral Large 4, AI | math, EmbeddingGemma 2')).toBe(
       'Mistral Large 4, AI | math, EmbeddingGemma 2',
     )
+  })
+})
+
+describe('selectPublishedArtifacts', () => {
+  it('keeps the newest unexpired artifacts from published runs only', () => {
+    const artifact = (id: number, createdAt: string, runId: number, isExpired = false) => ({
+      created_at: createdAt,
+      expired: isExpired,
+      id,
+      workflow_run: { id: runId },
+    })
+    const artifacts = [
+      artifact(1, '2026-10-01T12:00:00Z', 101),
+      artifact(2, '2026-10-03T12:00:00Z', 102),
+      artifact(3, '2026-10-04T12:00:00Z', 999), // failed or manual run
+      artifact(4, '2026-10-02T12:00:00Z', 104),
+      artifact(5, '2026-10-05T12:00:00Z', 105, true),
+    ]
+    const selected = selectPublishedArtifacts({
+      artifacts,
+      count: 2,
+      publishedRunIds: new Set([101, 102, 104, 105]),
+    })
+    expect(selected.map(a => a.id)).toEqual([2, 4])
   })
 })

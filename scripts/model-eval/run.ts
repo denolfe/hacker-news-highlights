@@ -36,6 +36,7 @@ type StoryInput = Pick<StoryOutput, 'comments' | 'content' | 'source' | 'title'>
 type RebuiltStory = { input: StoryInput } | { skipReason: string }
 
 type PendingStory = {
+  artifactId: number
   ciSummary: string
   date: string
   input: StoryInput
@@ -46,6 +47,8 @@ type PendingStory = {
 
 const EPISODE_COUNT = 7
 const GENERATION_CONCURRENCY = 6
+/** Typical narration rate, used only when no CI story has both a summary and a chapter duration */
+const DEFAULT_WPM = 150
 const REPORT_PATH = path.resolve(EVAL_DIR, 'report.md')
 const CI_COLUMN: ReportColumn = { id: 'ci', label: 'CI (published)' }
 
@@ -64,19 +67,27 @@ async function main() {
     destDir: path.resolve(EVAL_DIR, 'artifacts'),
   })
   const allStories = episodes.flatMap(episode =>
-    episode.stories.map((story, i) => ({ date: episode.date, rank: i + 1, story })),
+    episode.stories.map((story, i) => ({
+      artifactId: episode.artifactId,
+      date: episode.date,
+      rank: i + 1,
+      story,
+    })),
   )
-  const wpm = deriveWpm(
-    allStories.flatMap(({ story }) =>
-      story.ciSummary && story.durationSeconds
-        ? [{ text: story.ciSummary, durationSeconds: story.durationSeconds }]
-        : [],
-    ),
+  const wpmSamples = allStories.flatMap(({ story }) =>
+    story.ciSummary && story.durationSeconds
+      ? [{ text: story.ciSummary, durationSeconds: story.durationSeconds }]
+      : [],
   )
+  const isDefaultWpm = wpmSamples.length === 0
+  if (isDefaultWpm) {
+    logger.warning(`No CI summary has a matched chapter duration; using ${DEFAULT_WPM} WPM`)
+  }
+  const wpm = isDefaultWpm ? DEFAULT_WPM : deriveWpm(wpmSamples)
 
   const skipped: SkippedStory[] = []
   const pending: PendingStory[] = []
-  for (const { date, rank, story } of allStories) {
+  for (const { artifactId, date, rank, story } of allStories) {
     const skip = (reason: string) =>
       skipped.push({ date, storyId: story.storyId, title: story.title, reason })
     if (!story.ciSummary) {
@@ -88,7 +99,14 @@ async function main() {
       skip(rebuilt.skipReason)
       continue
     }
-    pending.push({ ...story, ciSummary: story.ciSummary, date, rank, input: rebuilt.input })
+    pending.push({
+      ...story,
+      artifactId,
+      ciSummary: story.ciSummary,
+      date,
+      rank,
+      input: rebuilt.input,
+    })
   }
 
   const generationColumns = [NANO_COLUMN, ...LUNA_COLUMNS]
@@ -114,6 +132,7 @@ async function main() {
       }
     }
     evaluated.push({
+      artifactId: story.artifactId,
       date: story.date,
       rank: story.rank,
       storyId: story.storyId,
@@ -137,6 +156,7 @@ async function main() {
     candidates: LUNA_COLUMNS.map(toReportColumn),
     ci: CI_COLUMN,
     introTitle,
+    isDefaultWpm,
     skipped,
     stories: evaluated,
     wpm,
