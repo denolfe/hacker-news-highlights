@@ -46,7 +46,7 @@
     ]
   },
   "dependencies": {
-    "@ai-sdk/openai": "^3.0.29",
+    "@ai-sdk/openai": "^3.0.124",
     "@elevenlabs/elevenlabs-js": "^2.58.0",
     "@mozilla/readability": "^0.6.0",
     "@remotion/bundler": "^4.0.424",
