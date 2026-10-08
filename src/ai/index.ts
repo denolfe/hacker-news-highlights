@@ -94,12 +94,7 @@ export async function summarize(stories: StoryDataAggregate[]): Promise<StoryDat
 export async function summarizeStory(story: StoryDataAggregate): Promise<StoryDataAggregate> {
   const cacheKey = 'summary-' + story.storyId.toString()
   story.summary = await getOrCompute(cacheKey, async () => {
-    const prompt =
-      storySummarizationPrompt +
-      `<title>${story.title}</title>\n` +
-      `<source>${story.source}</source>\n` +
-      `<content>${story.content}\n</content>\n` +
-      `<comments_data>${generateCommentTree(story.comments)}\n</comments_data>`
+    const prompt = buildStorySummaryPrompt(story)
 
     const tokenCount = estimateTokens(prompt)
     logger.info(`Estimated tokens: ${tokenCount}`)
@@ -135,40 +130,15 @@ Let's ${IMPERATIVE_PHRASES[Math.floor(Math.random() * IMPERATIVE_PHRASES.length)
 `
 
   const intro = await getOrCompute(cacheKey, async () => {
+    for (const story of stories.slice(0, 3)) {
+      if (!story.content) {
+        logger.warning(`Story ${story.storyId} has no content - intro will use title only`)
+      }
+    }
+
     const { text } = await generateText({
       model: openai(MODEL),
-      prompt: `
-Given 3 stories from today's Hacker News:
-
-- Summarize these 3 stories into a single sentence.
-- Keep each summary UNDER 10 WORDS. Pick the single most interesting aspect — never combine multiple ideas with "and".
-- When content is empty or missing, derive a summary from the title — never mention that content is missing.
-- The order of the summaries should match the order they were presented.
-- Be sure to change the summaries into the present participle form, using '-ing' verbs to indicate ongoing actions.
-- Focus on the main subject or action of each story.
-- Remove any extra context that isn't crucial for understanding.
-- For any currency amounts, convert them to words and remove the currency symbol. For example, $10.50 should be written as "ten dollars and fifty cents."; $1.4 billion should be written as "one point four billion dollars".
-- For any measurements or distances, convert them to words. For example, 5km should be written as "five kilometers"; 670nm should be written as "six hundred seventy nanometers".
-
-Output in the format: "Today, we dive into [summary 1]... [summary 2]... and [summary 3]."
-
-Here are the top 3 stories from today's Hacker News:
-
-${stories
-  .slice(0, 3)
-  .map(story => {
-    if (!story.content) {
-      logger.warning(`Story ${story.storyId} has no content - intro will use title only`)
-    }
-    const storyTitleAndContent = `Title: ${story.title}\nContent: ${story.content}\n\n`
-    const tokenCount = estimateTokens(storyTitleAndContent)
-    // gpt-4.1-nano max is 1M tokens. prompt tokens 237
-    // Remaining tokens of ~999,763, divided by 3 stories = ~333,000 tokens per story
-    // Only use the title if the content is too long
-    return tokenCount > 333_000 ? `Title: ${story.title}\n\n` : storyTitleAndContent
-  })
-  .join('\n')}
-`,
+      prompt: buildIntroPrompt(stories),
     })
 
     const intro = introTemplate(text)
@@ -197,7 +167,64 @@ export async function generateEpisodeTitle(stories: StoryOutput[]): Promise<stri
   return await getOrCompute(cacheKey, async () => {
     const { text } = await generateText({
       model: openai(MODEL),
-      prompt: `
+      prompt: buildEpisodeTitlePrompt(top3Stories),
+    })
+
+    const title = `${getEpisodeDatePrefix()}${EPISODE_TITLE_SEPARATOR}${text.replace(/\.$/, '')}`
+    logger.info(`Title: ${title}`)
+    return title
+  })
+}
+
+/** Builds the LLM prompt for one story summary: title, source, content, and comment tree. */
+export function buildStorySummaryPrompt(
+  story: Pick<StoryOutput, 'comments' | 'content' | 'source' | 'title'>,
+): string {
+  return (
+    storySummarizationPrompt +
+    `<title>${story.title}</title>\n` +
+    `<source>${story.source}</source>\n` +
+    `<content>${story.content}\n</content>\n` +
+    `<comments_data>${generateCommentTree(story.comments)}\n</comments_data>`
+  )
+}
+
+/** Builds the LLM prompt for the intro sentence from the top 3 stories. Excludes the intro template. */
+export function buildIntroPrompt(stories: Pick<StoryOutput, 'content' | 'title'>[]): string {
+  return `
+Given 3 stories from today's Hacker News:
+
+- Summarize these 3 stories into a single sentence.
+- Keep each summary UNDER 10 WORDS. Pick the single most interesting aspect — never combine multiple ideas with "and".
+- When content is empty or missing, derive a summary from the title — never mention that content is missing.
+- The order of the summaries should match the order they were presented.
+- Be sure to change the summaries into the present participle form, using '-ing' verbs to indicate ongoing actions.
+- Focus on the main subject or action of each story.
+- Remove any extra context that isn't crucial for understanding.
+- For any currency amounts, convert them to words and remove the currency symbol. For example, $10.50 should be written as "ten dollars and fifty cents."; $1.4 billion should be written as "one point four billion dollars".
+- For any measurements or distances, convert them to words. For example, 5km should be written as "five kilometers"; 670nm should be written as "six hundred seventy nanometers".
+
+Output in the format: "Today, we dive into [summary 1]... [summary 2]... and [summary 3]."
+
+Here are the top 3 stories from today's Hacker News:
+
+${stories
+  .slice(0, 3)
+  .map(story => {
+    const storyTitleAndContent = `Title: ${story.title}\nContent: ${story.content}\n\n`
+    const tokenCount = estimateTokens(storyTitleAndContent)
+    // gpt-4.1-nano max is 1M tokens. prompt tokens 237
+    // Remaining tokens of ~999,763, divided by 3 stories = ~333,000 tokens per story
+    // Only use the title if the content is too long
+    return tokenCount > 333_000 ? `Title: ${story.title}\n\n` : storyTitleAndContent
+  })
+  .join('\n')}
+`
+}
+
+/** Builds the LLM prompt for the episode title from the top 3 story titles. Excludes the date prefix. */
+export function buildEpisodeTitlePrompt(stories: Pick<StoryOutput, 'title'>[]): string {
+  return `
 Given 3 story titles from today's Hacker News:
 
 - Summarize each summary into only a few words
@@ -208,14 +235,11 @@ Given 3 story titles from today's Hacker News:
 
 Here are the titles:
 
-${top3Stories.map(story => `- ${story.title}\n`).join('')}
-`,
-    })
-
-    const title = `${getEpisodeDatePrefix()}${EPISODE_TITLE_SEPARATOR}${text.replace(/\.$/, '')}`
-    logger.info(`Title: ${title}`)
-    return title
-  })
+${stories
+  .slice(0, 3)
+  .map(story => `- ${story.title}\n`)
+  .join('')}
+`
 }
 
 /**
