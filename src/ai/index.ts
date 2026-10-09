@@ -1,3 +1,5 @@
+import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai'
+
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 import { createHash } from 'crypto'
@@ -16,7 +18,15 @@ const openai = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-const MODEL = 'gpt-4.1-nano'
+const MODEL = 'gpt-5.6-luna'
+
+/** Low effort keeps the format rules reliable at low cost; medium verbosity keeps segment length near the previous model */
+const MODEL_OPTIONS = {
+  openai: {
+    reasoningEffort: 'low',
+    textVerbosity: 'medium',
+  } satisfies OpenAILanguageModelResponsesOptions,
+}
 
 const storySummarizationPrompt = `
 You are an AI language model tasked with generating a recap of a top story from Hacker News (news.ycombinator.com) for a daily podcast. The recap is read aloud, so write for listeners.
@@ -101,6 +111,7 @@ export async function summarizeStory(story: StoryDataAggregate): Promise<StoryDa
     const { text } = await generateText({
       model: openai(MODEL),
       prompt,
+      providerOptions: MODEL_OPTIONS,
     })
     return text
   })
@@ -138,6 +149,7 @@ Let's ${IMPERATIVE_PHRASES[Math.floor(Math.random() * IMPERATIVE_PHRASES.length)
     const { text } = await generateText({
       model: openai(MODEL),
       prompt: buildIntroPrompt(stories),
+      providerOptions: MODEL_OPTIONS,
     })
 
     const intro = introTemplate(text)
@@ -167,6 +179,7 @@ export async function generateEpisodeTitle(stories: StoryOutput[]): Promise<stri
     const { text } = await generateText({
       model: openai(MODEL),
       prompt: buildEpisodeTitlePrompt(top3Stories),
+      providerOptions: MODEL_OPTIONS,
     })
 
     const title = `${getEpisodeDatePrefix()}${EPISODE_TITLE_SEPARATOR}${text.replace(/\.$/, '')}`
@@ -212,8 +225,8 @@ ${stories
   .map(story => {
     const storyTitleAndContent = `Title: ${story.title}\nContent: ${story.content}\n\n`
     const tokenCount = estimateTokens(storyTitleAndContent)
-    // gpt-4.1-nano max is 1M tokens. prompt tokens 237
-    // Remaining tokens of ~999,763, divided by 3 stories = ~333,000 tokens per story
+    // gpt-5.6-luna max is ~1.05M tokens. prompt tokens 237
+    // Budget ~1M tokens, divided by 3 stories = ~333,000 tokens per story
     // Only use the title if the content is too long
     return tokenCount > 333_000 ? `Title: ${story.title}\n\n` : storyTitleAndContent
   })
