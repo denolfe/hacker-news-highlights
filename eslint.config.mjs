@@ -17,6 +17,7 @@ export const defaultESLintIgnores = [
   '**/build/',
   '**/node_modules/',
   '**/temp/',
+  'output/',
   '**/*.spec.ts',
   '**/eslint.config.mjs',
 ]
