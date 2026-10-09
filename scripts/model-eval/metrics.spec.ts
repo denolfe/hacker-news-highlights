@@ -144,6 +144,12 @@ describe('detectMarkdown', () => {
     expect(detectMarkdown(wellFormedSummary)).toEqual([])
   })
 
+  it('ignores literal asterisks and underscores inside names', () => {
+    const text =
+      'Stars orbit Sagittarius A*, near Earth. The app targets x86_64 Linux and reads foo_bar.'
+    expect(detectMarkdown(text)).toEqual([])
+  })
+
   it('reports each kind of markdown found', () => {
     const text = [
       '## Heading',

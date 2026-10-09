@@ -132,10 +132,13 @@ const TITLE_BANNED_PUNCTUATION = /[—–:;!?"“”()[\]]|\s-\s/
 
 export type MarkdownKind = 'asterisk' | 'backtick' | 'heading' | 'link' | 'list' | 'underscore'
 
-/** Any asterisk, underscore, or backtick counts because the prompt bans those characters outright. */
+/**
+ * Asterisks and underscores count only as paired emphasis markers outside a word, so literal
+ * names such as "Sagittarius A*" or "x86_64" do not count. Any backtick counts.
+ */
 const MARKDOWN_PATTERNS: Array<{ kind: MarkdownKind; pattern: RegExp }> = [
-  { kind: 'asterisk', pattern: /\*/ },
-  { kind: 'underscore', pattern: /_/ },
+  { kind: 'asterisk', pattern: /(?<![\w*])(\*{1,2})(?=\S)[^\n]*?(?<=\S)\1(?![\w*])/ },
+  { kind: 'underscore', pattern: /\b(_{1,2})(?=\S)[^\n]*?(?<=\S)\1\b/ },
   { kind: 'backtick', pattern: /`/ },
   { kind: 'heading', pattern: /^\s*#{1,6}\s/m },
   { kind: 'list', pattern: /^\s*(?:[-+•]|\d+[.)])\s/m },
