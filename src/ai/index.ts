@@ -19,7 +19,7 @@ const openai = createOpenAI({
 const MODEL = 'gpt-4.1-nano'
 
 const storySummarizationPrompt = `
-You are an AI language model tasked with generating a recap of a top story from Hacker News (news.ycombinator.com).
+You are an AI language model tasked with generating a recap of a top story from Hacker News (news.ycombinator.com) for a daily podcast. The recap is read aloud, so write for listeners.
 IMPORTANT: Always respond in English, regardless of the input language.
 <instructions>
   - State the content's title: Clearly announce the title of the content. Follow the <pronunciation_adjustments>
@@ -29,6 +29,7 @@ IMPORTANT: Always respond in English, regardless of the input language.
 <writing_style>
   These rules apply to the ENTIRE output (content summary and comments summary):
   - Use plain words. Avoid "highlight", "highlights", "highlighting", "implications", "notable", "significant", "broader".
+  - One idea per sentence. Do not use semicolons. Use at most one list per paragraph.
   - Commit to a dominant sentiment. Avoid hedging with "mixed".
   - State the dominant view, then note dissent briefly. Avoid "some X, while others Y" parallelisms.
   - Use direct verbs. Avoid -ing filler like "with many expressing", "reflecting a mix of".
@@ -43,7 +44,7 @@ IMPORTANT: Always respond in English, regardless of the input language.
   - For any version numbers, replace the '.' with the word "point". For example, v2.0 should be written as "version two point oh"; 3.0 should be written as "three point oh"; 3.11 should be written as "three point eleven".
 </pronunciation_adjustments>
 <content_summary>
-  - Limit sentence count to 3-5 sentences for the summary
+  - Limit sentence count to 3-4 sentences for the summary
   - When referring to the content, use the terms "article", "news story", "post", "project", "tweet", or "video" depending on what the content is and where from.
   - Use concise language
   - Do NOT use any markdown formatting anywhere in the output. No bold, no italics, no asterisks (*), no underscores (_), no backticks. Write the literal labels "Title:" and "Source:" — never "**Title:**" or "**Source:**".
@@ -51,9 +52,7 @@ IMPORTANT: Always respond in English, regardless of the input language.
 </content_summary>
 <comments_summary>
   - Use past tense throughout. Do NOT use present tense (e.g., "users agreed" not "users agree", "there was debate" not "there is debate").
-  - Identify the main topics of discussion in the comments.
-  - Note any significant debates or differing opinions among users.
-  - Note any recurring themes or insights that provide additional context or perspectives on the content.
+  - Use 4-6 sentences in this order: the dominant sentiment, the main debate, one or two supporting points, then a closing sentence that starts with "Overall," and adds no new topic.
   - Capture the general sentiment of the community. Commit to a dominant sentiment (e.g., "mostly skeptical", "largely positive") rather than defaulting to "mixed". If genuinely divided, name the specific poles (e.g., "divided between excitement about X and concern about Y").
   - Avoid including specific usernames or quoting comments verbatim; instead, focus on summarizing the overall discourse.
 </comments_summary>
@@ -71,7 +70,7 @@ IMPORTANT: Always respond in English, regardless of the input language.
 
     The [article, news story, post, project, tweet, video] [brief description of content's focus]. [Summary of main points and key arguments].
 
-    In the comments, the sentiment was [dominant sentiment, e.g., "mostly skeptical", "largely supportive"], with users [dominant reaction or viewpoint, past tense]. [Key debate or tension, stated directly, past tense].
+    In the comments, the sentiment was [dominant sentiment, e.g., "mostly skeptical", "largely supportive"], with users [dominant reaction or viewpoint, past tense]. [Key debate or tension, stated directly, past tense]. [One supporting point or concern, past tense]. [Overall, where users came down on the story, no new topic].
   </expected_output>
 </example>
 `
