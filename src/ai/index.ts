@@ -62,7 +62,7 @@ IMPORTANT: Always respond in English, regardless of the input language.
 </content_summary>
 <comments_summary>
   - Use past tense throughout. Do NOT use present tense (e.g., "users agreed" not "users agree", "there was debate" not "there is debate").
-  - Use 4-6 sentences in this order: the dominant sentiment, the main debate, one or two supporting points, then a closing sentence that starts with "Overall," and adds no new topic.
+  - Use 4-5 sentences in this order: the dominant sentiment, the main debate, one supporting point, then a closing sentence that starts with "Overall,". Each sentence covers one topic. Leave out all other topics.
   - Capture the general sentiment of the community. Commit to a dominant sentiment (e.g., "mostly skeptical", "largely positive") rather than defaulting to "mixed". If genuinely divided, name the specific poles (e.g., "divided between excitement about X and concern about Y").
   - Avoid including specific usernames or quoting comments verbatim; instead, focus on summarizing the overall discourse.
 </comments_summary>
