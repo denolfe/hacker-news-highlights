@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker'
 import { beforeAll, describe, expect, test, vi } from 'vitest'
 import { disableCache, jsonResponse, textResponse } from '../test-utils.js'
-import { fetchTopStories } from './index.js'
+import { fetchTopStories, resolveStorySource } from './index.js'
 
 describe('hn', () => {
   beforeAll(() => {
@@ -59,6 +59,27 @@ describe('hn', () => {
       comments: expect.any(Array),
       content: storyText,
     })
+  })
+})
+
+describe('resolveStorySource', () => {
+  const url = 'https://www.example.com/post'
+
+  test('uses the site name up to the first separator', () => {
+    expect(resolveStorySource({ siteName: 'Example Blog | Home', title: 'Post', url })).toBe(
+      'Example Blog',
+    )
+  })
+
+  test('falls back to byline when there is no site name', () => {
+    expect(resolveStorySource({ siteName: null, byline: 'Jane Doe', title: 'Post', url })).toBe(
+      'Jane Doe',
+    )
+  })
+
+  test('uses the readable hostname when the source equals the title or is missing', () => {
+    expect(resolveStorySource({ siteName: 'Post', title: 'Post', url })).toBe('example.com')
+    expect(resolveStorySource({ title: 'Post', url })).toBe('example.com')
   })
 })
 

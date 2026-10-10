@@ -1,3 +1,5 @@
+import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai'
+
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 import { createHash } from 'crypto'
@@ -16,10 +18,18 @@ const openai = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-const MODEL = 'gpt-4.1-nano'
+const MODEL = 'gpt-5.6-luna'
+
+/** Low effort keeps the format rules reliable at low cost; medium verbosity keeps segment length near the previous model */
+const MODEL_OPTIONS = {
+  openai: {
+    reasoningEffort: 'low',
+    textVerbosity: 'medium',
+  } satisfies OpenAILanguageModelResponsesOptions,
+}
 
 const storySummarizationPrompt = `
-You are an AI language model tasked with generating a recap of a top story from Hacker News (news.ycombinator.com).
+You are an AI language model tasked with generating a recap of a top story from Hacker News (news.ycombinator.com) for a daily podcast. The recap is read aloud, so write for listeners.
 IMPORTANT: Always respond in English, regardless of the input language.
 <instructions>
   - State the content's title: Clearly announce the title of the content. Follow the <pronunciation_adjustments>
@@ -29,6 +39,7 @@ IMPORTANT: Always respond in English, regardless of the input language.
 <writing_style>
   These rules apply to the ENTIRE output (content summary and comments summary):
   - Use plain words. Avoid "highlight", "highlights", "highlighting", "implications", "notable", "significant", "broader".
+  - One idea per sentence. Do not use semicolons. Use at most one list per paragraph.
   - Commit to a dominant sentiment. Avoid hedging with "mixed".
   - State the dominant view, then note dissent briefly. Avoid "some X, while others Y" parallelisms.
   - Use direct verbs. Avoid -ing filler like "with many expressing", "reflecting a mix of".
@@ -43,7 +54,7 @@ IMPORTANT: Always respond in English, regardless of the input language.
   - For any version numbers, replace the '.' with the word "point". For example, v2.0 should be written as "version two point oh"; 3.0 should be written as "three point oh"; 3.11 should be written as "three point eleven".
 </pronunciation_adjustments>
 <content_summary>
-  - Limit sentence count to 3-5 sentences for the summary
+  - Limit sentence count to 3-4 sentences for the summary
   - When referring to the content, use the terms "article", "news story", "post", "project", "tweet", or "video" depending on what the content is and where from.
   - Use concise language
   - Do NOT use any markdown formatting anywhere in the output. No bold, no italics, no asterisks (*), no underscores (_), no backticks. Write the literal labels "Title:" and "Source:" — never "**Title:**" or "**Source:**".
@@ -51,9 +62,7 @@ IMPORTANT: Always respond in English, regardless of the input language.
 </content_summary>
 <comments_summary>
   - Use past tense throughout. Do NOT use present tense (e.g., "users agreed" not "users agree", "there was debate" not "there is debate").
-  - Identify the main topics of discussion in the comments.
-  - Note any significant debates or differing opinions among users.
-  - Note any recurring themes or insights that provide additional context or perspectives on the content.
+  - Use 4-5 sentences in this order: the dominant sentiment, the main debate, one supporting point, then a closing sentence that starts with "Overall," and states one conclusion in under 20 words, without "despite", "though", or "while". Each sentence covers one topic. Leave out all other topics.
   - Capture the general sentiment of the community. Commit to a dominant sentiment (e.g., "mostly skeptical", "largely positive") rather than defaulting to "mixed". If genuinely divided, name the specific poles (e.g., "divided between excitement about X and concern about Y").
   - Avoid including specific usernames or quoting comments verbatim; instead, focus on summarizing the overall discourse.
 </comments_summary>
@@ -71,7 +80,7 @@ IMPORTANT: Always respond in English, regardless of the input language.
 
     The [article, news story, post, project, tweet, video] [brief description of content's focus]. [Summary of main points and key arguments].
 
-    In the comments, the sentiment was [dominant sentiment, e.g., "mostly skeptical", "largely supportive"], with users [dominant reaction or viewpoint, past tense]. [Key debate or tension, stated directly, past tense].
+    In the comments, the sentiment was [dominant sentiment, e.g., "mostly skeptical", "largely supportive"], with users [dominant reaction or viewpoint, past tense]. [Key debate or tension, stated directly, past tense]. [One supporting point or concern, past tense]. [Overall, where users came down on the story, no new topic].
   </expected_output>
 </example>
 `
@@ -94,12 +103,7 @@ export async function summarize(stories: StoryDataAggregate[]): Promise<StoryDat
 export async function summarizeStory(story: StoryDataAggregate): Promise<StoryDataAggregate> {
   const cacheKey = 'summary-' + story.storyId.toString()
   story.summary = await getOrCompute(cacheKey, async () => {
-    const prompt =
-      storySummarizationPrompt +
-      `<title>${story.title}</title>\n` +
-      `<source>${story.source}</source>\n` +
-      `<content>${story.content}\n</content>\n` +
-      `<comments_data>${generateCommentTree(story.comments)}\n</comments_data>`
+    const prompt = buildStorySummaryPrompt(story)
 
     const tokenCount = estimateTokens(prompt)
     logger.info(`Estimated tokens: ${tokenCount}`)
@@ -107,6 +111,7 @@ export async function summarizeStory(story: StoryDataAggregate): Promise<StoryDa
     const { text } = await generateText({
       model: openai(MODEL),
       prompt,
+      providerOptions: MODEL_OPTIONS,
     })
     return text
   })
@@ -135,40 +140,16 @@ Let's ${IMPERATIVE_PHRASES[Math.floor(Math.random() * IMPERATIVE_PHRASES.length)
 `
 
   const intro = await getOrCompute(cacheKey, async () => {
+    for (const story of stories.slice(0, 3)) {
+      if (!story.content) {
+        logger.warning(`Story ${story.storyId} has no content - intro will use title only`)
+      }
+    }
+
     const { text } = await generateText({
       model: openai(MODEL),
-      prompt: `
-Given 3 stories from today's Hacker News:
-
-- Summarize these 3 stories into a single sentence.
-- Keep each summary UNDER 10 WORDS. Pick the single most interesting aspect — never combine multiple ideas with "and".
-- When content is empty or missing, derive a summary from the title — never mention that content is missing.
-- The order of the summaries should match the order they were presented.
-- Be sure to change the summaries into the present participle form, using '-ing' verbs to indicate ongoing actions.
-- Focus on the main subject or action of each story.
-- Remove any extra context that isn't crucial for understanding.
-- For any currency amounts, convert them to words and remove the currency symbol. For example, $10.50 should be written as "ten dollars and fifty cents."; $1.4 billion should be written as "one point four billion dollars".
-- For any measurements or distances, convert them to words. For example, 5km should be written as "five kilometers"; 670nm should be written as "six hundred seventy nanometers".
-
-Output in the format: "Today, we dive into [summary 1]... [summary 2]... and [summary 3]."
-
-Here are the top 3 stories from today's Hacker News:
-
-${stories
-  .slice(0, 3)
-  .map(story => {
-    if (!story.content) {
-      logger.warning(`Story ${story.storyId} has no content - intro will use title only`)
-    }
-    const storyTitleAndContent = `Title: ${story.title}\nContent: ${story.content}\n\n`
-    const tokenCount = estimateTokens(storyTitleAndContent)
-    // gpt-4.1-nano max is 1M tokens. prompt tokens 237
-    // Remaining tokens of ~999,763, divided by 3 stories = ~333,000 tokens per story
-    // Only use the title if the content is too long
-    return tokenCount > 333_000 ? `Title: ${story.title}\n\n` : storyTitleAndContent
-  })
-  .join('\n')}
-`,
+      prompt: buildIntroPrompt(stories),
+      providerOptions: MODEL_OPTIONS,
     })
 
     const intro = introTemplate(text)
@@ -197,25 +178,80 @@ export async function generateEpisodeTitle(stories: StoryOutput[]): Promise<stri
   return await getOrCompute(cacheKey, async () => {
     const { text } = await generateText({
       model: openai(MODEL),
-      prompt: `
-Given 3 story titles from today's Hacker News:
-
-- Summarize each summary into only a few words
-- Keep any proper nouns
-- The output should be a single sentence
-- The sentence should use commas to separate each story's summary. 
-- Avoid using any other punctuation besides commas (no em-dashes, colons, quotes, parentheses, etc.), unless it is necessary for clarity.
-
-Here are the titles:
-
-${top3Stories.map(story => `- ${story.title}\n`).join('')}
-`,
+      prompt: buildEpisodeTitlePrompt(top3Stories),
+      providerOptions: MODEL_OPTIONS,
     })
 
     const title = `${getEpisodeDatePrefix()}${EPISODE_TITLE_SEPARATOR}${text.replace(/\.$/, '')}`
     logger.info(`Title: ${title}`)
     return title
   })
+}
+
+/** Builds the LLM prompt for one story summary: title, source, content, and comment tree. */
+export function buildStorySummaryPrompt(
+  story: Pick<StoryOutput, 'comments' | 'content' | 'source' | 'title'>,
+): string {
+  return (
+    storySummarizationPrompt +
+    `<title>${story.title}</title>\n` +
+    `<source>${story.source}</source>\n` +
+    `<content>${story.content}\n</content>\n` +
+    `<comments_data>${generateCommentTree(story.comments)}\n</comments_data>`
+  )
+}
+
+/** Builds the LLM prompt for the intro sentence from the top 3 stories. Excludes the intro template. */
+export function buildIntroPrompt(stories: Pick<StoryOutput, 'content' | 'title'>[]): string {
+  return `
+Given 3 stories from today's Hacker News:
+
+- Summarize these 3 stories into a single sentence.
+- Keep each summary UNDER 10 WORDS. Pick the single most interesting aspect — never combine multiple ideas with "and".
+- When content is empty or missing, derive a summary from the title — never mention that content is missing.
+- The order of the summaries should match the order they were presented.
+- Be sure to change the summaries into the present participle form, using '-ing' verbs to indicate ongoing actions.
+- Focus on the main subject or action of each story.
+- Remove any extra context that isn't crucial for understanding.
+- For any currency amounts, convert them to words and remove the currency symbol. For example, $10.50 should be written as "ten dollars and fifty cents."; $1.4 billion should be written as "one point four billion dollars".
+- For any measurements or distances, convert them to words. For example, 5km should be written as "five kilometers"; 670nm should be written as "six hundred seventy nanometers".
+
+Output in the format: "Today, we dive into [summary 1]... [summary 2]... and [summary 3]."
+
+Here are the top 3 stories from today's Hacker News:
+
+${stories
+  .slice(0, 3)
+  .map(story => {
+    const storyTitleAndContent = `Title: ${story.title}\nContent: ${story.content}\n\n`
+    const tokenCount = estimateTokens(storyTitleAndContent)
+    // gpt-5.6-luna max is ~1.05M tokens. prompt tokens 237
+    // Budget ~1M tokens, divided by 3 stories = ~333,000 tokens per story
+    // Only use the title if the content is too long
+    return tokenCount > 333_000 ? `Title: ${story.title}\n\n` : storyTitleAndContent
+  })
+  .join('\n')}
+`
+}
+
+/** Builds the LLM prompt for the episode title from the top 3 story titles. Excludes the date prefix. */
+export function buildEpisodeTitlePrompt(stories: Pick<StoryOutput, 'title'>[]): string {
+  return `
+Given 3 story titles from today's Hacker News:
+
+- Summarize each story into a short phrase of at most 5 words
+- Keep any proper nouns
+- The output should be a single sentence
+- The sentence should use a comma followed by a space to separate each story's summary. 
+- Avoid using any other punctuation besides commas (no em-dashes, colons, quotes, parentheses, etc.), unless it is necessary for clarity.
+
+Here are the titles:
+
+${stories
+  .slice(0, 3)
+  .map(story => `- ${story.title}\n`)
+  .join('')}
+`
 }
 
 /**

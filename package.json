@@ -23,6 +23,7 @@
     "clean:stories": "rm -rf cache/story-*",
     "clean:summaries": "rm -rf cache/summary-* cache/intro-*",
     "clean:video": "rm -rf output/*.mp4",
+    "eval:models": "NODE_OPTIONS=--no-deprecation tsx scripts/model-eval/run.ts",
     "format": "prettier --write .",
     "postinstall": "puppeteer browsers install chrome",
     "lint": "eslint .",
@@ -46,7 +47,7 @@
     ]
   },
   "dependencies": {
-    "@ai-sdk/openai": "^3.0.29",
+    "@ai-sdk/openai": "^3.0.124",
     "@elevenlabs/elevenlabs-js": "^2.58.0",
     "@mozilla/readability": "^0.6.0",
     "@remotion/bundler": "^4.0.424",
