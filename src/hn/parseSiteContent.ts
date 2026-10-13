@@ -110,7 +110,11 @@ function parseHtmlWithReadability(html: string): null | ParseReturnType {
   return new Readability(dom.window.document).parse()
 }
 
-function needsBrowserFetch(html: string, parsed: null | ParseReturnType): boolean {
+/** Detects SPA shells, bot-protection pages, and pages with too little extractable text. */
+export function needsBrowserFetch(
+  html: string,
+  parsed: null | ParseReturnType = parseHtmlWithReadability(html),
+): boolean {
   const textLength = parsed?.textContent?.length ?? 0
 
   // Check for SPA/bot indicators in raw HTML

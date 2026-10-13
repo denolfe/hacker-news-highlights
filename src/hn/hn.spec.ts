@@ -1,11 +1,19 @@
+import { fetchContentWithBrowser } from '@/browser/fetchContent.js'
 import { faker } from '@faker-js/faker'
-import { beforeAll, describe, expect, test, vi } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { disableCache, jsonResponse, textResponse } from '../test-utils.js'
 import { fetchTopStories, resolveStorySource } from './index.js'
+
+vi.mock('@/browser/fetchContent.js', () => ({ fetchContentWithBrowser: vi.fn() }))
+
+const SPA_SHELL_HTML = '<!doctype html><html><body><div id="root"></div></body></html>'
 
 describe('hn', () => {
   beforeAll(() => {
     disableCache()
+  })
+  beforeEach(() => {
+    vi.mocked(fetchContentWithBrowser).mockReset()
   })
   test('fetchTopStories', async () => {
     global.fetch = vi.fn().mockImplementation((url: string) => {
@@ -27,6 +35,52 @@ describe('hn', () => {
       comments: expect.any(Array),
       url: expect.any(String),
     })
+  })
+
+  test('fetchTopStories - renders with browser when fetched HTML is an SPA shell', async () => {
+    const renderedHtml = makeStoryHtml()
+    vi.mocked(fetchContentWithBrowser).mockResolvedValue(renderedHtml)
+    global.fetch = mockHnFetch({ storyUrl: 'https://example.com/spa', storyHtml: SPA_SHELL_HTML })
+
+    const topStories = await fetchTopStories(1)
+
+    expect(fetchContentWithBrowser).toHaveBeenCalledWith('https://example.com/spa')
+    expect(topStories[0]?.content).toContain('Comment 1')
+  })
+
+  test('fetchTopStories - uses browser directly for Puppeteer-first domains', async () => {
+    vi.mocked(fetchContentWithBrowser).mockResolvedValue(makeStoryHtml())
+    const storyUrl = 'https://www.nytimes.com/2026/10/13/article.html'
+    global.fetch = mockHnFetch({ storyUrl, storyHtml: makeStoryHtml() })
+
+    await fetchTopStories(1)
+
+    expect(fetchContentWithBrowser).toHaveBeenCalledWith(storyUrl)
+    expect(global.fetch).not.toHaveBeenCalledWith(storyUrl, expect.anything())
+  })
+
+  test('fetchTopStories - renders with browser when plain fetch is rejected', async () => {
+    vi.mocked(fetchContentWithBrowser).mockResolvedValue(makeStoryHtml())
+    const accessDeniedHtml = `<html><body><h1>Access Denied</h1><p>${'You do not have permission to access this server. '.repeat(6)}</p></body></html>`
+    global.fetch = mockHnFetch({
+      storyUrl: 'https://example.com/blocked',
+      storyHtml: accessDeniedHtml,
+      storyStatus: 403,
+    })
+
+    const topStories = await fetchTopStories(1)
+
+    expect(fetchContentWithBrowser).toHaveBeenCalledWith('https://example.com/blocked')
+    expect(topStories[0]?.content).toContain('Comment 1')
+  })
+
+  test('fetchTopStories - keeps fetched HTML when browser fallback fails', async () => {
+    vi.mocked(fetchContentWithBrowser).mockRejectedValue(new Error('browser crashed'))
+    global.fetch = mockHnFetch({ storyUrl: 'https://example.com/spa', storyHtml: SPA_SHELL_HTML })
+
+    const topStories = await fetchTopStories(1)
+
+    expect(topStories).toHaveLength(1)
   })
 
   test('fetchTopStories - Ask HN, no url', async () => {
@@ -82,6 +136,21 @@ describe('resolveStorySource', () => {
     expect(resolveStorySource({ title: 'Post', url })).toBe('example.com')
   })
 })
+
+function mockHnFetch(params: { storyHtml: string; storyStatus?: number; storyUrl: string }) {
+  const { storyHtml, storyStatus = 200, storyUrl } = params
+  return vi.fn().mockImplementation((url: string) => {
+    if (url.startsWith('https://hn.algolia.com/api/v1/search?')) {
+      return jsonResponse({
+        hits: [{ title: 'Test Story', url: storyUrl, story_id: faker.number.int() }],
+      })
+    }
+    if (url.startsWith('https://hn.algolia.com/api/v1/items/')) {
+      return jsonResponse(makeStoryDataById())
+    }
+    return Promise.resolve(new Response(storyHtml, { status: storyStatus }))
+  })
+}
 
 function makeHnResponseData(count: number = 10) {
   return {
