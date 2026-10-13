@@ -1,10 +1,12 @@
 import type { Comment, CoveredStory, ResponseData, SlimComment, StoryOutput } from '@/types.js'
 
+import { fetchContentWithBrowser } from '@/browser/fetchContent.js'
+import { shouldUsePuppeteerFirst } from '@/browser/puppeteerDomains.js'
 import { getOrCompute, readFromCache, writeToCache } from '@/utils/cache.js'
 import { childLogger } from '@/utils/log.js'
 
 import { fetchPdfText } from './fetchPdfText.js'
-import { parseSiteContent } from './parseSiteContent.js'
+import { needsBrowserFetch, parseSiteContent } from './parseSiteContent.js'
 
 const logger = childLogger('HN')
 
@@ -151,7 +153,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
           logger.info('Link is a PDF, parsing PDF content...')
           content = await fetchPdfText(url)
         } else {
-          content = await fetchWithTimeoutAndRetry(url).then(res => res.text())
+          content = await fetchStoryHtml(url)
         }
         if (!content) {
           throw new EmptyContentError(url)
@@ -245,6 +247,34 @@ export function resolveStorySource(params: {
     return new URL(url).hostname.replace('www.', '')
   }
   return source
+}
+
+/**
+ * Fetches story HTML, rendering with Puppeteer for known problem domains and for
+ * plain-fetch results that are SPA shells or bot-protection pages.
+ */
+export async function fetchStoryHtml(url: string): Promise<string> {
+  if (shouldUsePuppeteerFirst(url)) {
+    logger.info(`Known Puppeteer domain, using browser: ${url}`)
+    try {
+      return await fetchContentWithBrowser(url)
+    } catch (error) {
+      logger.warning(`Browser fetch failed, falling back to plain fetch: ${String(error)}`)
+    }
+  }
+
+  const html = await fetchWithTimeoutAndRetry(url).then(res => res.text())
+  if (!needsBrowserFetch(html)) {
+    return html
+  }
+
+  logger.info(`Content extraction insufficient, trying browser: ${url}`)
+  try {
+    return await fetchContentWithBrowser(url)
+  } catch (error) {
+    logger.warning(`Browser fallback failed: ${String(error)}`)
+    return html
+  }
 }
 
 async function fetchWithTimeoutAndRetry(
