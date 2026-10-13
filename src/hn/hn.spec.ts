@@ -59,6 +59,21 @@ describe('hn', () => {
     expect(global.fetch).not.toHaveBeenCalledWith(storyUrl, expect.anything())
   })
 
+  test('fetchTopStories - renders with browser when plain fetch is rejected', async () => {
+    vi.mocked(fetchContentWithBrowser).mockResolvedValue(makeStoryHtml())
+    const accessDeniedHtml = `<html><body><h1>Access Denied</h1><p>${'You do not have permission to access this server. '.repeat(6)}</p></body></html>`
+    global.fetch = mockHnFetch({
+      storyUrl: 'https://example.com/blocked',
+      storyHtml: accessDeniedHtml,
+      storyStatus: 403,
+    })
+
+    const topStories = await fetchTopStories(1)
+
+    expect(fetchContentWithBrowser).toHaveBeenCalledWith('https://example.com/blocked')
+    expect(topStories[0]?.content).toContain('Comment 1')
+  })
+
   test('fetchTopStories - keeps fetched HTML when browser fallback fails', async () => {
     vi.mocked(fetchContentWithBrowser).mockRejectedValue(new Error('browser crashed'))
     global.fetch = mockHnFetch({ storyUrl: 'https://example.com/spa', storyHtml: SPA_SHELL_HTML })
@@ -122,8 +137,8 @@ describe('resolveStorySource', () => {
   })
 })
 
-function mockHnFetch(params: { storyUrl: string; storyHtml: string }) {
-  const { storyUrl, storyHtml } = params
+function mockHnFetch(params: { storyHtml: string; storyStatus?: number; storyUrl: string }) {
+  const { storyHtml, storyStatus = 200, storyUrl } = params
   return vi.fn().mockImplementation((url: string) => {
     if (url.startsWith('https://hn.algolia.com/api/v1/search?')) {
       return jsonResponse({
@@ -133,7 +148,7 @@ function mockHnFetch(params: { storyUrl: string; storyHtml: string }) {
     if (url.startsWith('https://hn.algolia.com/api/v1/items/')) {
       return jsonResponse(makeStoryDataById())
     }
-    return textResponse(storyHtml)
+    return Promise.resolve(new Response(storyHtml, { status: storyStatus }))
   })
 }
 

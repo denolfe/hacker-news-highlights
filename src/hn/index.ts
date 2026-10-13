@@ -251,7 +251,7 @@ export function resolveStorySource(params: {
 
 /**
  * Fetches story HTML, rendering with Puppeteer for known problem domains and for
- * plain-fetch results that are SPA shells or bot-protection pages.
+ * plain-fetch results that are non-OK, SPA shells, or bot-protection pages.
  */
 export async function fetchStoryHtml(url: string): Promise<string> {
   if (shouldUsePuppeteerFirst(url)) {
@@ -263,12 +263,13 @@ export async function fetchStoryHtml(url: string): Promise<string> {
     }
   }
 
-  const html = await fetchWithTimeoutAndRetry(url).then(res => res.text())
-  if (!needsBrowserFetch(html)) {
+  const response = await fetchWithTimeoutAndRetry(url)
+  const html = await response.text()
+  if (response.ok && !needsBrowserFetch(html)) {
     return html
   }
 
-  logger.info(`Content extraction insufficient, trying browser: ${url}`)
+  logger.info(`Plain fetch insufficient (HTTP ${response.status}), trying browser: ${url}`)
   try {
     return await fetchContentWithBrowser(url)
   } catch (error) {
