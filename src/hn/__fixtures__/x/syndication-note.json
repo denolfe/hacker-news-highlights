@@ -1,0 +1,37 @@
+{
+  "__typename": "Tweet",
+  "favorite_count": 40720,
+  "lang": "en",
+  "created_at": "2026-01-26T20:25:39.000Z",
+  "display_text_range": [
+    0,
+    278
+  ],
+  "entities": {},
+  "id_str": "2015883857489522876",
+  "text": "A few random notes from claude coding quite a bit last few weeks.\n\nCoding workflow. Given the latest lift in LLM coding capability, like many others I rapidly went from about 80% manual+autocomplete coding and 20% agents in November to 80% agent coding and 20% edits+touchups in",
+  "user": {
+    "id_str": "33836629",
+    "name": "Andrej Karpathy",
+    "screen_name": "karpathy",
+    "is_blue_verified": true,
+    "profile_image_shape": "Circle",
+    "verified": false,
+    "profile_image_url_https": "https://pbs.twimg.com/profile_images/1296667294148382721/9Pr6XrPB_normal.jpg"
+  },
+  "edit_control": {
+    "edit_tweet_ids": [
+      "2015883857489522876"
+    ],
+    "editable_until_msecs": "1769462739000",
+    "edits_remaining": "5",
+    "is_edit_eligible": true
+  },
+  "conversation_count": 1631,
+  "news_action_type": "conversation",
+  "isEdited": false,
+  "isStaleEdit": false,
+  "note_tweet": {
+    "id": "Tm90ZVR3ZWV0UmVzdWx0czoyMDE1ODgzODU3MDA3MTQ5MDYx"
+  }
+}

@@ -6,6 +6,7 @@ import { getOrCompute, readFromCache, writeToCache } from '@/utils/cache.js'
 import { childLogger } from '@/utils/log.js'
 
 import { fetchPdfText } from './fetchPdfText.js'
+import { fetchXPostHtml, parseXStatusUrl } from './fetchXPost.js'
 import { needsBrowserFetch, parseSiteContent } from './parseSiteContent.js'
 
 const logger = childLogger('HN')
@@ -252,8 +253,13 @@ export function resolveStorySource(params: {
 /**
  * Fetches story HTML, rendering with Puppeteer for known problem domains and for
  * plain-fetch results that are non-OK, SPA shells, or bot-protection pages.
+ * X/Twitter posts come from post APIs because rendered pages mix in replies.
  */
 export async function fetchStoryHtml(url: string): Promise<string> {
+  if (parseXStatusUrl(url)) {
+    return fetchXPostHtml(url)
+  }
+
   if (shouldUsePuppeteerFirst(url)) {
     logger.info(`Known Puppeteer domain, using browser: ${url}`)
     try {

@@ -1,5 +1,6 @@
 import { fetchContentWithBrowser } from '@/browser/fetchContent.js'
 import { faker } from '@faker-js/faker'
+import { readFileSync } from 'node:fs'
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { disableCache, jsonResponse, textResponse } from '../test-utils.js'
 import { fetchTopStories, resolveStorySource } from './index.js'
@@ -57,6 +58,24 @@ describe('hn', () => {
 
     expect(fetchContentWithBrowser).toHaveBeenCalledWith(storyUrl)
     expect(global.fetch).not.toHaveBeenCalledWith(storyUrl, expect.anything())
+  })
+
+  test('fetchTopStories - reads X posts from the post API, not the rendered page', async () => {
+    const storyUrl = 'https://x.com/garrytan/status/1899092996702048709'
+    const hnFetch = mockHnFetch({ storyUrl, storyHtml: '' })
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.startsWith('https://api.fxtwitter.com/')) {
+        return Promise.resolve(new Response(readXFixture('fxtwitter-quote.json')))
+      }
+      return hnFetch(url)
+    })
+
+    const topStories = await fetchTopStories(1)
+
+    expect(fetchContentWithBrowser).not.toHaveBeenCalled()
+    expect(topStories[0]?.content).toContain(
+      'Y Combinator has helped create more than $800 billion',
+    )
   })
 
   test('fetchTopStories - renders with browser when plain fetch is rejected', async () => {
@@ -150,6 +169,10 @@ function mockHnFetch(params: { storyHtml: string; storyStatus?: number; storyUrl
     }
     return Promise.resolve(new Response(storyHtml, { status: storyStatus }))
   })
+}
+
+function readXFixture(name: string): string {
+  return readFileSync(new URL(`./__fixtures__/x/${name}`, import.meta.url), 'utf8')
 }
 
 function makeHnResponseData(count: number = 10) {

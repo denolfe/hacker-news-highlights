@@ -1,0 +1,169 @@
+{
+  "code": 200,
+  "message": "OK",
+  "tweet": {
+    "url": "https://x.com/garrytan/status/1899092996702048709",
+    "id": "1899092996702048709",
+    "text": "Y Combinator has helped create more than $800 billion in market value over 20 years. Thank you to Paul, Jessica, Trevor and Robert and Happy Birthday to the fixed point combinator that changed the world.",
+    "raw_text": {
+      "text": "Y Combinator has helped create more than $800 billion in market value over 20 years. Thank you to Paul, Jessica, Trevor and Robert and Happy Birthday to the fixed point combinator that changed the world. https://t.co/N4Bmno9vWt",
+      "display_text_range": [
+        0,
+        203
+      ],
+      "facets": [
+        {
+          "type": "media",
+          "indices": [
+            204,
+            227
+          ],
+          "id": "1899092993828642817",
+          "display": "pic.x.com/N4Bmno9vWt",
+          "original": "https://t.co/N4Bmno9vWt",
+          "replacement": "https://x.com/garrytan/status/1899092996702048709/photo/1"
+        }
+      ]
+    },
+    "author": {
+      "screen_name": "garrytan",
+      "url": "https://x.com/garrytan",
+      "id": "11768582",
+      "followers": 1140867,
+      "following": 6001,
+      "likes": 253058,
+      "media_count": 4929,
+      "name": "Garry Tan",
+      "description": "President & CEO @ycombinator —Founder @garryslist—Creator of GStack & GBrain—designer/engineer who helps founders—SF Dem accelerating the boom loop",
+      "raw_description": {
+        "text": "President & CEO @ycombinator —Founder @garryslist—Creator of GStack & GBrain—designer/engineer who helps founders—SF Dem accelerating the boom loop",
+        "facets": []
+      },
+      "location": "San Francisco, CA",
+      "banner_url": "https://pbs.twimg.com/profile_banners/11768582/1789657007",
+      "avatar_url": "https://pbs.twimg.com/profile_images/2102142455281811456/-kNX65wI_200x200.jpg",
+      "joined": "Wed Jan 02 19:47:19 +0000 2008",
+      "protected": false,
+      "website": {
+        "url": "https://youtube.com/garrytan?sub_confirmation=1",
+        "display_url": "youtube.com/garrytan?sub_c…"
+      },
+      "verification": {
+        "verified": true,
+        "verified_at": null,
+        "type": "individual"
+      },
+      "avatar_color": null
+    },
+    "replies": 59,
+    "retweets": 156,
+    "likes": 2248,
+    "bookmarks": 208,
+    "quotes": 81,
+    "created_at": "Mon Mar 10 13:40:28 +0000 2025",
+    "created_timestamp": 1741614028,
+    "possibly_sensitive": false,
+    "views": 1080543,
+    "is_note_tweet": false,
+    "community_note": null,
+    "lang": "en",
+    "replying_to": null,
+    "replying_to_status": null,
+    "media": {
+      "all": [
+        {
+          "type": "photo",
+          "id": "1899092993828642817",
+          "url": "https://pbs.twimg.com/media/GlrvBByW4AEZ8PU.jpg?name=orig",
+          "width": 1000,
+          "height": 667
+        }
+      ],
+      "photos": [
+        {
+          "type": "photo",
+          "id": "1899092993828642817",
+          "url": "https://pbs.twimg.com/media/GlrvBByW4AEZ8PU.jpg?name=orig",
+          "width": 1000,
+          "height": 667
+        }
+      ]
+    },
+    "quote": {
+      "url": "https://x.com/paulg/status/1899059035166355823",
+      "id": "1899059035166355823",
+      "text": "Y Combinator's 20th birthday is tomorrow. Here's what was happening on March 11, 2005: https://paulgraham.com/ycstart.html\n\n(Yeah, I know this tweet will get hidden because it has a link in it, and that I'm supposed to put the link in a reply. But that's so stupid that I refuse to do it.)",
+      "raw_text": {
+        "text": "Y Combinator's 20th birthday is tomorrow. Here's what was happening on March 11, 2005: https://t.co/uEctjPUohb\n\n(Yeah, I know this tweet will get hidden because it has a link in it, and that I'm supposed to put the link in a reply. But that's so stupid that I refuse to do it.)",
+        "display_text_range": [
+          0,
+          277
+        ],
+        "facets": [
+          {
+            "type": "url",
+            "indices": [
+              87,
+              110
+            ],
+            "original": "https://t.co/uEctjPUohb",
+            "replacement": "https://paulgraham.com/ycstart.html",
+            "display": "paulgraham.com/ycstart.html"
+          }
+        ]
+      },
+      "author": {
+        "screen_name": "paulg",
+        "url": "https://x.com/paulg",
+        "id": "183749519",
+        "followers": 5448754,
+        "following": 806,
+        "likes": 159067,
+        "media_count": 2008,
+        "name": "Paul Graham",
+        "description": "",
+        "raw_description": {
+          "text": "",
+          "facets": []
+        },
+        "location": "",
+        "banner_url": "https://pbs.twimg.com/profile_banners/183749519/1401332683",
+        "avatar_url": "https://pbs.twimg.com/profile_images/1824002576/pg-railsconf_200x200.jpg",
+        "joined": "Fri Aug 27 20:13:59 +0000 2010",
+        "protected": false,
+        "website": {
+          "url": "http://paulgraham.com",
+          "display_url": "paulgraham.com"
+        },
+        "verification": {
+          "verified": true,
+          "verified_at": null,
+          "type": "individual"
+        },
+        "avatar_color": null
+      },
+      "replies": 134,
+      "retweets": 187,
+      "likes": 3600,
+      "bookmarks": 374,
+      "quotes": 65,
+      "created_at": "Mon Mar 10 11:25:31 +0000 2025",
+      "created_timestamp": 1741605931,
+      "possibly_sensitive": false,
+      "views": 586340,
+      "is_note_tweet": false,
+      "community_note": null,
+      "lang": "en",
+      "replying_to": null,
+      "replying_to_status": null,
+      "twitter_card": "tweet",
+      "color": null,
+      "provider": "twitter",
+      "reposted_by": null
+    },
+    "twitter_card": "summary_large_image",
+    "color": null,
+    "provider": "twitter",
+    "reposted_by": null
+  }
+}

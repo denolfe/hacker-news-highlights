@@ -1,0 +1,46 @@
+{
+  "__typename": "Tweet",
+  "favorite_count": 22266,
+  "lang": "en",
+  "created_at": "2025-06-10T13:48:07.000Z",
+  "display_text_range": [
+    0,
+    155
+  ],
+  "entities": {},
+  "id_str": "1932434606558462459",
+  "text": "we dropped the price of o3 by 80%!!\n\nexcited to see what people will do with it now.\n\nthink you'll also be happy with o3-pro pricing for the performance :)",
+  "user": {
+    "id_str": "1605",
+    "name": "Sam Altman",
+    "screen_name": "sama",
+    "is_blue_verified": true,
+    "profile_image_shape": "Circle",
+    "verified": false,
+    "profile_image_url_https": "https://pbs.twimg.com/profile_images/2046764873200394240/r7BxVezs_normal.jpg",
+    "highlighted_label": {
+      "badge": {
+        "url": "https://pbs.twimg.com/profile_images/1885410181409820672/ztsaR0JW_bigger.jpg"
+      },
+      "description": "OpenAI",
+      "url": {
+        "url": "https://twitter.com/OpenAI",
+        "url_type": "DeepLink"
+      },
+      "user_label_display_type": "Badge",
+      "user_label_type": "BusinessLabel"
+    }
+  },
+  "edit_control": {
+    "edit_tweet_ids": [
+      "1932434606558462459"
+    ],
+    "editable_until_msecs": "1749566887000",
+    "edits_remaining": "5",
+    "is_edit_eligible": true
+  },
+  "conversation_count": 1620,
+  "news_action_type": "conversation",
+  "isEdited": false,
+  "isStaleEdit": false
+}

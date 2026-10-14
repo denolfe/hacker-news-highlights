@@ -1,0 +1,251 @@
+{
+  "code": 200,
+  "message": "OK",
+  "tweet": {
+    "url": "https://x.com/lifeofjer/status/2048103471019434248",
+    "id": "2048103471019434248",
+    "text": "",
+    "raw_text": {
+      "text": "https://t.co/ofucbVgkLV",
+      "display_text_range": [
+        0,
+        23
+      ],
+      "facets": []
+    },
+    "author": {
+      "screen_name": "lifeofjer",
+      "url": "https://x.com/lifeofjer",
+      "id": "591273520",
+      "followers": 2781,
+      "following": 849,
+      "likes": 10289,
+      "media_count": 115,
+      "name": "JER",
+      "description": "Living life to the fullest",
+      "raw_description": {
+        "text": "Living life to the fullest",
+        "facets": []
+      },
+      "location": "Utah, USA",
+      "banner_url": "https://pbs.twimg.com/profile_banners/591273520/1787702840",
+      "avatar_url": "https://pbs.twimg.com/profile_images/2092399713517703168/yoftBcCS_200x200.jpg",
+      "joined": "Sat May 26 21:34:04 +0000 2012",
+      "protected": false,
+      "website": null,
+      "verification": {
+        "verified": true,
+        "verified_at": null,
+        "type": "individual"
+      },
+      "avatar_color": null
+    },
+    "replies": 1044,
+    "retweets": 1086,
+    "likes": 5301,
+    "bookmarks": 6321,
+    "quotes": 1347,
+    "created_at": "Sat Apr 25 18:14:54 +0000 2026",
+    "created_timestamp": 1777140894,
+    "possibly_sensitive": false,
+    "views": 7249960,
+    "is_note_tweet": false,
+    "community_note": null,
+    "lang": null,
+    "replying_to": null,
+    "replying_to_status": null,
+    "article": {
+      "created_at": "2026-04-25T18:14:54.000Z",
+      "modified_at": "2026-04-25T18:14:54.000Z",
+      "id": "2048102151818559488",
+      "title": "An AI Agent Just Destroyed Our Production Data. It Confessed in Writing.",
+      "preview_text": "A 30-hour timeline of how Cursor's agent, Railway's API, and an industry that markets AI safety faster than it ships it took down a small business serving rental companies across the country.\nI'm Jer",
+      "cover_media": {
+        "id": "QXBpTWVkaWE6DAAFCgABHGxS00ubIAEKAAIAAAAAIz4eMAAA",
+        "media_id": "2048102998006767617",
+        "media_info": {
+          "__typename": "ApiImage",
+          "color_info": {
+            "palette": [
+              {
+                "percentage": 97.92,
+                "rgb": {
+                  "blue": 255,
+                  "green": 255,
+                  "red": 255
+                }
+              },
+              {
+                "percentage": 0.7,
+                "rgb": {
+                  "blue": 143,
+                  "green": 141,
+                  "red": 140
+                }
+              },
+              {
+                "percentage": 0.54,
+                "rgb": {
+                  "blue": 60,
+                  "green": 64,
+                  "red": 74
+                }
+              },
+              {
+                "percentage": 0.32,
+                "rgb": {
+                  "blue": 246,
+                  "green": 182,
+                  "red": 91
+                }
+              },
+              {
+                "percentage": 0.23,
+                "rgb": {
+                  "blue": 94,
+                  "green": 118,
+                  "red": 166
+                }
+              }
+            ]
+          },
+          "original_img_height": 515,
+          "original_img_url": "https://pbs.twimg.com/media/HGxS00ubIAEDGlV.jpg",
+          "original_img_width": 1288
+        },
+        "media_key": "3_2048102998006767617"
+      },
+      "content": {
+        "blocks": [
+          {
+            "data": {},
+            "entityRanges": [],
+            "inlineStyleRanges": [
+              {
+                "length": 191,
+                "offset": 0,
+                "style": "Italic"
+              }
+            ],
+            "key": "e385f",
+            "text": "A 30-hour timeline of how Cursor's agent, Railway's API, and an industry that markets AI safety faster than it ships it took down a small business serving rental companies across the country.",
+            "type": "unstyled"
+          },
+          {
+            "data": {},
+            "entityRanges": [],
+            "inlineStyleRanges": [],
+            "key": "6deln",
+            "text": "I'm Jer Crane, founder of PocketOS. We build software that rental businesses — primarily car rental operators — use to run their entire operations: reservations, payments, customer management, vehicle tracking, the works. Some of our customers are five-year subscribers who literally cannot operate their businesses without us.",
+            "type": "unstyled"
+          },
+          {
+            "data": {},
+            "entityRanges": [],
+            "inlineStyleRanges": [],
+            "key": "fpeg1",
+            "text": "Yesterday afternoon, an AI coding agent — Cursor running Anthropic's flagship Claude Opus 4.6 — deleted our production database and all volume-level backups in a single API call to Railway, our infrastructure provider.",
+            "type": "unstyled"
+          }
+        ],
+        "entityMap": [
+          {
+            "key": "8",
+            "value": {
+              "data": {
+                "url": "https://mcp.railway.com/"
+              },
+              "mutability": "Mutable",
+              "type": "LINK"
+            }
+          },
+          {
+            "key": "4",
+            "value": {
+              "data": {
+                "url": "https://natesnewsletter.substack.com/p/executive-briefing-what-cursors-57k"
+              },
+              "mutability": "Mutable",
+              "type": "LINK"
+            }
+          },
+          {
+            "key": "5",
+            "value": {
+              "data": {
+                "url": "https://forum.cursor.com/t/dropping-my-local-db-even-with-instructions-to-avoid-destructive-operations/135012/2"
+              },
+              "mutability": "Mutable",
+              "type": "LINK"
+            }
+          },
+          {
+            "key": "6",
+            "value": {
+              "data": {
+                "url": "https://www.theregister.com/2026/01/26/cursor_opinion/"
+              },
+              "mutability": "Mutable",
+              "type": "LINK"
+            }
+          },
+          {
+            "key": "1",
+            "value": {
+              "data": {
+                "url": "https://cursor.com/blog/agent-best-practices"
+              },
+              "mutability": "Mutable",
+              "type": "LINK"
+            }
+          },
+          {
+            "key": "0",
+            "value": {
+              "data": {
+                "url": "https://cursor.com/docs/agent/security"
+              },
+              "mutability": "Mutable",
+              "type": "LINK"
+            }
+          },
+          {
+            "key": "2",
+            "value": {
+              "data": {
+                "url": "https://www.mintmcp.com/blog/cursor-plan-mode-destructive-operations"
+              },
+              "mutability": "Mutable",
+              "type": "LINK"
+            }
+          },
+          {
+            "key": "7",
+            "value": {
+              "data": {
+                "url": "https://mcp.railway.com/"
+              },
+              "mutability": "Mutable",
+              "type": "LINK"
+            }
+          },
+          {
+            "key": "3",
+            "value": {
+              "data": {
+                "url": "https://quasa.io/media/when-cursor-wiped-a-user-s-pc-a-cautionary-tale-of-ai-overreach"
+              },
+              "mutability": "Mutable",
+              "type": "LINK"
+            }
+          }
+        ]
+      },
+      "media_entities": []
+    },
+    "twitter_card": "tweet",
+    "color": null,
+    "provider": "twitter",
+    "reposted_by": null
+  }
+}
