@@ -5,6 +5,7 @@ import { Readability } from '@mozilla/readability'
 import { JSDOM, VirtualConsole } from 'jsdom'
 
 import { fetchPdfText } from './fetchPdfText.js'
+import { fetchXPostHtml, parseXStatusUrl } from './fetchXPost.js'
 
 const logger = childLogger('PARSE')
 
@@ -46,8 +47,11 @@ export async function parseSiteContent(
   let html: string
   let parsed: null | ParseReturnType
 
-  // For known problem domains, skip fetch and use Puppeteer directly
-  if (isUrl && usePuppeteerFallback && shouldUsePuppeteerFirst(htmlOrUrl)) {
+  if (isUrl && parseXStatusUrl(htmlOrUrl)) {
+    html = await fetchXPostHtml(htmlOrUrl)
+    parsed = parseHtmlWithReadability(html)
+  } else if (isUrl && usePuppeteerFallback && shouldUsePuppeteerFirst(htmlOrUrl)) {
+    // Known problem domains, skip fetch and use Puppeteer directly
     logger.info(`Known Puppeteer domain, using browser: ${htmlOrUrl}`)
     try {
       html = await fetchContentWithBrowser(htmlOrUrl)

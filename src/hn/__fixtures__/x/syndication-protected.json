@@ -1,0 +1,20 @@
+{
+  "__typename": "TweetTombstone",
+  "tombstone": {
+    "text": {
+      "entities": [
+        {
+          "from_index": 92,
+          "ref": {
+            "__typename": "TimelineUrl",
+            "url": "https://help.x.com/rules-and-policies/notices-on-x",
+            "url_type": "ExternalUrl"
+          },
+          "to_index": 102
+        }
+      ],
+      "rtl": false,
+      "text": "You’re unable to view this Post because this account owner limits who can view their Posts. Learn more"
+    }
+  }
+}
