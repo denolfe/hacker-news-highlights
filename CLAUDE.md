@@ -138,6 +138,7 @@ Uses Vitest with path alias support. Test files use `.spec.ts` extension.
 ```bash
 pnpm test src/audio/adjustPronunciation.spec.ts  # Run single test file
 pnpm test:content                                 # Run integration tests (60s timeout)
+pnpm tsx scripts/audit-story-fetch.ts             # Audit block page detection on all committed test sites
 ```
 
 Integration tests (`*.integration.spec.ts`) run separately via `vitest.integration.config.ts` with longer timeouts for network requests.

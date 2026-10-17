@@ -77,7 +77,13 @@ export async function fetchContentWithBrowser(url: string): Promise<string> {
     const status = getStatus(finalResponse)
     logger.info(`Rendered ${url}: HTTP ${status}`)
 
-    const blocked = detectBlockedPage({ status, headers: getHeaders(finalResponse), html })
+    const blocked = detectBlockedPage({
+      status,
+      headers: getHeaders(finalResponse),
+      html,
+      requestedUrl: url,
+      finalUrl: page.url(),
+    })
     if (blocked) {
       logger.warning(`Unusable page (${blocked.reason}: ${blocked.detail}) for ${url}`)
       throw new UnusablePageError({ url, ...blocked })

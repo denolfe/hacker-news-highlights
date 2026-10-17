@@ -107,17 +107,14 @@ describe('fetchXPostHtml', () => {
     expect(parsed.textContent).not.toContain('Log in or sign up for X')
   })
 
-  test('returns the no-content placeholder when every source fails', async () => {
+  test('returns empty HTML when every source fails', async () => {
     vi.mocked(fetchContentWithBrowser).mockRejectedValue(new Error('browser crashed'))
     global.fetch = mockXApis({
       fxtwitter: fixture('fxtwitter-private.json'),
       syndication: fixture('syndication-protected.json'),
     })
 
-    const parsed = await parseSiteContent(await fetchXPostHtml(POST_URL))
-
-    expect(parsed.textContent).toContain('No content found for this story')
-    expect(parsed.textContent).not.toContain('unable to view this Post')
+    expect(await fetchXPostHtml(POST_URL)).toBe('')
   })
 })
 

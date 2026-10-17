@@ -286,6 +286,8 @@ export async function fetchStoryHtml(url: string): Promise<string> {
     status: response.status,
     headers: Object.fromEntries(response.headers),
     html,
+    requestedUrl: url,
+    finalUrl: response.url,
   })
   if (!blocked && !needsBrowserFetch(html)) {
     return html

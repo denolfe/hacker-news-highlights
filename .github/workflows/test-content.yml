@@ -13,14 +13,13 @@ on:
   workflow_dispatch:
     inputs:
       suite:
-        description: 'Integration suite to run'
+        description: 'Integration suite, or audit of every committed test site'
         required: false
         default: 'story-fetch'
         type: choice
         options:
           - story-fetch
-          - content-extraction
-          - all
+          - audit
 
 permissions:
   contents: read
@@ -49,8 +48,14 @@ jobs:
         run: |
           case "$SUITE" in
             story-fetch) pnpm test:content src/hn/storyFetch.integration.spec.ts ;;
-            content-extraction) pnpm test:content src/hn/contentExtraction.integration.spec.ts ;;
-            all) pnpm test:content ;;
+            audit)
+              NODE_OPTIONS=--no-deprecation pnpm tsx scripts/audit-story-fetch.ts | tee audit.log
+              {
+                echo "# Story fetch audit"
+                echo
+                sed -n '/^| URL/,$p' audit.log
+              } >> "$GITHUB_STEP_SUMMARY"
+              ;;
             *) echo "Unknown suite: $SUITE" && exit 1 ;;
           esac
         env:

@@ -24,13 +24,16 @@ const CHALLENGE_MARKERS: { detail: string; pattern: RegExp }[] = [
 /**
  * Checks a page response for bot protection or an HTTP error.
  * @param params.headers - Response headers with lowercase names
+ * @param params.finalUrl - URL after redirects; empty when unknown
  */
 export function detectBlockedPage(params: {
   status: number
   headers: Record<string, string>
   html: string
+  requestedUrl: string
+  finalUrl: string
 }): BlockedPage | null {
-  const { status, headers, html } = params
+  const { status, headers, html, requestedUrl, finalUrl } = params
 
   if (BLOCKED_STATUSES.has(status)) {
     return { reason: 'blocked', detail: `HTTP ${status}` }
@@ -45,6 +48,10 @@ export function detectBlockedPage(params: {
   if (headers['cf-mitigated'] === 'challenge') {
     return { reason: 'blocked', detail: 'cf-mitigated header' }
   }
+  // Sites send dead article links to the homepage with status 200 (soft 404)
+  if (isRedirectToHomepage({ requestedUrl, finalUrl })) {
+    return { reason: 'http-error', detail: 'redirected to homepage' }
+  }
 
   const marker = findChallengeMarkup(html)
   return marker ? { reason: 'blocked', detail: marker } : null
@@ -53,4 +60,11 @@ export function detectBlockedPage(params: {
 /** Returns the vendor challenge found in the HTML, for callers that have no response status. */
 export function findChallengeMarkup(html: string): null | string {
   return CHALLENGE_MARKERS.find(({ pattern }) => pattern.test(html))?.detail ?? null
+}
+
+function isRedirectToHomepage(params: { requestedUrl: string; finalUrl: string }): boolean {
+  if (!params.finalUrl) {
+    return false
+  }
+  return new URL(params.requestedUrl).pathname !== '/' && new URL(params.finalUrl).pathname === '/'
 }
