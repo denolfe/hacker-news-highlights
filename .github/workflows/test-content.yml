@@ -1,0 +1,57 @@
+name: test-content
+
+# Runs live-site content fetch integration tests from GitHub's network, which bot
+# protection treats differently than local machines. Live sites change, so this
+# workflow is not a required check.
+on:
+  pull_request:
+    paths:
+      - 'src/hn/**'
+      - 'src/browser/**'
+      - '.github/workflows/test-content.yml'
+      - '.github/actions/setup-puppeteer/**'
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Integration suite to run'
+        required: false
+        default: 'story-fetch'
+        type: choice
+        options:
+          - story-fetch
+          - content-extraction
+          - all
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 23.6.0
+  PNPM_VERSION: 9.15.4
+
+jobs:
+  test-content:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Puppeteer
+        uses: ./.github/actions/setup-puppeteer
+
+      - name: Node setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+          pnpm-install-cache-key: pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+      - name: Run integration tests
+        run: |
+          case "$SUITE" in
+            story-fetch) pnpm test:content src/hn/storyFetch.integration.spec.ts ;;
+            content-extraction) pnpm test:content src/hn/contentExtraction.integration.spec.ts ;;
+            all) pnpm test:content ;;
+            *) echo "Unknown suite: $SUITE" && exit 1 ;;
+          esac
+        env:
+          SUITE: ${{ inputs.suite || 'story-fetch' }}

@@ -8,9 +8,34 @@ import { createPage, launchBrowser } from './index.js'
 
 const logger = childLogger('BROWSER')
 
+/** Thrown when the rendered page is a bot challenge or block page instead of real content. */
+export class BotProtectionError extends Error {
+  constructor(public readonly url: string) {
+    super(`Bot protection detected for ${url}`)
+  }
+}
+
+/** Minimum rendered text length for a page to count as real content (chars) */
+const MIN_CONTENT_LENGTH = 200
+
+/** Challenge pages are short; longer pages that mention these keywords are real articles */
+const MAX_CHALLENGE_PAGE_LENGTH = 2000
+
+const CHALLENGE_KEYWORDS = [
+  'verifying',
+  'validation required',
+  'access denied',
+  'please wait',
+  'checking your browser',
+  'just a moment',
+  'enable javascript',
+  'ray id',
+]
+
 /**
  * Fetches rendered HTML content from a URL using Puppeteer.
- * Handles SPAs, bot protection, and heavy pages with timeout fallback.
+ * Handles SPAs and heavy pages with timeout fallback.
+ * @throws {BotProtectionError} when the rendered page is a bot challenge or block page
  */
 export async function fetchContentWithBrowser(url: string): Promise<string> {
   logger.info(`Fetching content: ${url}`)
@@ -35,30 +60,26 @@ export async function fetchContentWithBrowser(url: string): Promise<string> {
     // Extra wait for SPAs to render content
     await new Promise(r => setTimeout(r, 2000))
 
-    // Check for bot protection (very little content or challenge keywords)
-    const isBotProtected = await page.evaluate(() => {
-      const text = document.body?.innerText?.toLowerCase() || ''
-      const hasLittleContent = text.length < 200
-      const challengeKeywords = [
-        'verifying',
-        'validation required',
-        'access denied',
-        'please wait',
-        'checking your browser',
-        'just a moment',
-        'enable javascript',
-        'ray id',
-      ]
-      const hasChallenge = challengeKeywords.some(kw => text.includes(kw))
-      return hasLittleContent || hasChallenge
-    })
-
-    if (isBotProtected) {
+    const text = await page.evaluate(() => document.body?.innerText ?? '')
+    if (isBotChallengeText(text)) {
       logger.warning(`Bot protection detected for ${url}`)
+      throw new BotProtectionError(url)
     }
 
     return await page.content()
   } finally {
     await browser.close()
   }
+}
+
+/** Detects bot challenge and block pages from rendered body text. */
+export function isBotChallengeText(text: string): boolean {
+  if (text.length < MIN_CONTENT_LENGTH) {
+    return true
+  }
+  if (text.length > MAX_CHALLENGE_PAGE_LENGTH) {
+    return false
+  }
+  const lowerText = text.toLowerCase()
+  return CHALLENGE_KEYWORDS.some(keyword => lowerText.includes(keyword))
 }

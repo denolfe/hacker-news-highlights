@@ -1,13 +1,18 @@
-import { fetchContentWithBrowser } from '@/browser/fetchContent.js'
+import { BotProtectionError, fetchContentWithBrowser } from '@/browser/fetchContent.js'
 import { faker } from '@faker-js/faker'
 import { readFileSync } from 'node:fs'
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { disableCache, jsonResponse, textResponse } from '../test-utils.js'
 import { fetchTopStories, resolveStorySource } from './index.js'
 
-vi.mock('@/browser/fetchContent.js', () => ({ fetchContentWithBrowser: vi.fn() }))
+vi.mock('@/browser/fetchContent.js', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/browser/fetchContent.js')>()),
+  fetchContentWithBrowser: vi.fn(),
+}))
 
 const SPA_SHELL_HTML = '<!doctype html><html><body><div id="root"></div></body></html>'
+const ACCESS_DENIED_HTML = `<html><body><h1>Access Denied</h1><p>${'You do not have permission to access this server. '.repeat(6)}</p></body></html>`
+const BLOCKED_URL = 'https://example.com/blocked'
 
 describe('hn', () => {
   beforeAll(() => {
@@ -80,17 +85,46 @@ describe('hn', () => {
 
   test('fetchTopStories - renders with browser when plain fetch is rejected', async () => {
     vi.mocked(fetchContentWithBrowser).mockResolvedValue(makeStoryHtml())
-    const accessDeniedHtml = `<html><body><h1>Access Denied</h1><p>${'You do not have permission to access this server. '.repeat(6)}</p></body></html>`
     global.fetch = mockHnFetch({
-      storyUrl: 'https://example.com/blocked',
-      storyHtml: accessDeniedHtml,
+      storyUrl: BLOCKED_URL,
+      storyHtml: ACCESS_DENIED_HTML,
       storyStatus: 403,
     })
 
     const topStories = await fetchTopStories(1)
 
-    expect(fetchContentWithBrowser).toHaveBeenCalledWith('https://example.com/blocked')
+    expect(fetchContentWithBrowser).toHaveBeenCalledWith(BLOCKED_URL)
     expect(topStories[0]?.content).toContain('Comment 1')
+  })
+
+  test('fetchTopStories - renders with browser when plain fetch throws', async () => {
+    vi.mocked(fetchContentWithBrowser).mockResolvedValue(makeStoryHtml())
+    const hnFetch = mockHnFetch({ storyUrl: BLOCKED_URL, storyHtml: '' })
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url === BLOCKED_URL) {
+        return Promise.reject(new TypeError('fetch failed'))
+      }
+      return hnFetch(url)
+    })
+
+    const topStories = await fetchTopStories(1)
+
+    expect(fetchContentWithBrowser).toHaveBeenCalledWith(BLOCKED_URL)
+    expect(topStories[0]?.content).toContain('Comment 1')
+  })
+
+  test('fetchTopStories - keeps story with empty content when every fetch is blocked', async () => {
+    vi.mocked(fetchContentWithBrowser).mockRejectedValue(new BotProtectionError(BLOCKED_URL))
+    global.fetch = mockHnFetch({
+      storyUrl: BLOCKED_URL,
+      storyHtml: ACCESS_DENIED_HTML,
+      storyStatus: 403,
+    })
+
+    const topStories = await fetchTopStories(1)
+
+    expect(topStories).toHaveLength(1)
+    expect(topStories[0]).toMatchObject({ content: '', url: BLOCKED_URL, source: 'example.com' })
   })
 
   test('fetchTopStories - keeps fetched HTML when browser fallback fails', async () => {
