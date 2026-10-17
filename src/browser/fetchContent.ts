@@ -2,40 +2,42 @@
  * Fetch page content using Puppeteer for JS-rendered sites and bot-protected pages.
  * Falls back gracefully on timeout using domcontentloaded.
  */
+import type { HTTPResponse } from 'puppeteer'
+
 import { childLogger } from '@/utils/log.js'
 
+import type { BlockedPage } from './detectBlockedPage.js'
+
+import { detectBlockedPage } from './detectBlockedPage.js'
 import { createPage, launchBrowser } from './index.js'
 
 const logger = childLogger('BROWSER')
 
-/** Thrown when the rendered page is a bot challenge or block page instead of real content. */
-export class BotProtectionError extends Error {
-  constructor(public readonly url: string) {
-    super(`Bot protection detected for ${url}`)
+/** Thrown when the rendered page is a block page, an HTTP error, or has too little text. */
+export class UnusablePageError extends Error {
+  public readonly detail: string
+  public readonly reason: 'insufficient-content' | BlockedPage['reason']
+  public readonly url: string
+
+  constructor(params: {
+    url: string
+    reason: 'insufficient-content' | BlockedPage['reason']
+    detail: string
+  }) {
+    super(`Unusable page (${params.reason}: ${params.detail}) for ${params.url}`)
+    this.url = params.url
+    this.reason = params.reason
+    this.detail = params.detail
   }
 }
 
 /** Minimum rendered text length for a page to count as real content (chars) */
 const MIN_CONTENT_LENGTH = 200
 
-/** Challenge pages are short; longer pages that mention these keywords are real articles */
-const MAX_CHALLENGE_PAGE_LENGTH = 2000
-
-const CHALLENGE_KEYWORDS = [
-  'verifying',
-  'validation required',
-  'access denied',
-  'please wait',
-  'checking your browser',
-  'just a moment',
-  'enable javascript',
-  'ray id',
-]
-
 /**
  * Fetches rendered HTML content from a URL using Puppeteer.
  * Handles SPAs and heavy pages with timeout fallback.
- * @throws {BotProtectionError} when the rendered page is a bot challenge or block page
+ * @throws {UnusablePageError} when the final page is blocked, an HTTP error, or nearly empty
  */
 export async function fetchContentWithBrowser(url: string): Promise<string> {
   logger.info(`Fetching content: ${url}`)
@@ -43,6 +45,17 @@ export async function fetchContentWithBrowser(url: string): Promise<string> {
   const browser = await launchBrowser()
   try {
     const page = await createPage(browser)
+
+    // A challenge that solves itself navigates again, so `goto()` returns the challenge response
+    let finalResponse: HTTPResponse | null = null
+    page.on('response', response => {
+      const isMainDocument =
+        response.request().isNavigationRequest() && response.frame() === page.mainFrame()
+      const isRedirect = response.status() >= 300 && response.status() < 400
+      if (isMainDocument && !isRedirect) {
+        finalResponse = response
+      }
+    })
 
     // Try networkidle0 first (waits for all network requests to settle)
     // Fall back to domcontentloaded on timeout (works for heavy pages like GitHub)
@@ -60,26 +73,34 @@ export async function fetchContentWithBrowser(url: string): Promise<string> {
     // Extra wait for SPAs to render content
     await new Promise(r => setTimeout(r, 2000))
 
-    const text = await page.evaluate(() => document.body?.innerText ?? '')
-    if (isBotChallengeText(text)) {
-      logger.warning(`Bot protection detected for ${url}`)
-      throw new BotProtectionError(url)
+    const html = await page.content()
+    const status = getStatus(finalResponse)
+    logger.info(`Rendered ${url}: HTTP ${status}`)
+
+    const blocked = detectBlockedPage({ status, headers: getHeaders(finalResponse), html })
+    if (blocked) {
+      logger.warning(`Unusable page (${blocked.reason}: ${blocked.detail}) for ${url}`)
+      throw new UnusablePageError({ url, ...blocked })
     }
 
-    return await page.content()
+    const text = await page.evaluate(() => document.body?.innerText ?? '')
+    if (text.length < MIN_CONTENT_LENGTH) {
+      const detail = `${text.length} chars of text`
+      logger.warning(`Unusable page (insufficient-content: ${detail}) for ${url}`)
+      throw new UnusablePageError({ url, reason: 'insufficient-content', detail })
+    }
+
+    return html
   } finally {
     await browser.close()
   }
 }
 
-/** Detects bot challenge and block pages from rendered body text. */
-export function isBotChallengeText(text: string): boolean {
-  if (text.length < MIN_CONTENT_LENGTH) {
-    return true
-  }
-  if (text.length > MAX_CHALLENGE_PAGE_LENGTH) {
-    return false
-  }
-  const lowerText = text.toLowerCase()
-  return CHALLENGE_KEYWORDS.some(keyword => lowerText.includes(keyword))
+/** Status of the final main-frame response, or 0 when the page loaded without one */
+function getStatus(response: HTTPResponse | null): number {
+  return response?.status() ?? 0
+}
+
+function getHeaders(response: HTTPResponse | null): Record<string, string> {
+  return response?.headers() ?? {}
 }

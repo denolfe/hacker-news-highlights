@@ -5,7 +5,6 @@
  *
  * Run with: pnpm test:content src/hn/storyFetch.integration.spec.ts
  */
-import { isBotChallengeText } from '@/browser/fetchContent.js'
 import { beforeAll, describe, expect, it } from 'vitest'
 
 import { disableCache } from '../test-utils.js'
@@ -24,6 +23,16 @@ const STORY_CASES: Record<string, StoryCase[]> = {
     {
       name: 'Cloudflare challenge (Substack)',
       url: 'https://mapwriting.substack.com/p/dentists',
+      expected: 'content-or-empty',
+    },
+    {
+      name: 'Large Cloudflare challenge (FT)',
+      url: 'https://www.ft.com/',
+      expected: 'content-or-empty',
+    },
+    {
+      name: 'Anubis challenge with status 200 (lore.kernel.org)',
+      url: 'https://lore.kernel.org/',
       expected: 'content-or-empty',
     },
   ],
@@ -72,6 +81,13 @@ const MIN_CONTENT_LENGTH = 200
 /** X posts are short */
 const MIN_X_POST_LENGTH = 50
 
+/** Text from the real block pages above, as Readability extracts it */
+const BLOCK_PAGE_PHRASES = [
+  "You don't have permission to access",
+  'Performing security verification',
+  "Making sure you're not a bot",
+]
+
 describe('fetchStoryContent', () => {
   beforeAll(() => {
     disableCache()
@@ -86,9 +102,8 @@ describe('fetchStoryContent', () => {
         return
       }
       expect(content.length).toBeGreaterThanOrEqual(getMinLength(url))
-      // Short X posts would read as too-little-text pages
-      if (content.length >= MIN_CONTENT_LENGTH) {
-        expect(isBotChallengeText(content)).toBe(false)
+      for (const phrase of BLOCK_PAGE_PHRASES) {
+        expect(content).not.toContain(phrase)
       }
     })
   })

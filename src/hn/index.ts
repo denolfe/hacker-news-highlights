@@ -1,5 +1,6 @@
 import type { Comment, CoveredStory, ResponseData, SlimComment, StoryOutput } from '@/types.js'
 
+import { detectBlockedPage } from '@/browser/detectBlockedPage.js'
 import { fetchContentWithBrowser } from '@/browser/fetchContent.js'
 import { shouldUsePuppeteerFirst } from '@/browser/puppeteerDomains.js'
 import { getOrCompute, readFromCache, writeToCache } from '@/utils/cache.js'
@@ -255,7 +256,7 @@ export async function fetchStoryContent(params: {
 
 /**
  * Fetches story HTML, rendering with Puppeteer for known problem domains and for
- * plain fetches that throw or return non-OK, SPA shell, or bot-protection pages.
+ * plain fetches that throw or return blocked, HTTP error, or SPA shell pages.
  * X/Twitter posts come from post APIs because rendered pages mix in replies.
  */
 export async function fetchStoryHtml(url: string): Promise<string> {
@@ -281,17 +282,23 @@ export async function fetchStoryHtml(url: string): Promise<string> {
     return fetchContentWithBrowser(url)
   }
   const html = await response.text()
-  if (response.ok && !needsBrowserFetch(html)) {
+  const blocked = detectBlockedPage({
+    status: response.status,
+    headers: Object.fromEntries(response.headers),
+    html,
+  })
+  if (!blocked && !needsBrowserFetch(html)) {
     return html
   }
 
-  logger.info(`Plain fetch insufficient (HTTP ${response.status}), trying browser: ${url}`)
+  // A real browser may pass challenges that plain fetch cannot
+  const reason = blocked ? `${blocked.reason}: ${blocked.detail}` : 'SPA shell or little text'
+  logger.info(`Plain fetch insufficient (${reason}), trying browser: ${url}`)
   try {
     return await fetchContentWithBrowser(url)
   } catch (error) {
     logger.warning(`Browser fallback failed: ${String(error)}`)
-    // A non-OK body is an error or block page, not story content
-    return response.ok ? html : ''
+    return blocked ? '' : html
   }
 }
 

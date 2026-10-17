@@ -1,4 +1,4 @@
-import { BotProtectionError, fetchContentWithBrowser } from '@/browser/fetchContent.js'
+import { fetchContentWithBrowser, UnusablePageError } from '@/browser/fetchContent.js'
 import { faker } from '@faker-js/faker'
 import { readFileSync } from 'node:fs'
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -113,8 +113,49 @@ describe('hn', () => {
     expect(topStories[0]?.content).toContain('Comment 1')
   })
 
+  test('fetchTopStories - renders with browser when plain fetch gets a 200 challenge page', async () => {
+    vi.mocked(fetchContentWithBrowser).mockResolvedValue(makeStoryHtml())
+    global.fetch = mockHnFetch({
+      storyUrl: BLOCKED_URL,
+      storyHtml: readPageFixture('anubis-challenge.html'),
+    })
+
+    const topStories = await fetchTopStories(1)
+
+    expect(fetchContentWithBrowser).toHaveBeenCalledWith(BLOCKED_URL)
+    expect(topStories[0]?.content).toContain('Comment 1')
+  })
+
+  test('fetchTopStories - renders with browser when plain fetch gets an AWS WAF challenge', async () => {
+    vi.mocked(fetchContentWithBrowser).mockResolvedValue(makeStoryHtml())
+    global.fetch = mockHnFetch({
+      storyUrl: BLOCKED_URL,
+      storyHtml: makeStoryHtml(),
+      storyStatus: 202,
+      storyHeaders: { 'x-amzn-waf-action': 'challenge' },
+    })
+
+    await fetchTopStories(1)
+
+    expect(fetchContentWithBrowser).toHaveBeenCalledWith(BLOCKED_URL)
+  })
+
+  test('fetchTopStories - drops a 200 challenge page when the browser also fails', async () => {
+    vi.mocked(fetchContentWithBrowser).mockRejectedValue(new Error('browser crashed'))
+    global.fetch = mockHnFetch({
+      storyUrl: BLOCKED_URL,
+      storyHtml: readPageFixture('anubis-challenge.html'),
+    })
+
+    const topStories = await fetchTopStories(1)
+
+    expect(topStories[0]?.content).toBe('')
+  })
+
   test('fetchTopStories - keeps story with empty content when every fetch is blocked', async () => {
-    vi.mocked(fetchContentWithBrowser).mockRejectedValue(new BotProtectionError(BLOCKED_URL))
+    vi.mocked(fetchContentWithBrowser).mockRejectedValue(
+      new UnusablePageError({ url: BLOCKED_URL, reason: 'blocked', detail: 'HTTP 403' }),
+    )
     global.fetch = mockHnFetch({
       storyUrl: BLOCKED_URL,
       storyHtml: ACCESS_DENIED_HTML,
@@ -190,8 +231,13 @@ describe('resolveStorySource', () => {
   })
 })
 
-function mockHnFetch(params: { storyHtml: string; storyStatus?: number; storyUrl: string }) {
-  const { storyHtml, storyStatus = 200, storyUrl } = params
+function mockHnFetch(params: {
+  storyHeaders?: Record<string, string>
+  storyHtml: string
+  storyStatus?: number
+  storyUrl: string
+}) {
+  const { storyHeaders, storyHtml, storyStatus = 200, storyUrl } = params
   return vi.fn().mockImplementation((url: string) => {
     if (url.startsWith('https://hn.algolia.com/api/v1/search?')) {
       return jsonResponse({
@@ -201,8 +247,12 @@ function mockHnFetch(params: { storyHtml: string; storyStatus?: number; storyUrl
     if (url.startsWith('https://hn.algolia.com/api/v1/items/')) {
       return jsonResponse(makeStoryDataById())
     }
-    return Promise.resolve(new Response(storyHtml, { status: storyStatus }))
+    return Promise.resolve(new Response(storyHtml, { status: storyStatus, headers: storyHeaders }))
   })
+}
+
+function readPageFixture(name: string): string {
+  return readFileSync(new URL(`../browser/__fixtures__/pages/${name}`, import.meta.url), 'utf8')
 }
 
 function readXFixture(name: string): string {
