@@ -6,9 +6,13 @@ import type { HTTPResponse } from 'puppeteer'
 
 import { childLogger } from '@/utils/log.js'
 
-import type { BlockedPage } from './detectBlockedPage.js'
+import type { BlockedPage, Navigation } from './detectBlockedPage.js'
 
-import { detectBlockedPage } from './detectBlockedPage.js'
+import {
+  classifyErrorStatus,
+  detectBlockedPage,
+  findAbandonedErrorResponse,
+} from './detectBlockedPage.js'
 import { createPage, launchBrowser } from './index.js'
 
 const logger = childLogger('BROWSER')
@@ -48,12 +52,14 @@ export async function fetchContentWithBrowser(url: string): Promise<string> {
 
     // A challenge that solves itself navigates again, so `goto()` returns the challenge response
     let finalResponse: HTTPResponse | null = null
+    const navigations: Navigation[] = []
     page.on('response', response => {
       const isMainDocument =
         response.request().isNavigationRequest() && response.frame() === page.mainFrame()
       const isRedirect = response.status() >= 300 && response.status() < 400
       if (isMainDocument && !isRedirect) {
         finalResponse = response
+        navigations.push({ status: response.status(), url: response.url() })
       }
     })
 
@@ -77,13 +83,11 @@ export async function fetchContentWithBrowser(url: string): Promise<string> {
     const status = getStatus(finalResponse)
     logger.info(`Rendered ${url}: HTTP ${status}`)
 
-    const blocked = detectBlockedPage({
-      status,
-      headers: getHeaders(finalResponse),
-      html,
-      requestedUrl: url,
-      finalUrl: page.url(),
-    })
+    const abandoned = findAbandonedErrorResponse(navigations)
+    const abandonedError = abandoned && classifyErrorStatus(abandoned.status)
+    const blocked = abandonedError
+      ? { ...abandonedError, detail: `${abandonedError.detail}, then redirected to ${page.url()}` }
+      : detectBlockedPage({ status, headers: getHeaders(finalResponse), html })
     if (blocked) {
       logger.warning(`Unusable page (${blocked.reason}: ${blocked.detail}) for ${url}`)
       throw new UnusablePageError({ url, ...blocked })

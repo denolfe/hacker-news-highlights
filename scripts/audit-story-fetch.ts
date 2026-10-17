@@ -74,8 +74,6 @@ async function describePlainFetch(url: string): Promise<string> {
       status: response.status,
       headers: Object.fromEntries(response.headers),
       html,
-      requestedUrl: url,
-      finalUrl: response.url,
     })
     if (blocked) {
       return `${blocked.reason} (${blocked.detail})`

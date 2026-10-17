@@ -21,25 +21,23 @@ const CHALLENGE_MARKERS: { detail: string; pattern: RegExp }[] = [
   { detail: 'Anubis challenge', pattern: /id="anubis_challenge"/ },
 ]
 
+/** A main-frame document response from one navigation */
+export type Navigation = { status: number; url: string }
+
 /**
  * Checks a page response for bot protection or an HTTP error.
  * @param params.headers - Response headers with lowercase names
- * @param params.finalUrl - URL after redirects; empty when unknown
  */
 export function detectBlockedPage(params: {
   status: number
   headers: Record<string, string>
   html: string
-  requestedUrl: string
-  finalUrl: string
 }): BlockedPage | null {
-  const { status, headers, html, requestedUrl, finalUrl } = params
+  const { status, headers, html } = params
 
-  if (BLOCKED_STATUSES.has(status)) {
-    return { reason: 'blocked', detail: `HTTP ${status}` }
-  }
-  if (status >= 400) {
-    return { reason: 'http-error', detail: `HTTP ${status}` }
+  const statusError = classifyErrorStatus(status)
+  if (statusError) {
+    return statusError
   }
   // AWS WAF challenges use 202 and CAPTCHAs use 405
   if (headers['x-amzn-waf-action']) {
@@ -48,13 +46,41 @@ export function detectBlockedPage(params: {
   if (headers['cf-mitigated'] === 'challenge') {
     return { reason: 'blocked', detail: 'cf-mitigated header' }
   }
-  // Sites send dead article links to the homepage with status 200 (soft 404)
-  if (isRedirectToHomepage({ requestedUrl, finalUrl })) {
-    return { reason: 'http-error', detail: 'redirected to homepage' }
-  }
 
   const marker = findChallengeMarkup(html)
   return marker ? { reason: 'blocked', detail: marker } : null
+}
+
+/**
+ * Finds an error response that the page left for another URL, such as a 404 that redirects
+ * to the homepage (soft 404). An error URL that later loads successfully is a solved
+ * challenge and does not count.
+ * @param navigations - Main-frame document responses in load order, without redirects
+ */
+export function findAbandonedErrorResponse(navigations: Navigation[]): Navigation | null {
+  const final = navigations.at(-1)
+  if (!final) {
+    return null
+  }
+  return (
+    navigations.find(
+      error =>
+        error.status >= 400 &&
+        !isSameUrl(error.url, final.url) &&
+        !navigations.some(later => later.status < 400 && isSameUrl(later.url, error.url)),
+    ) ?? null
+  )
+}
+
+/** Classifies an error status; null for a success status */
+export function classifyErrorStatus(status: number): BlockedPage | null {
+  if (BLOCKED_STATUSES.has(status)) {
+    return { reason: 'blocked', detail: `HTTP ${status}` }
+  }
+  if (status >= 400) {
+    return { reason: 'http-error', detail: `HTTP ${status}` }
+  }
+  return null
 }
 
 /** Returns the vendor challenge found in the HTML, for callers that have no response status. */
@@ -62,9 +88,6 @@ export function findChallengeMarkup(html: string): null | string {
   return CHALLENGE_MARKERS.find(({ pattern }) => pattern.test(html))?.detail ?? null
 }
 
-function isRedirectToHomepage(params: { requestedUrl: string; finalUrl: string }): boolean {
-  if (!params.finalUrl) {
-    return false
-  }
-  return new URL(params.requestedUrl).pathname !== '/' && new URL(params.finalUrl).pathname === '/'
+function isSameUrl(a: string, b: string): boolean {
+  return a.split('#')[0] === b.split('#')[0]
 }

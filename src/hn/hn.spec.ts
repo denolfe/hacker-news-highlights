@@ -140,20 +140,6 @@ describe('hn', () => {
     expect(fetchContentWithBrowser).toHaveBeenCalledWith(BLOCKED_URL)
   })
 
-  test('fetchTopStories - drops an article that redirects to the homepage', async () => {
-    vi.mocked(fetchContentWithBrowser).mockRejectedValue(new Error('browser crashed'))
-    global.fetch = mockHnFetch({
-      storyUrl: BLOCKED_URL,
-      storyHtml: makeStoryHtml(),
-      storyFinalUrl: 'https://example.com/?err=404',
-    })
-
-    const topStories = await fetchTopStories(1)
-
-    expect(fetchContentWithBrowser).toHaveBeenCalledWith(BLOCKED_URL)
-    expect(topStories[0]?.content).toBe('')
-  })
-
   test('fetchTopStories - drops a 200 challenge page when the browser also fails', async () => {
     vi.mocked(fetchContentWithBrowser).mockRejectedValue(new Error('browser crashed'))
     global.fetch = mockHnFetch({
@@ -246,14 +232,12 @@ describe('resolveStorySource', () => {
 })
 
 function mockHnFetch(params: {
-  /** URL after redirects; `Response` leaves it empty unless set */
-  storyFinalUrl?: string
   storyHeaders?: Record<string, string>
   storyHtml: string
   storyStatus?: number
   storyUrl: string
 }) {
-  const { storyFinalUrl = '', storyHeaders, storyHtml, storyStatus = 200, storyUrl } = params
+  const { storyHeaders, storyHtml, storyStatus = 200, storyUrl } = params
   return vi.fn().mockImplementation((url: string) => {
     if (url.startsWith('https://hn.algolia.com/api/v1/search?')) {
       return jsonResponse({
@@ -263,9 +247,7 @@ function mockHnFetch(params: {
     if (url.startsWith('https://hn.algolia.com/api/v1/items/')) {
       return jsonResponse(makeStoryDataById())
     }
-    const response = new Response(storyHtml, { status: storyStatus, headers: storyHeaders })
-    Object.defineProperty(response, 'url', { value: storyFinalUrl })
-    return Promise.resolve(response)
+    return Promise.resolve(new Response(storyHtml, { status: storyStatus, headers: storyHeaders }))
   })
 }
 
