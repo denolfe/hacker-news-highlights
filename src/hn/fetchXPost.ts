@@ -65,7 +65,7 @@ export function parseXStatusUrl(url: string): null | XStatus {
   }
 }
 
-/** Fetches an X post and returns minimal HTML for Readability parsing. */
+/** Fetches an X post and returns minimal HTML for Readability parsing, or '' when unavailable. */
 export async function fetchXPostHtml(url: string): Promise<string> {
   const status = parseXStatusUrl(url)
   if (!status) {
@@ -186,24 +186,25 @@ function syndicationToken(statusId: string): string {
   return ((Number(statusId) / 1e15) * Math.PI).toString(36).replace(/0+|\./g, '')
 }
 
+/** Empty when no source has the post, so the story counts as having no content */
 function renderPostHtml(post: null | XPost): string {
+  if (!post) {
+    return ''
+  }
   const { document } = new JSDOM(
     '<!doctype html><html><head></head><body><article></article></body></html>',
   ).window
   const article = document.querySelector('article')
-  const paragraphs = post?.paragraphs ?? ['No content found for this story']
 
-  for (const text of paragraphs) {
+  for (const text of post.paragraphs) {
     const p = document.createElement('p')
     p.textContent = text
     article?.append(p)
   }
-  if (post) {
-    document.title = `${post.authorName} on X`
-    const siteName = document.createElement('meta')
-    siteName.setAttribute('property', 'og:site_name')
-    siteName.setAttribute('content', 'X')
-    document.head.append(siteName)
-  }
+  document.title = `${post.authorName} on X`
+  const siteName = document.createElement('meta')
+  siteName.setAttribute('property', 'og:site_name')
+  siteName.setAttribute('content', 'X')
+  document.head.append(siteName)
   return `<!doctype html>${document.documentElement.outerHTML}`
 }

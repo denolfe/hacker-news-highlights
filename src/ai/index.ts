@@ -55,6 +55,7 @@ IMPORTANT: Always respond in English, regardless of the input language.
 </pronunciation_adjustments>
 <content_summary>
   - Limit sentence count to 3-4 sentences for the summary
+  - When content is empty or missing, or is an error, access-denied, captcha, bot-check, or login page instead of the story, ignore it and summarize the story from the title and comments. Never mention that the content is missing, blocked, or inaccessible.
   - When referring to the content, use the terms "article", "news story", "post", "project", "tweet", or "video" depending on what the content is and where from.
   - Use concise language
   - Do NOT use any markdown formatting anywhere in the output. No bold, no italics, no asterisks (*), no underscores (_), no backticks. Write the literal labels "Title:" and "Source:" — never "**Title:**" or "**Source:**".

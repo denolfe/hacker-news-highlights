@@ -1,3 +1,4 @@
+import { findChallengeMarkup } from '@/browser/detectBlockedPage.js'
 import { fetchContentWithBrowser } from '@/browser/fetchContent.js'
 import { shouldUsePuppeteerFirst } from '@/browser/puppeteerDomains.js'
 import { childLogger } from '@/utils/log.js'
@@ -17,15 +18,8 @@ type ParseReturnType = Pick<
 /** Minimum content length to consider extraction successful (chars) */
 const MIN_CONTENT_LENGTH = 200
 
-/** Patterns indicating SPA or bot-protected pages that need browser rendering */
-const SPA_INDICATORS = [
-  '<div id="app"></div>',
-  '<div id="root"></div>',
-  'please enable javascript',
-  'enable js and disable any ad blocker',
-  'checking your browser',
-  'captcha-delivery.com',
-]
+/** Patterns indicating SPA shells that need browser rendering */
+const SPA_INDICATORS = ['<div id="app"></div>', '<div id="root"></div>', 'please enable javascript']
 
 /**
  * Parse the HTML content of a site and extract the main text content, byline, excerpt, and site name.
@@ -121,10 +115,8 @@ export function needsBrowserFetch(
 ): boolean {
   const textLength = parsed?.textContent?.length ?? 0
 
-  // Check for SPA/bot indicators in raw HTML
   const htmlLower = html.toLowerCase()
   const hasSpaIndicator = SPA_INDICATORS.some(indicator => htmlLower.includes(indicator))
 
-  // Consider it failed if content is too short or has SPA indicators
-  return textLength < MIN_CONTENT_LENGTH || hasSpaIndicator
+  return textLength < MIN_CONTENT_LENGTH || hasSpaIndicator || findChallengeMarkup(html) !== null
 }

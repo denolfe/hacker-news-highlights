@@ -1,5 +1,6 @@
 import type { Comment, CoveredStory, ResponseData, SlimComment, StoryOutput } from '@/types.js'
 
+import { detectBlockedPage } from '@/browser/detectBlockedPage.js'
 import { fetchContentWithBrowser } from '@/browser/fetchContent.js'
 import { shouldUsePuppeteerFirst } from '@/browser/puppeteerDomains.js'
 import { getOrCompute, readFromCache, writeToCache } from '@/utils/cache.js'
@@ -117,8 +118,6 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   for (const [i, story] of filtered.entries()) {
     const comments = await fetchHnCommentsById(story.storyId)
     logger.info(`[${i + 1}/${filtered.length}] ${story.storyId} - ${story.title} - ${story.url}`)
-    const cacheKey = 'story-' + story.storyId.toString()
-
     const baseStoryOutput: Pick<
       StoryOutput,
       'comments' | 'hnUrl' | 'points' | 'storyId' | 'title'
@@ -145,51 +144,12 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
       continue
     }
 
-    const { url } = story
-    let storyContent: string
-    try {
-      storyContent = await getOrCompute(cacheKey, async () => {
-        let content: null | string
-        if (url.endsWith('.pdf')) {
-          logger.info('Link is a PDF, parsing PDF content...')
-          content = await fetchPdfText(url)
-        } else {
-          content = await fetchStoryHtml(url)
-        }
-        if (!content) {
-          throw new EmptyContentError(url)
-        }
-        return content
-      })
-    } catch (error) {
-      if (error instanceof EmptyContentError) {
-        logger.warning(`No content found for ${error.url} - story will be incomplete`)
-      } else {
-        logger.error(
-          `Failed to fetch content for ${url}: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-        )
-      }
-      continue
-    }
-
-    const { textContent, byline, excerpt, siteName } = await parseSiteContent(storyContent)
-    const source = resolveStorySource({ byline, siteName, title: story.title, url: story.url })
-
-    logger.info({
-      msg: 'Parsed site content',
+    const { content, source } = await fetchStoryContent({
       storyId: story.storyId,
-      byline,
-      excerpt,
-      siteName,
-      source,
-    })
-
-    output.push({
-      content: textContent || excerpt || '',
+      title: story.title,
       url: story.url,
-      source,
-      ...baseStoryOutput,
     })
+    output.push({ content, url: story.url, source, ...baseStoryOutput })
   }
 
   return output
@@ -251,8 +211,52 @@ export function resolveStorySource(params: {
 }
 
 /**
+ * Fetches a story link and extracts its text and spoken source.
+ * Content is empty when the fetch fails or is blocked, so the summary uses the title and comments.
+ */
+export async function fetchStoryContent(params: {
+  storyId: number
+  title: string
+  url: string
+}): Promise<Pick<StoryOutput, 'content' | 'source'>> {
+  const { storyId, title, url } = params
+  let storyContent: string
+  try {
+    storyContent = await getOrCompute(`story-${storyId}`, async () => {
+      let content: null | string
+      if (url.endsWith('.pdf')) {
+        logger.info('Link is a PDF, parsing PDF content...')
+        content = await fetchPdfText(url)
+      } else {
+        content = await fetchStoryHtml(url)
+      }
+      if (!content) {
+        throw new EmptyContentError(url)
+      }
+      return content
+    })
+  } catch (error) {
+    if (error instanceof EmptyContentError) {
+      logger.warning(`No content found for ${error.url} - summary will use title and comments`)
+    } else {
+      logger.error(
+        `Failed to fetch content for ${url}: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
+      )
+    }
+    return { content: '', source: resolveStorySource({ title, url }) }
+  }
+
+  const { textContent, byline, excerpt, siteName } = await parseSiteContent(storyContent)
+  const source = resolveStorySource({ byline, siteName, title, url })
+
+  logger.info({ msg: 'Parsed site content', storyId, byline, excerpt, siteName, source })
+
+  return { content: textContent || excerpt || '', source }
+}
+
+/**
  * Fetches story HTML, rendering with Puppeteer for known problem domains and for
- * plain-fetch results that are non-OK, SPA shells, or bot-protection pages.
+ * plain fetches that throw or return blocked, HTTP error, or SPA shell pages.
  * X/Twitter posts come from post APIs because rendered pages mix in replies.
  */
 export async function fetchStoryHtml(url: string): Promise<string> {
@@ -269,18 +273,32 @@ export async function fetchStoryHtml(url: string): Promise<string> {
     }
   }
 
-  const response = await fetchWithTimeoutAndRetry(url)
+  let response: Response
+  try {
+    response = await fetchWithTimeoutAndRetry(url)
+  } catch {
+    // Node fetch rejects some responses that browsers accept, such as oversized headers
+    logger.info(`Plain fetch failed, trying browser: ${url}`)
+    return fetchContentWithBrowser(url)
+  }
   const html = await response.text()
-  if (response.ok && !needsBrowserFetch(html)) {
+  const blocked = detectBlockedPage({
+    status: response.status,
+    headers: Object.fromEntries(response.headers),
+    html,
+  })
+  if (!blocked && !needsBrowserFetch(html)) {
     return html
   }
 
-  logger.info(`Plain fetch insufficient (HTTP ${response.status}), trying browser: ${url}`)
+  // A real browser may pass challenges that plain fetch cannot
+  const reason = blocked ? `${blocked.reason}: ${blocked.detail}` : 'SPA shell or little text'
+  logger.info(`Plain fetch insufficient (${reason}), trying browser: ${url}`)
   try {
     return await fetchContentWithBrowser(url)
   } catch (error) {
     logger.warning(`Browser fallback failed: ${String(error)}`)
-    return html
+    return blocked ? '' : html
   }
 }
 
