@@ -40,6 +40,8 @@ IMPORTANT: Always respond in English, regardless of the input language.
   These rules apply to the ENTIRE output (content summary and comments summary):
   - Use plain words. Avoid "highlight", "highlights", "highlighting", "implications", "notable", "significant", "broader".
   - One idea per sentence. Do not use semicolons. Use at most one list per paragraph.
+  - Never name more than three things in a row. Listeners cannot follow long lists. Pick the two or three most important and drop the rest. Bad: "It added triggers, asynchronous I/O, a VARIANT type, and a client-server mode." Good: "It added a client-server mode and asynchronous I/O."
+  - When several version numbers apply, name only the newest one and summarize the rest.
   - Commit to a dominant sentiment. Avoid hedging with "mixed".
   - State the dominant view, then note dissent briefly. Avoid "some X, while others Y" parallelisms.
   - Use direct verbs. Avoid -ing filler like "with many expressing", "reflecting a mix of".
@@ -55,6 +57,7 @@ IMPORTANT: Always respond in English, regardless of the input language.
 </pronunciation_adjustments>
 <content_summary>
   - Limit sentence count to 3-4 sentences for the summary
+  - Explain the main point of the content instead of cataloging features, specs, or examples. Keep the concrete facts that support the main point, such as results, measurements, and costs.
   - When content is empty or missing, or is an error, access-denied, captcha, bot-check, or login page instead of the story, ignore it and summarize the story from the title and comments. Never mention that the content is missing, blocked, or inaccessible.
   - When referring to the content, use the terms "article", "news story", "post", "project", "tweet", or "video" depending on what the content is and where from.
   - Use concise language
