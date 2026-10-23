@@ -110,6 +110,18 @@ jobs:
             !output/*.mp4
           retention-days: 7
 
+      # Separate from output-and-cache so text transcripts keep for analysis at max
+      # retention (90d) without also keeping ~45MB of audio/screenshots per run.
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: transcripts
+          path: |
+            output/transcript.txt
+            output/show-notes.txt
+          retention-days: 90
+          if-no-files-found: ignore
+
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
