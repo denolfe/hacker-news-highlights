@@ -101,14 +101,15 @@ function applyPronunciationRules(text: string): string {
       .replace(/(\d)\s?(?:t|tok)\/s\b/gi, '$1 tokens per second')
 
       // Convert version numbers (e.g., "GPT-5.2" -> "GPT-5-point-2", "4.0.0" -> "4-point-0-point-0")
-      .replace(/\b[a-z0-9-]+(?:\.\d+)+/gi, match => {
+      // Skips currency amounts ("$2.5M", "$10.50") since TTS normalizes those itself
+      .replace(/(?<!\$)\b[a-z0-9-]+(?:\.\d+)+/gi, match => {
         // Replace all dots with "-point-"
         return match.replace(/\./g, '-point-')
       })
 
       // For words with a '.' followed by a comma, ElevenLabs pronounces the word 'comma'.
       // Replace all '.' with '-' to prevent this
-      .replace(/\b\w[\w|.]+(?=,)\b/g, match => match.replaceAll('.', '-'))
+      .replace(/(?<!\$)\b\w[\w|.]+(?=,)\b/g, match => match.replaceAll('.', '-'))
 
       // Remove any special characters that will never be pronounced properly such as "•" or "|"
       .replace(/[•|]/g, '')

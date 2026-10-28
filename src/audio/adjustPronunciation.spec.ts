@@ -122,6 +122,15 @@ describe('adjustPronunciation', () => {
   })
 
   test.each([
+    ['Charging $2.5M for Records', 'Charging $2.5M for Records'],
+    ['costs $10.50.', 'costs $10.50.'],
+    ['costs $10.50, then', 'costs $10.50, then'],
+    ['raised $1.4 billion', 'raised $1.4 billion'],
+  ])('leaves currency amounts for TTS to normalize: %s', (input, expected) => {
+    expect(adjustPronunciation(input)).toBe(expected)
+  })
+
+  test.each([
     ['at 100T/s.', 'at 100 tokens per second.'],
     ['at 100 T/s', 'at 100 tokens per second'],
     ['at 40t/s', 'at 40 tokens per second'],
