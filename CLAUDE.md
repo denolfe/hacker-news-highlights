@@ -15,6 +15,8 @@ Daily podcast generator that summarizes top 10 Hacker News posts using AI and te
 
 ## Development Commands
 
+Node and pnpm versions are pinned in `mise.toml` (local and CI). Run `mise install` before `pnpm install`. Dependency build-script approvals live in `pnpm-workspace.yaml` (`allowBuilds`).
+
 ```bash
 # Run the podcast generator
 pnpm start

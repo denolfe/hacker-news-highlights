@@ -1,16 +1,8 @@
 name: Setup node and pnpm
 description: |
-  Configures Node, pnpm, cache, performs pnpm install
+  Installs tools from mise.toml, configures pnpm cache, performs pnpm install
 
 inputs:
-  node-version:
-    description: Node.js version
-    required: true
-    default: 22.6.0
-  pnpm-version:
-    description: Pnpm version
-    required: true
-    default: 9.7.1
   pnpm-run-install:
     description: Whether to run pnpm install
     required: false
@@ -37,16 +29,8 @@ runs:
       shell: bash
       run: sudo ethtool -K eth0 tx off rx off
 
-    - name: Setup Node@${{ inputs.node-version }}
-      uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
-      with:
-        node-version: ${{ inputs.node-version }}
-
-    - name: Install pnpm
-      uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-      with:
-        version: ${{ inputs.pnpm-version }}
-        run_install: false
+    - name: Setup mise
+      uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
 
     - name: Get pnpm store path
       shell: bash
@@ -62,7 +46,6 @@ runs:
         path: ${{ env.STORE_PATH }}
         key: ${{ inputs.pnpm-install-cache-key }}
         restore-keys: |
-          pnpm-store-${{ inputs.pnpm-version }}-
           pnpm-store-
 
     - name: Run pnpm install
