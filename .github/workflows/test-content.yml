@@ -24,13 +24,9 @@ on:
 permissions:
   contents: read
 
-env:
-  NODE_VERSION: 24
-  PNPM_VERSION: 9.15.4
-
 jobs:
   test-content:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -40,8 +36,6 @@ jobs:
       - name: Node setup
         uses: ./.github/actions/setup
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          pnpm-version: ${{ env.PNPM_VERSION }}
           pnpm-install-cache-key: pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: Run integration tests
