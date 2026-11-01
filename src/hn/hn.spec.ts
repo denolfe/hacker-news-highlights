@@ -106,8 +106,13 @@ describe('hn', () => {
       }
       return hnFetch(url)
     })
+    // Skip real retry backoff
+    vi.useFakeTimers()
 
-    const topStories = await fetchTopStories(1)
+    const pending = fetchTopStories(1)
+    await vi.runAllTimersAsync()
+    const topStories = await pending
+    vi.useRealTimers()
 
     expect(fetchContentWithBrowser).toHaveBeenCalledWith(BLOCKED_URL)
     expect(topStories[0]?.content).toContain('Comment 1')
