@@ -7,6 +7,7 @@ import { getOrCompute, readFromCache, writeToCache } from '@/utils/cache.js'
 import { childLogger } from '@/utils/log.js'
 
 import { fetchPdfText } from './fetchPdfText.js'
+import { fetchWithRetry } from './fetchWithRetry.js'
 import { fetchXPostHtml, parseXStatusUrl } from './fetchXPost.js'
 import { needsBrowserFetch, parseSiteContent } from './parseSiteContent.js'
 
@@ -57,7 +58,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
   logger.info(`Fetching top ${count} stories...`)
 
   // Fetch additional stories to account for stories covered in previous episodes
-  const response = await fetchWithTimeoutAndRetry(
+  const response = await fetchWithRetry(
     `https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=${count + 10}`,
   )
   const data = (await response.json()) as ResponseData
@@ -159,7 +160,7 @@ export async function fetchTopStories(count: number = 10): Promise<StoryOutput[]
  * Fetches all comments for a given story ID from Hacker News API.
  */
 export async function fetchHnCommentsById(storyId: number): Promise<SlimComment[]> {
-  const response = await fetchWithTimeoutAndRetry(`https://hn.algolia.com/api/v1/items/${storyId}`)
+  const response = await fetchWithRetry(`https://hn.algolia.com/api/v1/items/${storyId}`)
   const data = await response.json()
   return data.children.map(extractComment)
 }
@@ -168,7 +169,7 @@ export async function fetchHnCommentsById(storyId: number): Promise<SlimComment[
  * Fetches complete story data including metadata, content, and comments by story ID.
  */
 export async function fetchStoryDataById(storyId: number): Promise<StoryOutput> {
-  const response = await fetchWithTimeoutAndRetry(`https://hn.algolia.com/api/v1/items/${storyId}`)
+  const response = await fetchWithRetry(`https://hn.algolia.com/api/v1/items/${storyId}`)
   const data = (await response.json()) as StoryDataByIdResponse
   const comments = data.children.map(extractComment)
 
@@ -275,7 +276,13 @@ export async function fetchStoryHtml(url: string): Promise<string> {
 
   let response: Response
   try {
-    response = await fetchWithTimeoutAndRetry(url)
+    // Short budget: the browser fallback below handles slow or unreachable article sites.
+    // Error statuses pass through so block detection can inspect them.
+    response = await fetchWithRetry(url, {
+      timeoutMs: 5000,
+      attempts: 3,
+      shouldRetryHttpErrors: false,
+    })
   } catch {
     // Node fetch rejects some responses that browsers accept, such as oversized headers
     logger.info(`Plain fetch failed, trying browser: ${url}`)
@@ -300,35 +307,6 @@ export async function fetchStoryHtml(url: string): Promise<string> {
     logger.warning(`Browser fallback failed: ${String(error)}`)
     return blocked ? '' : html
   }
-}
-
-async function fetchWithTimeoutAndRetry(
-  url: string,
-  timeout: number = 5000,
-  retries: number = 3,
-): Promise<Response> {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    const controller = new AbortController()
-    const id = setTimeout(() => controller.abort(), timeout)
-    try {
-      const response = await fetch(url, { signal: controller.signal })
-      clearTimeout(id)
-      return response
-    } catch (error: unknown) {
-      clearTimeout(id)
-      if (attempt === retries) {
-        logger.error(
-          `Failed to fetch ${url} after ${retries} attempts: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-        )
-        logger.error(error)
-        throw error
-      }
-      logger.warning(
-        `Attempt ${attempt} failed for ${url}. ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-      )
-    }
-  }
-  throw new Error(`Failed to fetch ${url} after ${retries} attempts`)
 }
 
 /** Recursively extracts comment data from HN API response. */
