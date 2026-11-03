@@ -15,23 +15,11 @@ export async function uploadPodcast(args: {
   log.info('Uploading podcast...')
   const { audioFilePath, title, showNotes, publishAt } = args
 
-  const apiKey = process.env.TRANSISTOR_API_KEY!
-  const headers = {
-    'Content-Type': 'application/json',
-    'x-api-key': apiKey,
-  }
+  const headers = getTransistorHeaders()
 
-  // One episode per Eastern calendar day. Any episode already carrying today's
-  // date key means an earlier run got this far, so stop before uploading rather
-  // than creating a duplicate.
-  const datePrefix = getEpisodeDatePrefix()
-  const existing = await findEpisodeForDate({ datePrefix, headers })
-
-  if (existing) {
-    throw new Error(
-      `Episode already exists for ${datePrefix}: id ${existing.id}, status ${existing.attributes?.status}. Refusing to create a duplicate.`,
-    )
-  }
+  // Repeated right before upload to catch a concurrent run that published
+  // after this run's pre-flight check.
+  await assertNoEpisodeForToday()
 
   const filename = audioFilePath.split('/').pop()
 
@@ -151,6 +139,22 @@ export async function uploadPodcast(args: {
 }
 
 /**
+ * One episode per Eastern calendar day. Any episode already carrying today's
+ * date key means an earlier run got this far, so throw before doing any work
+ * that would create a duplicate.
+ */
+export async function assertNoEpisodeForToday(): Promise<void> {
+  const datePrefix = getEpisodeDatePrefix()
+  const existing = await findEpisodeForDate({ datePrefix, headers: getTransistorHeaders() })
+
+  if (existing) {
+    throw new Error(
+      `Episode already exists for ${datePrefix}: id ${existing.id}, status ${existing.attributes?.status}. Refusing to create a duplicate.`,
+    )
+  }
+}
+
+/**
  * Release instruction for a target time, or immediate release when there is none.
  *
  * Transistor rejects `scheduled` with a published_at in the past (HTTP 400),
@@ -168,6 +172,13 @@ export function resolveEpisodeRelease(publishAt?: Date, now: Date = new Date()):
   return {
     status: isTargetInFuture ? 'scheduled' : 'published',
     published_at: publishAt.toISOString(),
+  }
+}
+
+function getTransistorHeaders(): Record<string, string> {
+  return {
+    'Content-Type': 'application/json',
+    'x-api-key': process.env.TRANSISTOR_API_KEY ?? '',
   }
 }
 
