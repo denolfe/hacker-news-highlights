@@ -12,7 +12,7 @@ import { generateAudioFromText } from '@/audio/index.js'
 import { EPISODE_OUTPUT, PODCAST_NAME, YOUTUBE_CHAPTERS_OUTPUT } from '@/constants.js'
 import { fetchStoryDataById, fetchTopStories } from '@/hn/index.js'
 import { parseSiteContent } from '@/hn/parseSiteContent.js'
-import { uploadPodcast } from '@/podcast.js'
+import { assertNoEpisodeForToday, uploadPodcast } from '@/podcast.js'
 import { getTtsService } from '@/services.js'
 import { generateShowNotes } from '@/show-notes.js'
 import { initCacheDir, writeToCache } from '@/utils/cache.js'
@@ -182,6 +182,15 @@ async function main() {
     return
   }
 
+  const shouldPublish =
+    !args.preview && args.audio !== false && (args.publish ?? Boolean(process.env.CI))
+
+  // Fail before fetching stories so a duplicate run reports the real reason
+  // and spends nothing on summaries or TTS.
+  if (shouldPublish) {
+    await assertNoEpisodeForToday()
+  }
+
   const storyData = await fetchTopStories(args.count ?? 10)
 
   if (args.preview) {
@@ -227,7 +236,6 @@ async function main() {
     log.info(`Total character count: ${showNotes.replace(/\s+/g, '').length}`)
 
     // Publish podcast before video generation so it succeeds even if video fails
-    const shouldPublish = args.publish ?? Boolean(process.env.CI)
     if (shouldPublish) {
       await uploadPodcast({
         audioFilePath: EPISODE_OUTPUT,

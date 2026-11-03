@@ -2,7 +2,7 @@ import type { Mock } from 'vitest'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { resolveEpisodeRelease, uploadPodcast } from '@/podcast.js'
+import { assertNoEpisodeForToday, resolveEpisodeRelease, uploadPodcast } from '@/podcast.js'
 import { getEpisodeDatePrefix } from '@/utils/episodeDate.js'
 
 vi.mock('fs/promises', () => ({
@@ -162,6 +162,38 @@ describe('uploadPodcast publish behavior', () => {
     mockTransistorApi(() => jsonResponse({ data: { attributes: { status: 'draft' } } }))
     const publishAt = new Date(Date.now() + 60 * 60 * 1000)
     await expect(uploadPodcast({ ...uploadArgs, publishAt })).rejects.toThrow(/Failed to publish/)
+  })
+})
+
+describe('assertNoEpisodeForToday', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    process.env.TRANSISTOR_API_KEY = 'test-key'
+  })
+
+  it('throws when an episode already exists for today', async () => {
+    mockTransistorApi(
+      () => undefined,
+      [
+        {
+          id: '99',
+          attributes: {
+            title: `${getEpisodeDatePrefix()} | Existing episode`,
+            status: 'scheduled',
+          },
+        },
+      ],
+    )
+    await expect(assertNoEpisodeForToday()).rejects.toThrow(/Episode already exists.*id 99/)
+  })
+
+  it('resolves when no episode exists for today', async () => {
+    const fetchMock = mockTransistorApi(
+      () => undefined,
+      [{ id: '97', attributes: { title: '1.1.99 | Some other day', status: 'published' } }],
+    )
+    await expect(assertNoEpisodeForToday()).resolves.toBeUndefined()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 })
 
