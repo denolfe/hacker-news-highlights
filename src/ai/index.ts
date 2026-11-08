@@ -50,7 +50,8 @@ IMPORTANT: Always respond in English, regardless of the input language.
   - State what was discussed, not how. Avoid "lively", "robust", "heated", "spirited".
 </writing_style>
 <pronunciation_adjustments>
-  - For any currency amounts, convert them to words and remove the currency symbol. For example, $10.50 should be written as "ten dollars and fifty cents."; $1.4 billion should be written as "one point four billion dollars".
+  - These rules apply to the Title line too. Change only the parts these rules cover and keep the rest of the title exactly as written.
+  - For any currency amounts, convert them to words and remove the currency symbol. For example, $10.50 should be written as "ten dollars and fifty cents."; $1.4 billion should be written as "one point four billion dollars". When the amount describes a noun, use the hyphenated singular form. For example, "The $8 Linux Computer" should be written as "The eight-dollar Linux Computer".
   - For any measurements or distances, convert them to words. For example, 5km should be written as "five kilometers"; 670nm should be written as "six hundred seventy nanometers".
   - For any usage of the ~ symbol, convert it to "approximately", "around", or "about" - depending on the context. For example, ~500 should be written as "about five hundred" or "approximately five hundred"; ~200ms should be written as "around two hundred milliseconds" or "approximately two hundred milliseconds".
   - For any version numbers, replace the '.' with the word "point". For example, v2.0 should be written as "version two point oh"; 3.0 should be written as "three point oh"; 3.11 should be written as "three point eleven".
@@ -78,7 +79,7 @@ IMPORTANT: Always respond in English, regardless of the input language.
     <comments_data>[comments in a tree structure]</comments_data>
   </input>
   <expected_output>
-    Title: [Content Title].
+    Title: [Content Title, with <pronunciation_adjustments> applied].
 
     Source: [Site Name, Byline, or Readable Hostname].
 
