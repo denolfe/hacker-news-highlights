@@ -66,6 +66,12 @@ function applyPronunciationRules(text: string): string {
       .replace(/\bmeta\b/gi, 'med-uh')
       .replace(/~(\d+)%/g, '~$1 percent')
 
+      // SWE (software engineering), often fused into names like DeepSWE or SWEbench.
+      // Case-sensitive so words like "answer" and "Sweden" are untouched.
+      .replace(/(?<![A-Z])([a-z])?SWE(?![A-Z])([a-z])?/g, (_, before, after) => {
+        return (before ? before + ' ' : '') + 'swee' + (after ? '-' + after : '')
+      })
+
       // Grok
       .replace(/\bgrok\b/gi, 'grock')
       .replace(/\bgrok(\d)\b/gi, 'grock $1')

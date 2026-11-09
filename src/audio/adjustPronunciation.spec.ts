@@ -110,6 +110,17 @@ describe('adjustPronunciation', () => {
   })
 
   test.each([
+    ['SWE', 'swee'],
+    ['DeepSWE', 'Deep swee'],
+    ['SWE-bench', 'swee-bench'],
+    ['SWEbench', 'swee-bench'],
+    ['ANSWER', 'ANSWER'], // no change
+    ['Sweden', 'Sweden'], // no change
+  ])('pronounces SWE acronym as "swee": %s', (input, expected) => {
+    expect(adjustPronunciation(input)).toBe(expected)
+  })
+
+  test.each([
     ['gpt-5.2', 'gpt-5-point-2'], // case insensitive
     ['v1.2', 'v1-point-2'],
     ['Python 3.9', 'Python 3-point-9'],
