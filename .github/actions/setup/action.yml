@@ -25,9 +25,17 @@ runs:
   using: composite
   steps:
     # https://github.com/actions/virtual-environments/issues/1187
+    # AWS-hosted runners name the adapter differently (e.g. enp39s0), so resolve it from the default route.
     - name: tune linux network
       shell: bash
-      run: sudo ethtool -K eth0 tx off rx off
+      run: |
+        # Tuning is best-effort: never fail the job, since pipefail would abort on a missing `ip`
+        iface=$(ip route show default 2>/dev/null | sed -n '/ dev /{s/.* dev \([^ ]*\).*/\1/p;q;}') || true
+        if [ -z "$iface" ]; then
+          echo "::warning::No default network interface found, skipping ethtool tuning"
+          exit 0
+        fi
+        sudo -n ethtool -K "$iface" tx off rx off || echo "::warning::ethtool tuning failed on $iface"
 
     - name: Setup mise
       uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
