@@ -247,7 +247,7 @@ async function main() {
         audioFilePath: EPISODE_OUTPUT,
         title,
         showNotes,
-        // Cron runs release at a consistent 6:30am ET; manual runs publish immediately
+        // Cron and Pi-dispatched runs release at a consistent 6:30am ET; other manual runs publish immediately
         publishAt: process.env.SCHEDULED_RELEASE === 'true' ? getScheduledPublishTime() : undefined,
       })
     } else {
