@@ -18,14 +18,14 @@ readonly MIN_CURL=7.76.0
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 readonly SCRIPT_DIR
 
-# Global so the EXIT trap can still see it after install() returns
+# Global so the EXIT trap can still see it after install_trigger() returns
 HEADER_FILE=''
 trap '[[ -n $HEADER_FILE ]] && rm -f "$HEADER_FILE"' EXIT
 
 main() {
   case "${1:-}" in
-    '') install ;;
-    --uninstall) uninstall ;;
+    '') install_trigger ;;
+    --uninstall) uninstall_trigger ;;
     -h | --help) usage ;;
     *)
       usage >&2
@@ -34,7 +34,8 @@ main() {
   esac
 }
 
-install() {
+# Not named install(): that would shadow the install(1) command used below
+install_trigger() {
   preflight
 
   local token
@@ -69,7 +70,7 @@ install() {
   echo "Logs: journalctl -u $UNIT_NAME.service -n 50"
 }
 
-uninstall() {
+uninstall_trigger() {
   require_root
   systemctl disable --now "$UNIT_NAME.timer" 2>/dev/null || true
   rm -f "$UNIT_DIR/$UNIT_NAME.service" "$UNIT_DIR/$UNIT_NAME.timer"

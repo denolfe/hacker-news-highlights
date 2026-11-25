@@ -9,8 +9,9 @@ Type=oneshot
 # Passing it via -H @file keeps the token out of the process list.
 LoadCredential=github-auth-header:/etc/podcast-trigger/github-auth-header
 # Each retry may create a run; workflow concurrency queues them and later runs
-# exit early once today's episode exists.
-ExecStart=/usr/bin/curl --silent --show-error --fail-with-body \
+# exit early once today's episode exists. HTTP/1.1 because curl 7.88 reuses
+# stale HTTP/2 connections across retry delays and fails every other retry.
+ExecStart=/usr/bin/curl --silent --show-error --fail-with-body --http1.1 \
   --retry 5 --retry-delay 30 --retry-all-errors \
   -X POST \
   -H "Accept: application/vnd.github+json" \
