@@ -144,14 +144,18 @@ export async function uploadPodcast(args: {
  * that would create a duplicate.
  */
 export async function assertNoEpisodeForToday(): Promise<void> {
-  const datePrefix = getEpisodeDatePrefix()
-  const existing = await findEpisodeForDate({ datePrefix, headers: getTransistorHeaders() })
+  const existing = await findEpisodeForToday()
 
   if (existing) {
     throw new Error(
-      `Episode already exists for ${datePrefix}: id ${existing.id}, status ${existing.attributes?.status}. Refusing to create a duplicate.`,
+      `Episode already exists for ${getEpisodeDatePrefix()}: id ${existing.id}, status ${existing.attributes?.status}. Refusing to create a duplicate.`,
     )
   }
+}
+
+/** Episode for the current Eastern calendar day, in any status, if one exists. */
+export async function findEpisodeForToday(): Promise<EpisodeListEntry | undefined> {
+  return findEpisodeForDate({ datePrefix: getEpisodeDatePrefix(), headers: getTransistorHeaders() })
 }
 
 /**

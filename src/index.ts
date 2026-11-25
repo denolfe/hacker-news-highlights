@@ -12,7 +12,7 @@ import { generateAudioFromText } from '@/audio/index.js'
 import { EPISODE_OUTPUT, PODCAST_NAME, YOUTUBE_CHAPTERS_OUTPUT } from '@/constants.js'
 import { fetchStoryDataById, fetchTopStories } from '@/hn/index.js'
 import { parseSiteContent } from '@/hn/parseSiteContent.js'
-import { assertNoEpisodeForToday, uploadPodcast } from '@/podcast.js'
+import { findEpisodeForToday, uploadPodcast } from '@/podcast.js'
 import { getTtsService } from '@/services.js'
 import { generateShowNotes } from '@/show-notes.js'
 import { initCacheDir, writeToCache } from '@/utils/cache.js'
@@ -185,10 +185,16 @@ async function main() {
   const shouldPublish =
     !args.preview && args.audio !== false && (args.publish ?? Boolean(process.env.CI))
 
-  // Fail before fetching stories so a duplicate run reports the real reason
-  // and spends nothing on summaries or TTS.
+  // Multiple triggers fire per day (Pi dispatch plus backup cron); whichever
+  // runs second exits cleanly before spending anything on summaries or TTS.
   if (shouldPublish) {
-    await assertNoEpisodeForToday()
+    const existing = await findEpisodeForToday()
+    if (existing) {
+      log.info(
+        `Episode already exists for today: id ${existing.id}, status ${existing.attributes?.status}. Skipping.`,
+      )
+      return
+    }
   }
 
   const storyData = await fetchTopStories(args.count ?? 10)

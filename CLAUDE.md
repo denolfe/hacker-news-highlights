@@ -174,7 +174,7 @@ Pattern categories handled:
 
 ## CI/CD
 
-GitHub Actions workflow runs daily via cron (`generate-podcast.yml`). The cron fires at 05:47 UTC — intentionally early because GitHub cron delivery is delayed and variable (see issue #13). Scheduled runs set `SCHEDULED_RELEASE=true`, which makes the episode upload use Transistor scheduled publish targeting 6:30am Eastern (DST-aware, computed in `src/utils/publishTime.ts`). Manual runs (workflow_dispatch or `--publish`) publish immediately. Workflow:
+GitHub Actions workflow `generate-podcast.yml` runs daily. The primary trigger is a Raspberry Pi systemd timer that calls `workflow_dispatch` at 5:00am ET (90 minutes before release), because GitHub cron delivery can be delayed by many hours or skipped (setup: `docs/raspberry-pi-trigger.md`, unit files and install script: `deploy/pi/`). The `schedule` cron at 05:47 UTC is a backup. A `concurrency` group queues overlapping runs, and a run exits 0 before fetching stories when today's episode already exists. Scheduled cron runs and Pi dispatches (`scheduled_release` input) set `SCHEDULED_RELEASE=true`, which makes the episode upload use Transistor scheduled publish targeting 6:30am Eastern (DST-aware, computed in `src/utils/publishTime.ts`). Other manual runs (workflow_dispatch or `--publish`) publish immediately. Workflow:
 1. Restores `cache/covered-stories` from GitHub Actions cache
 2. Runs `pnpm start` with env vars from secrets
 3. Publishes episode automatically (CI env var triggers publish)
@@ -188,6 +188,7 @@ The workflow can be triggered manually with these options:
 - **voice_service** - Choose `openai` or `elevenlabs` (default: openai for manual, elevenlabs on main)
 - **skip_publish** - Skip publishing to podcast host (default: true for manual runs)
 - **video** - Generate YouTube video (default: false for manual runs)
+- **scheduled_release** - Release via Transistor scheduled publish at 6:30am ET (default: false; the Pi trigger sets true)
 
 ## Video Generation
 
