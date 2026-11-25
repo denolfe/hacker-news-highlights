@@ -185,8 +185,8 @@ GitHub Actions workflow `generate-podcast.yml` runs daily. The primary trigger i
 
 The workflow can be triggered manually with these options:
 - **debug** - Enable debug mode
-- **voice_service** - Choose `openai` or `elevenlabs` (default: openai for manual, elevenlabs on main)
-- **skip_publish** - Skip publishing to podcast host (default: true for manual runs)
+- **voice_service** - Choose `openai` or `elevenlabs` (default: elevenlabs)
+- **skip_publish** - Skip publishing to podcast host (default: false; manual runs on `main` publish unless checked, other branches never publish)
 - **video** - Generate YouTube video (default: false for manual runs)
 - **scheduled_release** - Release via Transistor scheduled publish at 6:30am ET (default: false; the Pi trigger sets true)
 

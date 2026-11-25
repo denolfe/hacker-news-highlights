@@ -11,7 +11,7 @@ on:
       voice_service:
         description: 'Voice service to use'
         required: false
-        default: 'openai'
+        default: 'elevenlabs'
         type: choice
         options:
           - openai
@@ -19,7 +19,7 @@ on:
       skip_publish:
         description: 'Skip publishing to podcast host'
         required: false
-        default: 'true'
+        default: 'false'
         type: boolean
       video:
         description: 'Generate YouTube video'
@@ -91,7 +91,8 @@ jobs:
           echo "ARGS: '$ARGS'"
           pnpm start $ARGS
         env:
-          SKIP_PUBLISH: ${{ github.event.inputs.skip_publish }}
+          # Only main publishes; manual runs on other branches never do
+          SKIP_PUBLISH: ${{ github.ref != 'refs/heads/main' || github.event.inputs.skip_publish }}
           VIDEO: ${{ github.event.inputs.video || 'false' }}
           SCHEDULED_RELEASE: ${{ github.event_name == 'schedule' || inputs.scheduled_release }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
