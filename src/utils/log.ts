@@ -31,5 +31,5 @@ export const childLogger = (name: string) => {
 }
 
 export function isDebug() {
-  return Boolean(process.env.DEBUG)
+  return process.env.DEBUG === 'true'
 }

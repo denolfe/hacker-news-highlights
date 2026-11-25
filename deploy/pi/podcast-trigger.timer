@@ -1,0 +1,13 @@
+[Unit]
+Description=Daily trigger for the generate-podcast workflow
+
+[Timer]
+# 90 minutes before the 6:30am ET release leaves room for one manual rerun.
+# Overnight ET is a quiet period on HN, so the top stories barely change
+# between midnight and 5am. A later snapshot only makes them a bit more settled.
+OnCalendar=*-*-* 05:00:00 America/New_York
+# Fire at boot if the Pi was off or rebooting at the scheduled time
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -11,7 +11,7 @@ on:
       voice_service:
         description: 'Voice service to use'
         required: false
-        default: 'openai'
+        default: 'elevenlabs'
         type: choice
         options:
           - openai
@@ -19,23 +19,32 @@ on:
       skip_publish:
         description: 'Skip publishing to podcast host'
         required: false
-        default: 'true'
+        default: 'false'
         type: boolean
       video:
         description: 'Generate YouTube video'
         required: false
         default: 'false'
         type: boolean
+      scheduled_release:
+        description: 'Release via Transistor scheduled publish at 6:30am ET'
+        required: false
+        default: 'false'
+        type: boolean
 
   schedule:
-    # Fires early on purpose: GitHub cron is delayed 30min-3.5h (see issue #13).
-    # Episode release time is controlled by Transistor scheduled publish (6:30am ET),
-    # and 05:47 UTC lands the story snapshot in HN's settled overnight window.
+    # Backup for the Pi trigger (docs/raspberry-pi-trigger.md); GitHub cron runs hours late.
+    # Whichever run creates today's episode first wins; the other exits 0.
     - cron: '47 5 * * *'
 
 permissions:
   contents: read
   actions: write # for caching
+
+# Queue overlapping Pi and cron runs so the second sees the first's episode
+concurrency:
+  group: generate-podcast-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   COVERED_STORIES_CACHE_KEY: ${{ github.ref }}-covered-stories
@@ -82,9 +91,10 @@ jobs:
           echo "ARGS: '$ARGS'"
           pnpm start $ARGS
         env:
-          SKIP_PUBLISH: ${{ github.event.inputs.skip_publish }}
+          # Only main publishes; manual runs on other branches never do
+          SKIP_PUBLISH: ${{ github.ref != 'refs/heads/main' || github.event.inputs.skip_publish }}
           VIDEO: ${{ github.event.inputs.video || 'false' }}
-          SCHEDULED_RELEASE: ${{ github.event_name == 'schedule' }}
+          SCHEDULED_RELEASE: ${{ github.event_name == 'schedule' || inputs.scheduled_release }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ELEVEN_LABS_API_KEY: ${{ secrets.ELEVEN_LABS_API_KEY }}
           DEBUG: ${{ github.event.inputs.debug }}

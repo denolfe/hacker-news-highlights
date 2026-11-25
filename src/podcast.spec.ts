@@ -2,7 +2,12 @@ import type { Mock } from 'vitest'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { assertNoEpisodeForToday, resolveEpisodeRelease, uploadPodcast } from '@/podcast.js'
+import {
+  assertNoEpisodeForToday,
+  findEpisodeForToday,
+  resolveEpisodeRelease,
+  uploadPodcast,
+} from '@/podcast.js'
 import { getEpisodeDatePrefix } from '@/utils/episodeDate.js'
 
 vi.mock('fs/promises', () => ({
@@ -194,6 +199,38 @@ describe('assertNoEpisodeForToday', () => {
     )
     await expect(assertNoEpisodeForToday()).resolves.toBeUndefined()
     expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('findEpisodeForToday', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    process.env.TRANSISTOR_API_KEY = 'test-key'
+  })
+
+  it("returns today's episode when one exists", async () => {
+    mockTransistorApi(
+      () => undefined,
+      [
+        { id: '97', attributes: { title: '1.1.99 | Some other day', status: 'published' } },
+        {
+          id: '99',
+          attributes: {
+            title: `${getEpisodeDatePrefix()} | Existing episode`,
+            status: 'published',
+          },
+        },
+      ],
+    )
+    await expect(findEpisodeForToday()).resolves.toMatchObject({ id: '99' })
+  })
+
+  it('returns undefined when no episode exists for today', async () => {
+    mockTransistorApi(
+      () => undefined,
+      [{ id: '97', attributes: { title: '1.1.99 | Some other day', status: 'published' } }],
+    )
+    await expect(findEpisodeForToday()).resolves.toBeUndefined()
   })
 })
 
